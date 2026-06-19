@@ -128,6 +128,37 @@ body.dark .dzikir-faedah {
   color: #94a3b8;
 }
 
+/* ===== POST META (author, date, read time) ===== */
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.post-meta .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.post-meta .meta-sep {
+  color: #cbd5e1;
+}
+
+body.dark .post-meta {
+  color: #94a3b8;
+}
+
+body.dark .post-meta .meta-sep {
+  color: #334155;
+}
+
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 768px) {
@@ -137,5 +168,10 @@ body.dark .dzikir-faedah {
 
   .dzikir-arabic {
     font-size: 24px;
+  }
+
+  .post-meta {
+    gap: 4px 12px;
+    font-size: 12px;
   }
 }

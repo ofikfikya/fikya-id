@@ -4,166 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Website pribadi Fikya.id — tempat berbagi tulisan, proyek, eksperimen, dan ide.">
-  <title>Fikya.id</title>
+  
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fikya.id/">
+  <meta property="og:title" content="Fikya.id — Personal Website">
+  <meta property="og:description" content="Website pribadi Fikya.id — tempat berbagi tulisan, proyek, eksperimen, dan ide.">
+  <meta property="og:image" content="https://fikya.id/gambar-thumbnail-anda.jpg"> <title>Fikya.id</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
-
-  <style>
-    /* ===== HERO ===== */
-    .hero {
-      padding: 100px 20px;
-      text-align: center;
-      background:
-        radial-gradient(circle at top left, #60a5fa 0%, transparent 35%),
-        radial-gradient(circle at right, #2563eb 0%, transparent 40%),
-        linear-gradient(135deg, #1e3a8a, #2563eb);
-      color: white;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero h1 {
-      font-size: clamp(2.5rem, 6vw, 4rem);
-      font-weight: 800;
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .hero p {
-      max-width: 650px;
-      margin: 0 auto 35px;
-      opacity: .9;
-      position: relative;
-      z-index: 2;
-    }
-
-    .btn-row {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 2;
-    }
-
-    /* ===== MAIN WRAPPER ===== */
-    .main-wrapper {
-      max-width: 1200px;
-      margin: 50px auto 90px;
-      padding: 0 20px;
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 40px;
-      align-items: start;
-    }
-
-    .section-title {
-      font-size: 30px;
-      font-weight: 800;
-      margin-bottom: 25px;
-      transition: color .3s;
-    }
-
-    /* ===== CARDS ===== */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 25px;
-    }
-
-    .card {
-      background: white;
-      padding: 35px;
-      border-radius: 22px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, .03);
-      transition: .35s;
-    }
-
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, .08);
-    }
-
-    .card-icon  { font-size: 35px; margin-bottom: 15px; }
-    .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; transition: color .3s; }
-    .card-desc  { color: #64748b; font-size: 14px; transition: color .3s; }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar {
-      background: white;
-      padding: 25px;
-      border-radius: 22px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, .03);
-      position: sticky;
-      top: 90px;
-      transition: .35s;
-    }
-
-    .sidebar-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f1f5f9;
-      color: #0f172a;
-      transition: color .3s, border-color .3s;
-    }
-
-    .sidebar-list { list-style: none; }
-    .sidebar-list li { margin-bottom: 15px; }
-    .sidebar-list li:last-child { margin-bottom: 0; }
-
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: #64748b;
-      font-weight: 500;
-      font-size: 15px;
-      transition: .2s;
-    }
-
-    .sidebar-link:hover {
-      color: #2563eb;
-      transform: translateX(5px);
-    }
-
-    /* ===== DARK MODE — page specific ===== */
-    body.dark .card,
-    body.dark .sidebar         { background: #1e293b; border-color: #334155; }
-    body.dark .card-title,
-    body.dark .sidebar-title   { color: #f1f5f9; }
-    body.dark .sidebar-title   { border-bottom-color: #334155; }
-    body.dark .card-desc,
-    body.dark .sidebar-link    { color: #94a3b8; }
-    body.dark .sidebar-link:hover { color: #60a5fa; }
-    body.dark .section-title   { color: #f1f5f9; }
-
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 900px) {
-      .main-wrapper {
-        grid-template-columns: 1fr;
-        gap: 50px;
-      }
-      .sidebar { position: static; }
-    }
-
-    @media (max-width: 768px) {
-      .hero { padding: 80px 20px; }
-    }
-  </style>
-</head>
+  <link rel="stylesheet" href="css/home.css"> </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav class="navbar">
     <a href="index.html" class="logo">Fikya.id</a>
     <div class="nav-datetime">
@@ -179,16 +34,14 @@
     </div>
   </nav>
 
-  <!-- SEARCH OVERLAY -->
   <div class="search-overlay" id="search-overlay">
     <div class="search-box">
-      <span style="font-size:16px;color:#94a3b8;">🔍</span>
+      <span style="font-size:16px;color:var(--text-muted);">🔍</span>
       <input type="text" id="search-input" placeholder="Cari artikel, proyek...">
-      <button class="search-close" id="search-close">✕</button>
+      <button class="search-close" id="search-close" aria-label="Tutup pencarian">✕</button>
     </div>
   </div>
 
-  <!-- HERO -->
   <section class="hero">
     <h1>Selamat Datang di Fikya.id</h1>
     <p>Website pribadi untuk berbagi tulisan, proyek, eksperimen, dan ide yang saya bangun.</p>
@@ -198,10 +51,8 @@
     </div>
   </section>
 
-  <!-- KONTEN UTAMA & SIDEBAR -->
-  <div class="main-wrapper" id="main-content">
+  <main class="main-wrapper" id="main-content">
 
-    <!-- KOLOM KIRI -->
     <div class="content-left">
       <h2 class="section-title">Fitur Website</h2>
       <section class="cards">
@@ -223,7 +74,6 @@
       </section>
     </div>
 
-    <!-- SIDEBAR KANAN -->
     <aside class="sidebar">
       <h3 class="sidebar-title">Artikel Populer</h3>
       <ul class="sidebar-list">
@@ -245,7 +95,7 @@
       </ul>
     </aside>
 
-  </div>
+  </main>
 
   <footer>
     © <span id="tahun"></span> Fikya.id — Dibuat menggunakan Cloudflare Pages

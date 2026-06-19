@@ -1,0 +1,141 @@
+/* ============================================================
+   blog.css — Style khusus halaman blog & dzikir
+   ============================================================ */
+
+/* ===== HERO HEADER ===== */
+
+.header-section {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.header-section h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.header-section p {
+  color: #64748b;
+  font-size: 16px;
+  max-width: 600px;
+  margin: auto;
+}
+
+/* ===== DZIKIR CONTAINER ===== */
+
+.dzikir-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ===== DZIKIR CARD ===== */
+
+.dzikir-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .03);
+  transition: all .3s ease;
+}
+
+.dzikir-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dzikir-arabic {
+  font-family: 'Amiri', 'Times New Roman', serif;
+  font-size: 28px;
+  line-height: 2.2;
+  text-align: right;
+  direction: rtl;
+  color: #0f172a;
+  margin-bottom: 20px;
+}
+
+.dzikir-latin {
+  font-size: 15px;
+  font-style: italic;
+  color: #2563eb;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.dzikir-arti {
+  font-size: 15px;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.dzikir-faedah {
+  background: #f8fafc;
+  border-left: 4px solid #2563eb;
+  padding: 15px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 15px;
+}
+
+.dzikir-count {
+  display: inline-block;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+/* ===== DARK MODE — blog/dzikir specific ===== */
+
+body.dark .dzikir-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, .2);
+}
+
+body.dark .dzikir-title {
+  color: #f1f5f9;
+}
+
+body.dark .dzikir-arabic {
+  color: #f8fafc;
+}
+
+body.dark .dzikir-latin {
+  color: #60a5fa;
+}
+
+body.dark .dzikir-arti {
+  color: #cbd5e1;
+}
+
+body.dark .dzikir-faedah {
+  background: #0f172a;
+  border-left-color: #3b82f6;
+  color: #94a3b8;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .dzikir-card {
+    padding: 20px;
+  }
+
+  .dzikir-arabic {
+    font-size: 24px;
+  }
+}

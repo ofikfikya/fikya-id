@@ -8,7 +8,6 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -58,17 +57,31 @@ body.dark .nav-btn:hover{
   color:#f1f5f9;
 }
 
-body.dark .card{
+body.dark .card,
+body.dark .sidebar{
   background:#1e293b;
   border-color:#334155;
 }
 
-body.dark .card-title{
+body.dark .card-title,
+body.dark .sidebar-title{
   color:#f1f5f9;
+}
+
+body.dark .sidebar-title{
+  border-bottom-color:#334155;
 }
 
 body.dark .card-desc{
   color:#94a3b8;
+}
+
+body.dark .sidebar-link{
+  color:#94a3b8;
+}
+
+body.dark .sidebar-link:hover{
+  color:#60a5fa;
 }
 
 body.dark .section-title{
@@ -105,7 +118,6 @@ body.dark footer{
   justify-self:start;
 }
 
-/* datetime tengah */
 .nav-datetime{
   display:flex;
   align-items:center;
@@ -131,7 +143,6 @@ body.dark footer{
   letter-spacing:0.04em;
 }
 
-/* tombol kanan */
 .nav-actions{
   display:flex;
   align-items:center;
@@ -226,24 +237,30 @@ body.dark footer{
   background:rgba(255,255,255,.1);
 }
 
-/* ===== SECTION TITLE ===== */
+/* ===== MAIN WRAPPER (TWO COLUMNS) ===== */
+
+.main-wrapper{
+  max-width:1200px;
+  margin:50px auto 90px;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:1fr 300px; /* Kolom kiri fleksibel, kanan 300px */
+  gap:40px;
+  align-items:start;
+}
 
 .section-title{
-  text-align:center;
-  padding-top:70px;
   font-size:30px;
   font-weight:800;
+  margin-bottom:25px;
   transition:color .3s;
 }
 
-/* ===== CARDS ===== */
+/* ===== CARDS (Kiri) ===== */
 
 .cards{
-  max-width:1200px;
-  margin:auto;
-  padding:50px 20px 90px;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:25px;
 }
 
@@ -277,6 +294,57 @@ body.dark footer{
   color:#64748b;
   font-size:14px;
   transition:color .3s;
+}
+
+/* ===== SIDEBAR (Kanan) ===== */
+
+.sidebar{
+  background:white;
+  padding:25px;
+  border-radius:22px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 5px 20px rgba(0,0,0,.03);
+  position:sticky; /* Agar ikut ke-scroll halus */
+  top:90px;
+  transition:.35s;
+}
+
+.sidebar-title{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:20px;
+  padding-bottom:10px;
+  border-bottom:2px solid #f1f5f9;
+  color:#0f172a;
+  transition:color .3s, border-color .3s;
+}
+
+.sidebar-list{
+  list-style:none;
+}
+
+.sidebar-list li{
+  margin-bottom:15px;
+}
+
+.sidebar-list li:last-child{
+  margin-bottom:0;
+}
+
+.sidebar-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:#64748b;
+  font-weight:500;
+  font-size:15px;
+  transition:.2s;
+}
+
+.sidebar-link:hover{
+  color:#2563eb;
+  transform:translateX(5px);
 }
 
 /* ===== FOOTER ===== */
@@ -359,6 +427,16 @@ body.dark .search-close{
 
 /* ===== RESPONSIVE ===== */
 
+@media(max-width:900px){
+  .main-wrapper{
+    grid-template-columns:1fr; /* Jadi satu kolom (atas bawah) di HP */
+    gap:50px;
+  }
+  .sidebar{
+    position:static;
+  }
+}
+
 @media(max-width:768px){
   .navbar{
     padding:0 16px;
@@ -381,9 +459,7 @@ body.dark .search-close{
 
 <!-- NAVBAR -->
 <nav class="navbar">
-
   <a href="#" class="logo">Fikya.id</a>
-
   <div class="nav-datetime">
     <span class="tgl-nav" id="nav-tgl">—</span>
     <span class="sep">•</span>
@@ -391,12 +467,10 @@ body.dark .search-close{
     <span class="sep">•</span>
     <span class="hijri-nav" id="nav-hijri">—</span>
   </div>
-
   <div class="nav-actions">
     <button class="nav-btn" id="btn-darkmode" title="Dark / Light mode" aria-label="Toggle dark mode">🌙</button>
     <button class="nav-btn" id="btn-search" title="Cari" aria-label="Buka pencarian">🔍</button>
   </div>
-
 </nav>
 
 <!-- SEARCH OVERLAY -->
@@ -414,30 +488,54 @@ body.dark .search-close{
   <p>Website pribadi untuk berbagi tulisan, proyek, eksperimen, dan ide yang saya bangun.</p>
   <div class="btn-row">
     <a href="tentang.html" class="btn btn-primary">Tentang Saya</a>
-    <a href="#" class="btn btn-outline">Lihat Konten</a>
+    <a href="#main-content" class="btn btn-outline">Lihat Konten</a>
   </div>
 </section>
 
-<!-- FEATURES -->
-<h2 class="section-title">Fitur Website</h2>
+<!-- KONTEN UTAMA & SIDEBAR -->
+<div class="main-wrapper" id="main-content">
+  
+  <!-- KOLOM KIRI (FITUR WEBSITE) -->
+  <div class="content-left">
+    <h2 class="section-title">Fitur Website</h2>
+    <section class="cards">
+      <div class="card">
+        <div class="card-icon">✏️</div>
+        <div class="card-title">Blog</div>
+        <div class="card-desc">Berisi tulisan, catatan, pengalaman, dan ide yang ingin saya bagikan.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">💻</div>
+        <div class="card-title">Proyek</div>
+        <div class="card-desc">Kumpulan proyek website, eksperimen coding, dan pengembangan teknologi.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">👤</div>
+        <div class="card-title">Tentang Saya</div>
+        <div class="card-desc">Informasi singkat mengenai saya dan apa yang sedang saya kerjakan.</div>
+      </div>
+    </section>
+  </div>
 
-<section class="cards">
-  <div class="card">
-    <div class="card-icon">✏️</div>
-    <div class="card-title">Blog</div>
-    <div class="card-desc">Berisi tulisan, catatan, pengalaman, dan ide yang ingin saya bagikan.</div>
-  </div>
-  <div class="card">
-    <div class="card-icon">💻</div>
-    <div class="card-title">Proyek</div>
-    <div class="card-desc">Kumpulan proyek website, eksperimen coding, dan pengembangan teknologi.</div>
-  </div>
-  <div class="card">
-    <div class="card-icon">👤</div>
-    <div class="card-title">Tentang Saya</div>
-    <div class="card-desc">Informasi singkat mengenai saya dan apa yang sedang saya kerjakan.</div>
-  </div>
-</section>
+  <!-- KOLOM KANAN (SIDEBAR ARTIKEL POPULER) -->
+  <aside class="sidebar">
+    <h3 class="sidebar-title">Artikel Populer</h3>
+    <ul class="sidebar-list">
+      <li>
+        <a href="dzikir-pagi.html" class="sidebar-link">
+          <span class="icon">📖</span> Dzikir Pagi
+        </a>
+      </li>
+      <!-- Anda bisa menambahkan daftar lainnya nanti di bawah sini -->
+      <li>
+        <a href="#" class="sidebar-link">
+          <span class="icon">✨</span> Fitur Baru Fikya.id
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+</div>
 
 <footer>
   © <span id="tahun"></span> Fikya.id — Dibuat menggunakan Cloudflare Pages

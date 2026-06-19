@@ -1,9 +1,48 @@
 /* ============================================================
-   style.css — Global styles Fikya.id
-   Covers: reset, body, navbar, footer, buttons, search overlay,
-           dark mode, responsive
+   style.css — Global styles Fikya.id (Refactored)
+   Covers: CSS Variables, reset, body, navbar, footer, buttons, 
+           search overlay, responsive
    ============================================================ */
 
+:root {
+  /* --- Tema Terang (Light Mode) --- */
+  --bg-body: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-sep: #cbd5e1;
+  --primary-color: #2563eb;
+  --border-color: #e2e8f0;
+  
+  --bg-nav: rgba(255, 255, 255, 0.85);
+  --border-nav: rgba(226, 232, 240, 0.8);
+  
+  --bg-element-hover: #f1f5f9;
+  --bg-search-box: #ffffff;
+  
+  --footer-border: #e2e8f0;
+  --footer-text: #64748b;
+}
+
+body.dark {
+  /* --- Tema Gelap (Dark Mode) --- */
+  --bg-body: #0f172a;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-sep: #334155;
+  --primary-color: #60a5fa; /* Sedikit lebih terang agar kontras */
+  --border-color: #334155;
+  
+  --bg-nav: rgba(15, 23, 42, 0.85);
+  --border-nav: rgba(51, 65, 85, 0.8);
+  
+  --bg-element-hover: #1e293b;
+  --bg-search-box: #1e293b;
+  
+  --footer-border: #1e293b;
+  --footer-text: #475569;
+}
+
+/* ===== RESET ===== */
 * {
   margin: 0;
   padding: 0;
@@ -12,59 +51,14 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--bg-body);
+  color: var(--text-main);
   line-height: 1.6;
   overflow-x: hidden;
-  transition: background .3s, color .3s;
-}
-
-/* ===== DARK MODE ===== */
-
-body.dark {
-  background: #0f172a;
-  color: #f1f5f9;
-}
-
-body.dark .navbar {
-  background: rgba(15, 23, 42, .85);
-  border-bottom-color: rgba(51, 65, 85, .8);
-}
-
-body.dark .nav-datetime {
-  color: #94a3b8;
-}
-
-body.dark .nav-datetime .sep {
-  color: #334155;
-}
-
-body.dark .nav-btn {
-  color: #94a3b8;
-  border-color: #334155;
-}
-
-body.dark .nav-btn:hover {
-  background: #1e293b;
-  color: #f1f5f9;
-}
-
-body.dark footer {
-  border-top-color: #1e293b;
-  color: #475569;
-}
-
-body.dark .search-box {
-  background: #1e293b;
-}
-
-body.dark .search-close {
-  background: #334155;
-  color: #94a3b8;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ===== NAVBAR ===== */
-
 .navbar {
   position: sticky;
   top: 0;
@@ -74,16 +68,16 @@ body.dark .search-close {
   align-items: center;
   padding: 0 8%;
   height: 60px;
-  background: rgba(255, 255, 255, .85);
+  background: var(--bg-nav);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, .8);
-  transition: background .3s, border-color .3s;
+  border-bottom: 1px solid var(--border-nav);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .logo {
   font-size: 20px;
   font-weight: 800;
-  color: #2563eb;
+  color: var(--primary-color);
   text-decoration: none;
   justify-self: start;
 }
@@ -93,22 +87,22 @@ body.dark .search-close {
   align-items: center;
   gap: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 400;
   white-space: nowrap;
   letter-spacing: 0.01em;
-  transition: color .3s;
+  transition: color 0.3s ease;
 }
 
 .nav-datetime .sep {
   margin: 0 7px;
-  color: #cbd5e1;
+  color: var(--text-sep);
   font-weight: 300;
 }
 
 .nav-datetime .jam-nav {
   font-weight: 600;
-  color: #2563eb;
+  color: var(--primary-color);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
 }
@@ -124,71 +118,68 @@ body.dark .search-close {
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   background: transparent;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: .2s;
+  transition: 0.2s ease;
 }
 
 .nav-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-element-hover);
+  color: var(--text-main);
 }
 
 /* ===== BUTTONS ===== */
-
 .btn {
   padding: 14px 28px;
   border-radius: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: .3s;
+  transition: 0.3s ease;
   cursor: pointer;
 }
 
 .btn-primary {
-  background: white;
-  color: #2563eb;
+  background: white; 
+  color: #2563eb; /* Tetap biru terang untuk kebutuhan Hero */
 }
 
 .btn-primary:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 255, 255, .25);
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.25);
 }
 
 .btn-outline {
-  border: 1px solid rgba(255, 255, 255, .4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
 }
 
 .btn-outline:hover {
-  background: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ===== FOOTER ===== */
-
 footer {
   padding: 35px;
   text-align: center;
-  border-top: 1px solid #e2e8f0;
-  color: #64748b;
+  border-top: 1px solid var(--footer-border);
+  color: var(--footer-text);
   font-size: 14px;
-  transition: border-color .3s, color .3s;
+  transition: border-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===== SEARCH OVERLAY ===== */
-
 .search-overlay {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(15, 23, 42, .5);
+  background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
   align-items: flex-start;
   justify-content: center;
@@ -200,14 +191,15 @@ footer {
 }
 
 .search-box {
-  background: white;
+  background: var(--bg-search-box);
   border-radius: 16px;
   padding: 6px 8px;
   display: flex;
   align-items: center;
   gap: 8px;
   width: min(560px, 90vw);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, .15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease;
 }
 
 .search-box input {
@@ -222,7 +214,7 @@ footer {
 }
 
 .search-box input::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .search-close {
@@ -230,17 +222,17 @@ footer {
   height: 32px;
   border-radius: 8px;
   border: none;
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--bg-element-hover);
+  color: var(--text-muted);
   font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ===== RESPONSIVE ===== */
-
 @media (max-width: 768px) {
   .navbar {
     padding: 0 16px;

@@ -1,65 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>Fikya.id</title>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4ff; color: #1e293b; }
+
+        /* ===== BAR TANGGAL & JAM ===== */
+        .datetime-bar {
+            background: #1e3a8a;
+            color: white;
             text-align: center;
-            background: #f5f7fb;
+            padding: 12px 20px;
         }
+        .datetime-bar .jam { font-size: 26px; font-weight: bold; letter-spacing: 3px; }
+        .datetime-bar .tgl-masehi { font-size: 14px; margin-top: 4px; opacity: 0.9; }
+        .datetime-bar .tgl-hijri { font-size: 13px; margin-top: 2px; opacity: 0.8; color: #93c5fd; }
+        .datetime-bar .zona { font-size: 11px; margin-top: 4px; opacity: 0.6; font-style: italic; }
 
-        h1 {
-            color: #2563eb;
-        }
-
-        p {
-            color: #555;
-        }
-
-        .menu {
-            margin-top: 30px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 12px 25px;
-            margin: 10px;
+        /* ===== HERO ===== */
+        .hero {
             background: #2563eb;
             color: white;
-            text-decoration: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .hero h1 { font-size: 32px; margin-bottom: 12px; }
+        .hero p { font-size: 16px; opacity: 0.9; max-width: 500px; margin: 0 auto 24px; line-height: 1.6; }
+
+        .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            padding: 12px 26px;
             border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .btn-primary { background: white; color: #1e3a8a; border: none; }
+        .btn-primary:hover { background: #e2e8f0; }
+        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.7); }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
 
-        .btn:hover {
-            background: #1d4ed8;
+        /* ===== KARTU FITUR ===== */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
         }
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .card-icon { font-size: 32px; margin-bottom: 12px; }
+        .card-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
+        .card-desc { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+        /* ===== FOOTER ===== */
+        footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 25px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
     </style>
-
 </head>
-
 <body>
 
-    <h1>Selamat Datang di Fikya.id</h1>
+<header class="datetime-bar">
+    <div class="jam" id="jam">--:--:--</div>
+    <div class="tgl-masehi" id="tgl-masehi">—</div>
+    <div class="tgl-hijri" id="tgl-hijri">—</div>
+    <div class="zona" id="zona">Mendeteksi zona waktu…</div>
+</header>
 
-    <p>
-        Website pertama saya menggunakan Cloudflare Pages.
-    </p>
+<main>
+    <section class="hero">
+        <h1>Selamat Datang di Fikya.id</h1>
+        <p>Website pertama saya menggunakan Cloudflare Pages. Tempat berbagi tulisan, proyek, dan ide.</p>
+        <div class="btn-row">
+            <a class="btn btn-primary" href="tentang.html">Tentang Saya</a>
+            <a class="btn btn-outline" href="#">Lihat Konten</a>
+        </div>
+    </section>
 
+    <section class="cards">
+        <div class="card">
+            <div class="card-icon">✏️</div>
+            <div class="card-title">Blog</div>
+            <div class="card-desc">Tulisan dan catatan harian saya</div>
+        </div>
+        <div class="card">
+            <div class="card-icon">💻</div>
+            <div class="card-title">Proyek</div>
+            <div class="card-desc">Kumpulan proyek dan eksperimen</div>
+        </div>
+        <div class="card">
+            <div class="card-icon">👤</div>
+            <div class="card-title">Tentang</div>
+            <div class="card-desc">Siapa saya dan apa yang saya lakukan</div>
+        </div>
+    </section>
+</main>
 
-    <div class="menu">
+<footer>© 2026 Fikya.id — Dibuat dengan ♥ menggunakan Cloudflare Pages</footer>
 
-        <a class="btn" href="tentang.html">
-            Tentang
-        </a>
+<script>
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN_H = ["Muharram","Safar","Rabiul Awal","Rabiul Akhir","Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban","Ramadan","Syawal","Dzulqaidah","Dzulhijjah"];
 
-    </div>
+// Ganti angka ini jika tanggal Hijriah meleset (misal: 1, -1, atau 0)
+const KOREKSI_HIJRIH = 0; 
 
+function toHijri(date) {
+    // Menambahkan koreksi hari jika diperlukan
+    let adjustedDate = new Date(date);
+    adjustedDate.setDate(adjustedDate.getDate() + KOREKSI_HIJRIH);
 
+    let y = adjustedDate.getFullYear(), m = adjustedDate.getMonth()+1, d = adjustedDate.getDate();
+    if (m < 3) { y--; m += 12; }
+    let A = Math.floor(y/100), B = 2 - A + Math.floor(A/4);
+    let JD = Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524.5;
+    let l = JD - 1948440 + 10632;
+    let n = Math.floor((l-1)/10631);
+    l = l - 10631*n + 354;
+    let J = Math.floor((10985-l)/5965);
+    l = l - Math.floor((Math.min(J,1)*(-6+J*(-10632+J*((J+J+1)*5519+366*10631))))/10631);
+    let i = Math.floor(l/30);
+    let dd = l - Math.floor(i*29.5001+0.99);
+    let mm = ((i+1) % 12) || 12;
+    let yy = n*30 + J + Math.floor((i+1)/13);
+    return { d: dd, m: mm-1, y: yy };
+}
+
+function update() {
+    const now = new Date();
+    
+    // Update Jam
+    document.getElementById('jam').textContent =
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0') + ':' +
+        String(now.getSeconds()).padStart(2,'0');
+
+    // Update Tanggal Masehi
+    document.getElementById('tgl-masehi').textContent =
+        HARI[now.getDay()] + ', ' + now.getDate() + ' ' + BULAN[now.getMonth()] + ' ' + now.getFullYear();
+
+    // Update Tanggal Hijriah
+    const hj = toHijri(now);
+    document.getElementById('tgl-hijri').textContent =
+        hj.d + ' ' + BULAN_H[hj.m] + ' ' + hj.y + ' H';
+
+    // Update Zona Waktu
+    try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        document.getElementById('zona').textContent = tz.replace(/_/g,' ');
+    } catch(e) {}
+}
+
+// Jalankan fungsi saat pertama dimuat dan setiap detik berikutnya
+update();
+setInterval(update, 1000);
+</script>
 </body>
 </html>

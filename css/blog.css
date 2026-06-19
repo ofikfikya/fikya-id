@@ -2,6 +2,19 @@
    blog.css — Style khusus halaman blog & dzikir
    ============================================================ */
 
+/* ===== READING PROGRESS BAR ===== */
+
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(to right, #2563eb, #60a5fa);
+  z-index: 9999;
+  transition: width .1s linear;
+}
+
 /* ===== HERO HEADER ===== */
 
 .header-section {

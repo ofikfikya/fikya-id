@@ -44,6 +44,13 @@
   <header class="header-section">
     <h1>Dzikir Pagi</h1>
     <p>Dzikir yang Dibaca di Waktu Pagi (Antara Shubuh hingga siang hari ketika matahari akan bergeser ke barat)</p>
+    <div class="post-meta">
+      <span class="meta-item">✍️ Rahmat Taufik</span>
+      <span class="meta-sep">•</span>
+      <span class="meta-item">📅 19 Juni 2026</span>
+      <span class="meta-sep">•</span>
+      <span class="meta-item">⏱️ <span id="read-time">—</span> menit baca</span>
+    </div>
   </header>
 
   <!-- KONTEN DZIKIR -->
@@ -211,5 +218,14 @@
   </footer>
 
   <script src="../js/main.js"></script>
+  <script>
+    /* ===== READ TIME ===== */
+    (function () {
+      const text  = document.querySelector('main').innerText || '';
+      const words = text.trim().split(/\s+/).length;
+      const mins  = Math.max(1, Math.round(words / 200));
+      document.getElementById('read-time').textContent = mins;
+    })();
+  </script>
 </body>
 </html>

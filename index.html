@@ -25,49 +25,60 @@
             background: #2563eb;
             color: white;
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 20px;
         }
-        .hero h1 { font-size: 32px; margin-bottom: 12px; }
-        .hero p { font-size: 16px; opacity: 0.9; max-width: 500px; margin: 0 auto 24px; line-height: 1.6; }
+        .hero h1 { font-size: 28px; margin-bottom: 10px; }
+        .hero p { font-size: 15px; opacity: 0.85; max-width: 480px; margin: 0 auto 20px; line-height: 1.6; }
 
-        .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .btn {
-            padding: 12px 26px;
+            padding: 11px 24px;
             border-radius: 8px;
             font-size: 14px;
-            font-weight: bold;
             text-decoration: none;
             cursor: pointer;
-            transition: all 0.2s;
+            font-family: Arial, sans-serif;
+            transition: background 0.2s;
         }
-        .btn-primary { background: white; color: #1e3a8a; border: none; }
+        .btn-primary { background: white; color: #1e3a8a; font-weight: bold; border: none; }
         .btn-primary:hover { background: #e2e8f0; }
-        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.7); }
+        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.6); }
         .btn-outline:hover { background: rgba(255,255,255,0.1); }
 
         /* ===== KARTU FITUR ===== */
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            padding: 40px 20px;
-            max-width: 800px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            padding: 30px 20px;
+            max-width: 700px;
             margin: 0 auto;
         }
         .card {
             background: white;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            padding: 24px 16px;
+            padding: 20px 15px;
             text-align: center;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-        .card-icon { font-size: 32px; margin-bottom: 12px; }
-        .card-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 6px; }
+        .card-icon { font-size: 30px; margin-bottom: 10px; }
+        .card-title { font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
         .card-desc { font-size: 13px; color: #64748b; line-height: 1.5; }
 
-        /* ===== FOOTER ===== */
-        footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 25px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
+        .menu { text-align: center; padding: 10px 20px 30px; }
+        .menu a {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 8px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+        .menu a:hover { background: #1d4ed8; }
+
+        footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 20px; border-top: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
@@ -108,63 +119,61 @@
     </section>
 </main>
 
+<div class="menu">
+    <a href="tentang.html">Tentang</a>
+</div>
+
 <footer>© 2026 Fikya.id — Dibuat dengan ♥ menggunakan Cloudflare Pages</footer>
 
 <script>
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const BULAN_H = ["Muharram","Safar","Rabiul Awal","Rabiul Akhir","Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban","Ramadan","Syawal","Dzulqaidah","Dzulhijjah"];
 
-// Ganti angka ini jika tanggal Hijriah meleset (misal: 1, -1, atau 0)
-const KOREKSI_HIJRIH = 0; 
+function getHijriDate(date) {
+    try {
+        // Menggunakan standar internasional penanggalan Umm al-Qura otomatis berbahasa Indonesia
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+            calendar: 'islamic-umalqura',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
 
-function toHijri(date) {
-    // Menambahkan koreksi hari jika diperlukan
-    let adjustedDate = new Date(date);
-    adjustedDate.setDate(adjustedDate.getDate() + KOREKSI_HIJRIH);
+        const parts = formatter.formatToParts(date);
+        const day = parts.find(p => p.type === 'day').value;
+        const month = parts.find(p => p.type === 'month').value;
+        const year = parts.find(p => p.type === 'year').value;
 
-    let y = adjustedDate.getFullYear(), m = adjustedDate.getMonth()+1, d = adjustedDate.getDate();
-    if (m < 3) { y--; m += 12; }
-    let A = Math.floor(y/100), B = 2 - A + Math.floor(A/4);
-    let JD = Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524.5;
-    let l = JD - 1948440 + 10632;
-    let n = Math.floor((l-1)/10631);
-    l = l - 10631*n + 354;
-    let J = Math.floor((10985-l)/5965);
-    l = l - Math.floor((Math.min(J,1)*(-6+J*(-10632+J*((J+J+1)*5519+366*10631))))/10631);
-    let i = Math.floor(l/30);
-    let dd = l - Math.floor(i*29.5001+0.99);
-    let mm = ((i+1) % 12) || 12;
-    let yy = n*30 + J + Math.floor((i+1)/13);
-    return { d: dd, m: mm-1, y: yy };
+        return `${day} ${month} ${year} H`;
+    } catch (e) {
+        return '—';
+    }
 }
 
 function update() {
     const now = new Date();
     
-    // Update Jam
+    // 1. Update Jam Real-time
     document.getElementById('jam').textContent =
         String(now.getHours()).padStart(2,'0') + ':' +
         String(now.getMinutes()).padStart(2,'0') + ':' +
         String(now.getSeconds()).padStart(2,'0');
 
-    // Update Tanggal Masehi
+    // 2. Update Tanggal Masehi
     document.getElementById('tgl-masehi').textContent =
         HARI[now.getDay()] + ', ' + now.getDate() + ' ' + BULAN[now.getMonth()] + ' ' + now.getFullYear();
 
-    // Update Tanggal Hijriah
-    const hj = toHijri(now);
-    document.getElementById('tgl-hijri').textContent =
-        hj.d + ' ' + BULAN_H[hj.m] + ' ' + hj.y + ' H';
+    // 3. Update Tanggal Hijriah
+    document.getElementById('tgl-hijri').textContent = getHijriDate(now);
 
-    // Update Zona Waktu
+    // 4. Update Zona Waktu Pengunjung
     try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         document.getElementById('zona').textContent = tz.replace(/_/g,' ');
     } catch(e) {}
 }
 
-// Jalankan fungsi saat pertama dimuat dan setiap detik berikutnya
+// Menjalankan fungsi pertama kali saat web dibuka & diulang setiap 1 detik
 update();
 setInterval(update, 1000);
 </script>

@@ -1,9 +1,32 @@
 /* ============================================================
-   blog.css — Style khusus halaman blog & dzikir
+   blog.css — Style khusus halaman blog & dzikir (Refactored)
    ============================================================ */
 
-/* ===== READING PROGRESS BAR ===== */
+:root {
+  /* --- Tema Terang (Blog Specific) --- */
+  --bg-card: #ffffff;
+  --shadow-card: 0 4px 10px rgba(0, 0, 0, 0.03);
+  
+  --dzikir-title: #2563eb;
+  --dzikir-arabic: #0f172a;
+  --dzikir-arti: #475569;
+  --dzikir-faedah-bg: #f8fafc;
+  --dzikir-count-bg: rgba(37, 99, 235, 0.1);
+}
 
+body.dark {
+  /* --- Tema Gelap (Blog Specific) --- */
+  --bg-card: #1e293b;
+  --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.2);
+  
+  --dzikir-title: #f1f5f9;
+  --dzikir-arabic: #f8fafc;
+  --dzikir-arti: #cbd5e1;
+  --dzikir-faedah-bg: #0f172a;
+  --dzikir-count-bg: rgba(96, 165, 250, 0.15); /* Disesuaikan agar lebih kontras di dark mode */
+}
+
+/* ===== READING PROGRESS BAR ===== */
 .progress-bar {
   position: fixed;
   top: 0;
@@ -12,11 +35,10 @@
   height: 3px;
   background: linear-gradient(to right, #2563eb, #60a5fa);
   z-index: 9999;
-  transition: width .1s linear;
+  transition: width 0.1s linear;
 }
 
 /* ===== HERO HEADER ===== */
-
 .header-section {
   padding: 60px 20px;
   text-align: center;
@@ -29,14 +51,13 @@
 }
 
 .header-section p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 16px;
   max-width: 600px;
   margin: auto;
 }
 
 /* ===== DZIKIR CONTAINER ===== */
-
 .dzikir-container {
   max-width: 800px;
   margin: 0 auto;
@@ -44,24 +65,24 @@
 }
 
 /* ===== DZIKIR CARD ===== */
-
 .dzikir-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   padding: 30px;
   margin-bottom: 25px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, .03);
-  transition: all .3s ease;
+  box-shadow: var(--shadow-card);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .dzikir-title {
   font-size: 16px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--dzikir-title);
   margin-bottom: 20px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
 }
 
 .dzikir-arabic {
@@ -70,79 +91,53 @@
   line-height: 2.2;
   text-align: right;
   direction: rtl;
-  color: #0f172a;
+  color: var(--dzikir-arabic);
   margin-bottom: 20px;
+  transition: color 0.3s ease;
 }
 
 .dzikir-latin {
   font-size: 15px;
   font-style: italic;
-  color: #2563eb;
+  color: var(--primary-color);
   margin-bottom: 15px;
   line-height: 1.6;
+  transition: color 0.3s ease;
 }
 
 .dzikir-arti {
   font-size: 15px;
-  color: #475569;
+  color: var(--dzikir-arti);
   line-height: 1.6;
   margin-bottom: 15px;
+  transition: color 0.3s ease;
 }
 
 .dzikir-faedah {
-  background: #f8fafc;
-  border-left: 4px solid #2563eb;
+  background: var(--dzikir-faedah-bg);
+  border-left: 4px solid var(--primary-color);
   padding: 15px;
   border-radius: 0 8px 8px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-muted);
   margin-top: 15px;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .dzikir-count {
   display: inline-block;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: var(--dzikir-count-bg);
+  color: var(--primary-color);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   margin-top: 5px;
   margin-bottom: 15px;
-}
-
-/* ===== DARK MODE — blog/dzikir specific ===== */
-
-body.dark .dzikir-card {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, .2);
-}
-
-body.dark .dzikir-title {
-  color: #f1f5f9;
-}
-
-body.dark .dzikir-arabic {
-  color: #f8fafc;
-}
-
-body.dark .dzikir-latin {
-  color: #60a5fa;
-}
-
-body.dark .dzikir-arti {
-  color: #cbd5e1;
-}
-
-body.dark .dzikir-faedah {
-  background: #0f172a;
-  border-left-color: #3b82f6;
-  color: #94a3b8;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ===== POST META (author, date, read time) ===== */
-
 .post-meta {
   display: flex;
   align-items: center;
@@ -151,7 +146,8 @@ body.dark .dzikir-faedah {
   gap: 6px 16px;
   margin-top: 14px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
 }
 
 .post-meta .meta-item {
@@ -161,19 +157,11 @@ body.dark .dzikir-faedah {
 }
 
 .post-meta .meta-sep {
-  color: #cbd5e1;
-}
-
-body.dark .post-meta {
-  color: #94a3b8;
-}
-
-body.dark .post-meta .meta-sep {
-  color: #334155;
+  color: var(--text-sep);
+  transition: color 0.3s ease;
 }
 
 /* ===== RESPONSIVE ===== */
-
 @media (max-width: 768px) {
   .dzikir-card {
     padding: 20px;

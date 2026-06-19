@@ -1,181 +1,405 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>Fikya.id</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f0f4ff; color: #1e293b; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Website pribadi Fikya.id — tempat berbagi tulisan, proyek, eksperimen, dan ide.">
+<title>Fikya.id</title>
 
-        /* ===== BAR TANGGAL & JAM ===== */
-        .datetime-bar {
-            background: #1e3a8a;
-            color: white;
-            text-align: center;
-            padding: 12px 20px;
-        }
-        .datetime-bar .jam { font-size: 26px; font-weight: bold; letter-spacing: 3px; }
-        .datetime-bar .tgl-masehi { font-size: 14px; margin-top: 4px; opacity: 0.9; }
-        .datetime-bar .tgl-hijri { font-size: 13px; margin-top: 2px; opacity: 0.8; color: #93c5fd; }
-        .datetime-bar .zona { font-size: 11px; margin-top: 4px; opacity: 0.6; font-style: italic; }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-        /* ===== HERO ===== */
-        .hero {
-            background: #2563eb;
-            color: white;
-            text-align: center;
-            padding: 50px 20px;
-        }
-        .hero h1 { font-size: 28px; margin-bottom: 10px; }
-        .hero p { font-size: 15px; opacity: 0.85; max-width: 480px; margin: 0 auto 20px; line-height: 1.6; }
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn {
-            padding: 11px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-decoration: none;
-            cursor: pointer;
-            font-family: Arial, sans-serif;
-            transition: background 0.2s;
-        }
-        .btn-primary { background: white; color: #1e3a8a; font-weight: bold; border: none; }
-        .btn-primary:hover { background: #e2e8f0; }
-        .btn-outline { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.6); }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-        /* ===== KARTU FITUR ===== */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 14px;
-            padding: 30px 20px;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        .card-icon { font-size: 30px; margin-bottom: 10px; }
-        .card-title { font-size: 15px; font-weight: bold; color: #1e293b; margin-bottom: 5px; }
-        .card-desc { font-size: 13px; color: #64748b; line-height: 1.5; }
+body{
+  font-family:'Inter',sans-serif;
+  background:#f8fafc;
+  color:#0f172a;
+  line-height:1.6;
+  overflow-x:hidden;
+}
 
-        .menu { text-align: center; padding: 10px 20px 30px; }
-        .menu a {
-            display: inline-block;
-            padding: 12px 25px;
-            margin: 8px;
-            background: #2563eb;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-        .menu a:hover { background: #1d4ed8; }
+/* ===== NAVBAR ===== */
 
-        footer { text-align: center; font-size: 12px; color: #94a3b8; padding: 20px; border-top: 1px solid #e2e8f0; }
-    </style>
+.navbar{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 8%;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(226,232,240,.8);
+}
+
+.logo{
+  font-size:22px;
+  font-weight:800;
+  color:#2563eb;
+  text-decoration:none;
+}
+
+.nav-links{
+  display:flex;
+  gap:30px;
+}
+
+.nav-links a{
+  text-decoration:none;
+  color:#475569;
+  font-size:14px;
+  font-weight:500;
+  transition:.3s;
+}
+
+.nav-links a:hover{
+  color:#2563eb;
+}
+
+/* ===== HERO ===== */
+
+.hero{
+  padding:100px 20px;
+  text-align:center;
+  background:
+    radial-gradient(circle at top left,#60a5fa 0%,transparent 35%),
+    radial-gradient(circle at right,#2563eb 0%,transparent 40%),
+    linear-gradient(135deg,#1e3a8a,#2563eb);
+  color:white;
+  position:relative;
+  overflow:hidden;
+}
+
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4rem);
+  font-weight:800;
+  margin-bottom:15px;
+  position:relative;
+  z-index:2;
+}
+
+.hero p{
+  max-width:650px;
+  margin:0 auto 35px;
+  opacity:.9;
+  position:relative;
+  z-index:2;
+}
+
+.btn-row{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  flex-wrap:wrap;
+  position:relative;
+  z-index:2;
+}
+
+.btn{
+  padding:14px 28px;
+  border-radius:14px;
+  font-weight:600;
+  text-decoration:none;
+  transition:.3s;
+  cursor:pointer;
+}
+
+.btn-primary{
+  background:white;
+  color:#2563eb;
+}
+
+.btn-primary:hover{
+  transform:translateY(-4px);
+  box-shadow:0 10px 25px rgba(255,255,255,.25);
+}
+
+.btn-outline{
+  border:1px solid rgba(255,255,255,.4);
+  color:white;
+}
+
+.btn-outline:hover{
+  background:rgba(255,255,255,.1);
+}
+
+/* ===== DATETIME ===== */
+
+.datetime{
+  padding:50px 20px 30px;
+  text-align:center;
+}
+
+.jam{
+  font-size:52px;
+  font-weight:800;
+  color:#2563eb;
+  letter-spacing:2px;
+}
+
+.tgl{
+  margin-top:10px;
+  color:#475569;
+  font-size:15px;
+}
+
+.hijri{
+  margin-top:5px;
+  color:#64748b;
+  font-size:14px;
+}
+
+.zona{
+  margin-top:5px;
+  font-size:13px;
+  color:#94a3b8;
+}
+
+/* ===== SECTION TITLE ===== */
+
+.section-title{
+  text-align:center;
+  padding-top:20px;
+  font-size:30px;
+  font-weight:800;
+}
+
+/* ===== CARDS ===== */
+
+.cards{
+  max-width:1200px;
+  margin:auto;
+  padding:50px 20px 90px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:25px;
+}
+
+.card{
+  background:white;
+  padding:35px;
+  border-radius:22px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 5px 20px rgba(0,0,0,.03);
+  transition:.35s;
+}
+
+.card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+
+.card-icon{
+  font-size:35px;
+  margin-bottom:15px;
+}
+
+.card-title{
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.card-desc{
+  color:#64748b;
+  font-size:14px;
+}
+
+/* ===== FOOTER ===== */
+
+footer{
+  padding:35px;
+  text-align:center;
+  border-top:1px solid #e2e8f0;
+  color:#64748b;
+  font-size:14px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media(max-width:768px){
+  .navbar{
+    padding:16px 20px;
+  }
+  .nav-links{
+    gap:15px;
+  }
+  .nav-links a{
+    font-size:13px;
+  }
+  .hero{
+    padding:80px 20px;
+  }
+  .jam{
+    font-size:38px;
+  }
+}
+</style>
 </head>
 <body>
 
-<header class="datetime-bar">
-    <div class="jam" id="jam">--:--:--</div>
-    <div class="tgl-masehi" id="tgl-masehi">—</div>
-    <div class="tgl-hijri" id="tgl-hijri">—</div>
-    <div class="zona" id="zona">Mendeteksi zona waktu…</div>
-</header>
-
-<main>
-    <section class="hero">
-        <h1>Selamat Datang di Fikya.id</h1>
-        <p>Website pertama saya menggunakan Cloudflare Pages. Tempat berbagi tulisan, proyek, dan ide.</p>
-        <div class="btn-row">
-            <a class="btn btn-primary" href="tentang.html">Tentang Saya</a>
-            <a class="btn btn-outline" href="#">Lihat Konten</a>
-        </div>
-    </section>
-
-    <section class="cards">
-        <div class="card">
-            <div class="card-icon">✏️</div>
-            <div class="card-title">Blog</div>
-            <div class="card-desc">Tulisan dan catatan harian saya</div>
-        </div>
-        <div class="card">
-            <div class="card-icon">💻</div>
-            <div class="card-title">Proyek</div>
-            <div class="card-desc">Kumpulan proyek dan eksperimen</div>
-        </div>
-        <div class="card">
-            <div class="card-icon">👤</div>
-            <div class="card-title">Tentang</div>
-            <div class="card-desc">Siapa saya dan apa yang saya lakukan</div>
-        </div>
-    </section>
-</main>
-
-<div class="menu">
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="#" class="logo">Fikya.id</a>
+  <div class="nav-links">
+    <a href="#">Beranda</a>
+    <a href="#">Blog</a>
+    <a href="#">Proyek</a>
     <a href="tentang.html">Tentang</a>
-</div>
+  </div>
+</nav>
 
-<footer>© 2026 Fikya.id — Dibuat dengan ♥ menggunakan Cloudflare Pages</footer>
+<!-- HERO -->
+<section class="hero">
+  <h1>Selamat Datang di Fikya.id</h1>
+  <p>Website pribadi untuk berbagi tulisan, proyek, eksperimen, dan ide yang saya bangun.</p>
+  <div class="btn-row">
+    <a href="tentang.html" class="btn btn-primary">Tentang Saya</a>
+    <a href="#" class="btn btn-outline">Lihat Konten</a>
+  </div>
+</section>
+
+<!-- DATETIME -->
+<section class="datetime">
+  <div class="jam" id="jam">--:--:--</div>
+  <div class="tgl" id="tgl-masehi">Memuat tanggal...</div>
+  <div class="hijri" id="tgl-hijri">Memuat kalender Hijriah...</div>
+  <div class="zona" id="zona">Mendeteksi zona waktu...</div>
+</section>
+
+<!-- FEATURES -->
+<h2 class="section-title">Fitur Website</h2>
+
+<section class="cards">
+  <div class="card">
+    <div class="card-icon">✏️</div>
+    <div class="card-title">Blog</div>
+    <div class="card-desc">Berisi tulisan, catatan, pengalaman, dan ide yang ingin saya bagikan.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">💻</div>
+    <div class="card-title">Proyek</div>
+    <div class="card-desc">Kumpulan proyek website, eksperimen coding, dan pengembangan teknologi.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">👤</div>
+    <div class="card-title">Tentang Saya</div>
+    <div class="card-desc">Informasi singkat mengenai saya dan apa yang sedang saya kerjakan.</div>
+  </div>
+</section>
+
+<footer>
+  © <span id="tahun"></span> Fikya.id — Dibuat menggunakan Cloudflare Pages
+</footer>
 
 <script>
+
+/* ===== NAMA BULAN HIJRIAH (fallback manual) ===== */
+const BULAN_HIJRI = [
+  'Muharram','Safar','Rabiul Awal','Rabiul Akhir',
+  'Jumadil Awal','Jumadil Akhir','Rajab',"Sya'ban",
+  'Ramadan','Syawal','Dzulqaidah','Dzulhijjah'
+];
+
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN = [
+  'Januari','Februari','Maret','April','Mei','Juni',
+  'Juli','Agustus','September','Oktober','November','Desember'
+];
 
-function getHijriDate(date) {
-    try {
-        // Menggunakan standar internasional penanggalan Umm al-Qura otomatis berbahasa Indonesia
-        const formatter = new Intl.DateTimeFormat('id-ID', {
-            calendar: 'islamic-umalqura',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+/* Cek apakah string mengandung karakter latin (bukan Arab) */
+function isLatin(str){
+  return /[a-zA-Z]/.test(str);
+}
 
-        const parts = formatter.formatToParts(date);
-        const day = parts.find(p => p.type === 'day').value;
-        const month = parts.find(p => p.type === 'month').value;
-        const year = parts.find(p => p.type === 'year').value;
+function getHijriDate(date){
+  try{
+    const formatter = new Intl.DateTimeFormat('id-ID',{
+      calendar:'islamic-umalqura',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    });
 
-        return `${day} ${month} ${year} H`;
-    } catch (e) {
-        return '—';
+    const parts = formatter.formatToParts(date);
+    const day   = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year  = parts.find(p => p.type === 'year').value;
+
+    /* Jika nama bulan bukan latin (tampil huruf Arab), pakai fallback manual */
+    if(!isLatin(month)){
+      return getFallbackHijri(date);
     }
+
+    return `${day} ${month} ${year} H`;
+
+  } catch(e){
+    return getFallbackHijri(date);
+  }
 }
 
-function update() {
-    const now = new Date();
-    
-    // 1. Update Jam Real-time
-    document.getElementById('jam').textContent =
-        String(now.getHours()).padStart(2,'0') + ':' +
-        String(now.getMinutes()).padStart(2,'0') + ':' +
-        String(now.getSeconds()).padStart(2,'0');
-
-    // 2. Update Tanggal Masehi
-    document.getElementById('tgl-masehi').textContent =
-        HARI[now.getDay()] + ', ' + now.getDate() + ' ' + BULAN[now.getMonth()] + ' ' + now.getFullYear();
-
-    // 3. Update Tanggal Hijriah
-    document.getElementById('tgl-hijri').textContent = getHijriDate(now);
-
-    // 4. Update Zona Waktu Pengunjung
-    try {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        document.getElementById('zona').textContent = tz.replace(/_/g,' ');
-    } catch(e) {}
+/* Fallback: hitung Hijriah secara manual */
+function getFallbackHijri(date){
+  try{
+    let y = date.getFullYear(), m = date.getMonth()+1, d = date.getDate();
+    if(m < 3){ y--; m += 12; }
+    const A  = Math.floor(y/100);
+    const B  = 2 - A + Math.floor(A/4);
+    const JD = Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + d + B - 1524.5;
+    let l    = JD - 1948440 + 10632;
+    const n  = Math.floor((l-1)/10631);
+    l        = l - 10631*n + 354;
+    const J  = Math.floor((10985-l)/5965);
+    l        = l - Math.floor((Math.min(J,1)*(-6+J*(-10632+J*((J+J+1)*5519+366*10631))))/10631);
+    const i  = Math.floor(l/30);
+    const dd = l - Math.floor(i*29.5001+0.99);
+    const mm = ((i+1) % 12) || 12;
+    const yy = n*30 + J + Math.floor((i+1)/13);
+    return `${dd} ${BULAN_HIJRI[mm-1]} ${yy} H`;
+  } catch(e){
+    return '—';
+  }
 }
 
-// Menjalankan fungsi pertama kali saat web dibuka & diulang setiap 1 detik
+function update(){
+  const now = new Date();
+
+  /* Jam */
+  document.getElementById('jam').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0');
+
+  /* Tanggal Masehi */
+  document.getElementById('tgl-masehi').textContent =
+    HARI[now.getDay()] + ', ' + now.getDate() + ' ' +
+    BULAN[now.getMonth()] + ' ' + now.getFullYear();
+
+  /* Tanggal Hijriah */
+  document.getElementById('tgl-hijri').textContent = getHijriDate(now);
+
+  /* Zona waktu */
+  try{
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById('zona').textContent = tz.replace(/_/g,' ');
+  } catch(e){}
+}
+
+/* Tahun footer dinamis */
+document.getElementById('tahun').textContent = new Date().getFullYear();
+
 update();
 setInterval(update, 1000);
+
 </script>
 </body>
 </html>

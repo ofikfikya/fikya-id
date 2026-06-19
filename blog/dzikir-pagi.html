@@ -15,6 +15,9 @@
 </head>
 <body>
 
+  <!-- READING PROGRESS BAR -->
+  <div class="progress-bar" id="progress-bar"></div>
+
   <!-- NAVBAR -->
   <nav class="navbar">
     <a href="../index.html" class="logo">Fikya.id</a>
@@ -47,7 +50,7 @@
     <div class="post-meta">
       <span class="meta-item">✍️ Rahmat Taufik</span>
       <span class="meta-sep">•</span>
-      <span class="meta-item">📅 19 Juni 2026</span>
+      <span class="meta-item">📅 12 Juni 2025</span>
       <span class="meta-sep">•</span>
       <span class="meta-item">⏱️ <span id="read-time">—</span> menit baca</span>
     </div>
@@ -226,6 +229,15 @@
       const mins  = Math.max(1, Math.round(words / 200));
       document.getElementById('read-time').textContent = mins;
     })();
+
+    /* ===== READING PROGRESS BAR ===== */
+    const bar = document.getElementById('progress-bar');
+    window.addEventListener('scroll', () => {
+      const scrollTop    = window.scrollY;
+      const docHeight    = document.documentElement.scrollHeight - window.innerHeight;
+      const progress     = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      bar.style.width    = progress + '%';
+    });
   </script>
 </body>
 </html>

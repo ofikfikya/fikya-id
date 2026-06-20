@@ -1,6 +1,7 @@
 /* ============================================================
    main.js — Shared logic Fikya.id
-   Covers: datetime/clock, Hijri calendar, dark mode, search
+   Covers: datetime/clock, Hijri calendar, dark mode, search,
+           read time, reading progress bar
 ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -245,5 +246,32 @@ document.addEventListener('DOMContentLoaded', () => {
       openSearch();
     }
   });
+
+  /* ===== 8. READ TIME ===== */
+  // Hitung estimasi waktu baca dari konten <main>
+  // Hanya aktif jika elemen #read-time ada di halaman
+
+  const elReadTime = document.getElementById('read-time');
+  const elMain     = document.querySelector('main');
+
+  if (elReadTime && elMain) {
+    const words = (elMain.innerText || '').trim().split(/\s+/).length;
+    const mins  = Math.max(1, Math.round(words / 200));
+    elReadTime.textContent = mins;
+  }
+
+  /* ===== 9. READING PROGRESS BAR ===== */
+  // Hanya aktif jika elemen #progress-bar ada di halaman
+
+  const elBar = document.getElementById('progress-bar');
+
+  if (elBar) {
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress  = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      elBar.style.width = progress + '%';
+    }, { passive: true });
+  }
 
 });

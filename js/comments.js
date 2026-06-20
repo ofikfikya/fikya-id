@@ -364,15 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ada CORS header — trade-off: response tidak bisa dibaca,
     sehingga kita asumsikan sukses jika tidak ada network error.
 
-    INTEGRASI CLOUDFLARE TURNSTILE:
-    Setelah mengaktifkan Turnstile di Cloudflare Dashboard:
-    1. Tambahkan widget di HTML sebelum tombol submit:
-       <div class="cf-turnstile" data-sitekey="SITE_KEY_ANDA"></div>
-    2. Uncomment baris berikut untuk mengambil token:
-       const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
-       if (!turnstileToken) { showMsg('error', 'Verifikasi Turnstile gagal.'); return; }
-    3. Tambahkan turnstileToken ke payload di bawah
-    4. Verifikasi token di Apps Script (Code.gs) sebelum menyimpan komentar
+    Form dilindungi Cloudflare Turnstile — token diambil dari
+    widget '.cf-turnstile' dan diverifikasi di sisi server
+    (Code.gs) sebelum komentar disimpan.
   */
 
   if (elForm) {
@@ -413,6 +407,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      /* Ambil token Turnstile — widget wajib diselesaikan dulu */
+      const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
+      if (!turnstileToken) {
+        showMsg('error', 'Selesaikan verifikasi keamanan (Turnstile) terlebih dahulu.');
+        return;
+      }
+
       /* Disable tombol saat proses */
       if (elSubmitBtn) {
         elSubmitBtn.disabled    = true;
@@ -431,6 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
           postId,
           nama,
           komentar,
+          turnstileToken,
         });
 
         await fetch(APPS_SCRIPT_URL, {
@@ -460,6 +462,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elSubmitBtn) {
           elSubmitBtn.disabled    = false;
           elSubmitBtn.textContent = 'Kirim Komentar';
+        }
+        /* Token Turnstile sekali pakai — reset widget agar siap submit berikutnya */
+        if (window.turnstile) {
+          try { window.turnstile.reset(); } catch(e) {}
         }
       }
     });

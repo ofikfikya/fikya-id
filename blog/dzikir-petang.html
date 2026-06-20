@@ -4,12 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Bacaan Dzikir Petang sesuai sunnah lengkap dengan terjemahan dan faedahnya - Fikya.id">
-  
+
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://fikya.id/blog/dzikir-petang.html">
   <meta property="og:title" content="Dzikir Petang — Fikya.id">
   <meta property="og:description" content="Bacaan Dzikir Petang sesuai sunnah lengkap dengan terjemahan dan faedahnya.">
-  <meta property="og:image" content="https://fikya.id/gambar-thumbnail-dzikir-petang.jpg"> <title>Dzikir Petang — Fikya.id</title>
+  <meta property="og:image" content="https://fikya.id/android-chrome-512x512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest"><title>Dzikir Petang — Fikya.id</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -213,30 +220,5 @@
   </footer>
 
   <script src="../js/main.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      /* ===== READ TIME ===== */
-      const mainEl = document.querySelector('main');
-      const readTimeEl = document.getElementById('read-time');
-      
-      if (mainEl && readTimeEl) {
-        const text = mainEl.innerText || '';
-        const words = text.trim().split(/\s+/).length;
-        const mins = Math.max(1, Math.round(words / 200));
-        readTimeEl.textContent = mins;
-      }
-
-      /* ===== READING PROGRESS BAR ===== */
-      const bar = document.getElementById('progress-bar');
-      if (bar) {
-        window.addEventListener('scroll', () => {
-          const scrollTop = window.scrollY;
-          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-          const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-          bar.style.width = progress + '%';
-        }, { passive: true });
-      }
-    });
-  </script>
 </body>
 </html>

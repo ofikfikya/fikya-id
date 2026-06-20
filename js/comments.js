@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ===== 1. KONFIGURASI ===== */
 
-  const APPS_SCRIPT_URL = 'GANTI_DENGAN_URL_ANDA';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2AQEhvZTYJjnoTkk1JhHhMdfLinKonWYN0JAyXWnswP0QExe-RdiFZXGr1g87Tx1DuQ/exec';
 
   const CONFIG = {
     maxNama      : 50,       // karakter maksimal nama

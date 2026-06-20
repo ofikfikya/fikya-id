@@ -1,450 +1,478 @@
 /* ============================================================
-   main.js — Shared logic Fikya.id
-   Covers: datetime/clock, Hijri calendar, dark mode, search,
-           read time, reading progress bar
-   Search: PageFind (dijalankan saat build di Cloudflare Pages)
-           Index tersedia di /pagefind/pagefind.js
-============================================================ */
+   comments.js — Sistem komentar & statistik Fikya.id
+   Covers: postId dari URL, view counter, statistik,
+           form komentar, tampil komentar, cache localStorage,
+           validasi, XSS protection, cooldown
+   ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
-  /* ===== 1. CONSTANTS ===== */
+  /* ===== 1. KONFIGURASI ===== */
 
-  const HARI = [
-    'Minggu', 'Senin', 'Selasa', 'Rabu',
-    'Kamis', 'Jumat', 'Sabtu'
-  ];
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2AQEhvZTYJjnoTkk1JhHhMdfLinKonWYN0JAyXWnswP0QExe-RdiFZXGr1g87Tx1DuQ/exec';
 
-  const BULAN = [
-    'Januari', 'Februari', 'Maret', 'April',
-    'Mei', 'Juni', 'Juli', 'Agustus',
-    'September', 'Oktober', 'November', 'Desember'
-  ];
-
-  const BULAN_HIJRI = [
-    'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
-    'Jumadil Awal', 'Jumadil Akhir', 'Rajab', "Sya'ban",
-    'Ramadan', 'Syawal', 'Dzulqaidah', 'Dzulhijjah'
-  ];
-
-  // Panjang bulan Hijri dalam siklus 30 tahun (indeks 0-based, bulan ke-1..12).
-  // Ini jauh lebih akurat dari rumus genap/ganjil.
-  const HIJRI_MONTH_LENGTHS = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-
-  // -------------------------------------------------------
-  // KOREKSI OFFSET (hari): sesuaikan jika masih meleset.
-  // +1 berarti tambah 1 hari, -1 kurangi 1 hari, 0 = tidak dikoreksi.
-  // Ganti nilai ini jika rujukan resmi (BIMAS / ru'yat) berbeda.
-  // -------------------------------------------------------
-  const HIJRI_OFFSET_DAYS = 1; // <-- ubah di sini jika perlu
-
-  /* ===== UTILS ===== */
-
-  /** Shorthand querySelector dengan guard null */
-  const qs = (sel) => document.querySelector(sel);
-  const qid = (id)  => document.getElementById(id);
-
-  /* ===== 2. HIJRI CALENDAR ===== */
-
-  /**
-   * Fallback: konversi Gregorian → Hijri via algoritma
-   * Kuwaiti (lebih akurat dari JDN naif).
-   */
-  const getFallbackHijri = (date) => {
-    try {
-      const d = date.getDate();
-      const m = date.getMonth() + 1;
-      const y = date.getFullYear();
-
-      // Algoritma Kuwaiti (dipakai Microsoft)
-      const jd = Math.floor((14 - m) / 12);
-      const yt = y + 4800 - jd;
-      const mt = m + 12 * jd - 3;
-
-      const jdn =
-        d +
-        Math.floor((153 * mt + 2) / 5) +
-        365 * yt +
-        Math.floor(yt / 4) -
-        Math.floor(yt / 100) +
-        Math.floor(yt / 400) -
-        32045;
-
-      // JDN → Hijri
-      const l  = jdn - 1948440 + 10632;
-      const n  = Math.floor((l - 1) / 10631);
-      const l2 = l - 10631 * n + 354;
-      const j  =
-        Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
-        Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
-      const l3 =
-        l2 -
-        Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
-        Math.floor(j / 16) * Math.floor((15238 * j) / 43) +
-        29;
-
-      const hMonth = Math.floor((24 * l3) / 709);
-      const hDay   = l3 - Math.floor((709 * hMonth) / 24);
-      const hYear  = 30 * n + j - 30;
-
-      return { d: hDay, m: hMonth - 1, y: hYear }; // m: 0-based index
-    } catch {
-      return null;
-    }
+  const CONFIG = {
+    maxNama      : 50,            // karakter maksimal nama
+    maxKomentar  : 1000,          // karakter maksimal komentar
+    cooldownSecs : 60,            // detik cooldown antar komentar
+    cacheTTL     : 5 * 60 * 1000, // 5 menit dalam milidetik
+    jsonpTimeout : 10000,         // timeout JSONP request (ms)
   };
 
-  /**
-   * Terapkan offset hari ke hasil Hijri, dengan roll-over bulan/tahun.
-   * Menggunakan HIJRI_MONTH_LENGTHS yang lebih akurat daripada rumus genap/ganjil.
-   */
-  const applyHijriOffset = (hDay, hMonthIndex, hYear, offset) => {
-    if (offset === 0) return { hDay, hMonthIndex, hYear };
-
-    hDay += offset;
-
-    const maxDay = HIJRI_MONTH_LENGTHS[hMonthIndex] ?? 30;
-
-    if (hDay > maxDay) {
-      hDay -= maxDay;
-      hMonthIndex++;
-      if (hMonthIndex > 11) { hMonthIndex = 0; hYear++; }
-    } else if (hDay < 1) {
-      hMonthIndex--;
-      if (hMonthIndex < 0) { hMonthIndex = 11; hYear--; }
-      hDay += HIJRI_MONTH_LENGTHS[hMonthIndex] ?? 30;
-    }
-
-    return { hDay, hMonthIndex, hYear };
-  };
-
-  /**
-   * Coba pakai Intl API dulu; fallback ke algoritma Kuwaiti.
-   * Terapkan HIJRI_OFFSET_DAYS setelah dapat hasilnya.
-   */
-  const getHijriDate = (date) => {
-    try {
-      let hDay, hMonthIndex, hYear;
-
-      // --- Coba Intl ---
-      try {
-        const formatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
-          day: 'numeric', month: 'long', year: 'numeric',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        });
-
-        const parts    = formatter.formatToParts(date);
-        const dayStr   = parts.find(p => p.type === 'day')?.value;
-        const monthStr = parts.find(p => p.type === 'month')?.value;
-        const yearStr  = parts.find(p => p.type === 'year')?.value;
-
-        const monthIdx = BULAN_HIJRI.findIndex(
-          bh => monthStr?.toLowerCase().includes(bh.toLowerCase())
-        );
-
-        if (!dayStr || monthIdx === -1 || !yearStr) {
-          throw new Error('Intl parts tidak lengkap');
-        }
-
-        hDay        = parseInt(dayStr, 10);
-        hMonthIndex = monthIdx;
-        hYear       = parseInt(yearStr, 10);
-
-      } catch {
-        // --- Fallback algoritma ---
-        const fb = getFallbackHijri(date);
-        if (!fb) return '—';
-        hDay        = fb.d;
-        hMonthIndex = fb.m;
-        hYear       = fb.y;
-      }
-
-      // --- Terapkan offset hari ---
-      ({ hDay, hMonthIndex, hYear } =
-        applyHijriOffset(hDay, hMonthIndex, hYear, HIJRI_OFFSET_DAYS));
-
-      return `${hDay} ${BULAN_HIJRI[hMonthIndex]} ${hYear} H`;
-
-    } catch {
-      return '—';
-    }
-  };
-
-  /* ===== 3. ELEMENT REFERENCES ===== */
-
-  const elJam   = qid('nav-jam');
-  const elTgl   = qid('nav-tgl');
-  const elHijri = qid('nav-hijri');
-
-  /* ===== 4. CLOCK ===== */
-
-  const updateClock = () => {
-    if (!elJam) return;
-    const now = new Date();
-    const hh  = String(now.getHours()).padStart(2, '0');
-    const mm  = String(now.getMinutes()).padStart(2, '0');
-    const ss  = String(now.getSeconds()).padStart(2, '0');
-    elJam.textContent = `${hh}:${mm}:${ss}`;
-  };
-
-  const updateDate = () => {
-    const now = new Date();
-    if (elTgl) {
-      elTgl.textContent =
-        `${HARI[now.getDay()]}, ${now.getDate()} ${BULAN[now.getMonth()]} ${now.getFullYear()}`;
-    }
-    if (elHijri) elHijri.textContent = getHijriDate(now);
-  };
-
-  /**
-   * Jadwalkan update tanggal agar sinkron dengan pergantian menit sistem,
-   * bukan sekadar interval 60 detik dari waktu load halaman.
-   */
-  const scheduleDateUpdate = () => {
-    updateDate();
-    const now          = new Date();
-    const msUntilNext  = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
-    setTimeout(() => {
-      updateDate();
-      setInterval(updateDate, 60_000);
-    }, msUntilNext);
-  };
-
-  updateClock();
-  scheduleDateUpdate();
-  setInterval(updateClock, 1000);
-
-  /* ===== 5. FOOTER YEAR ===== */
-
-  const elTahun = qid('tahun');
-  if (elTahun) elTahun.textContent = new Date().getFullYear();
-
-  /* ===== 6. DARK MODE ===== */
-
-  const btnDark = qid('btn-darkmode');
-
-  const applyDark = (isDark) => {
-    document.body.classList.toggle('dark', isDark);
-    if (btnDark) btnDark.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('darkmode', isDark ? '1' : '0');
-  };
-
-  // Prioritas: localStorage → prefers-color-scheme sistem
-  const storedDark = localStorage.getItem('darkmode');
-  const prefersDark =
-    storedDark !== null
-      ? storedDark === '1'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  applyDark(prefersDark);
-
-  if (btnDark) {
-    btnDark.addEventListener('click', () => {
-      applyDark(!document.body.classList.contains('dark'));
-    });
-  }
-
-  /* ===== 7. SEARCH (PageFind) ===== */
+  /* ===== 2. AMBIL POST ID DARI URL ===== */
   /*
-    PageFind di-load secara lazy — hanya saat search overlay dibuka
-    untuk pertama kali. Ini menghindari network request yang tidak
-    perlu di halaman yang tidak menggunakan search.
-
-    PageFind men-generate /pagefind/pagefind.js saat build.
-    Di local development file ini belum ada, sehingga search
-    tidak akan berfungsi — ini normal. Jalankan build dulu:
-      npx pagefind --site .
-    atau biarkan Cloudflare Pages yang menjalankannya.
+    Contoh:
+    /blog/dzikir-pagi.html → postId = "dzikir-pagi"
+    /blog/cara-memasak/   → postId = "cara-memasak"
+    /                     → postId = "" → sistem dinonaktifkan
   */
 
-  const overlay       = qid('search-overlay');
-  const searchInput   = qid('search-input');
-  const searchResults = qid('search-results');
-  const btnSearch     = qid('btn-search');
-  const searchClose   = qid('search-close');
+  const getPostId = () => {
+    const path = window.location.pathname;
+    // Hapus trailing slash, ambil segmen terakhir
+    const segment = path.replace(/\/$/, '').split('/').pop();
+    // Hapus ekstensi .html / .htm jika ada
+    return (segment || '').replace(/\.html?$/i, '');
+  };
 
-  // Tiga state untuk mencegah race condition:
-  // idle → loading → ready | failed
-  let pagefind        = null;
-  let pagefindState   = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
-  let searchTimer     = null;
+  const postId = getPostId();
 
-  /* --- Load PageFind secara lazy, hanya sekali --- */
-  const loadPagefind = async () => {
-    if (pagefindState !== 'idle') return;
-    pagefindState = 'loading';
+  if (!postId) {
+    console.warn('comments.js: postId tidak ditemukan, sistem komentar dinonaktifkan.');
+    return;
+  }
+
+  /* ===== 3. CACHE HELPER ===== */
+
+  const cache = {
+    set(key, data) {
+      try {
+        localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+      } catch(e) { /* localStorage penuh atau diblokir */ }
+    },
+
+    get(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (Date.now() - parsed.ts > CONFIG.cacheTTL) {
+          localStorage.removeItem(key);
+          return null;
+        }
+        return parsed.data;
+      } catch(e) { return null; }
+    },
+
+    clear(key) {
+      try { localStorage.removeItem(key); } catch(e) {}
+    },
+  };
+
+  const CACHE_KEY_STATS    = `stats_${postId}`;
+  const CACHE_KEY_COMMENTS = `comments_${postId}`;
+
+  /* ===== 4. KEAMANAN — SANITASI ===== */
+  /*
+    Tidak menggunakan innerHTML untuk data pengguna.
+    Semua teks pengguna ditampilkan via textContent, yang sudah
+    aman dari XSS (entity HTML tidak dieksekusi oleh browser).
+  */
+
+  const sanitize = (str) => String(str ?? '').trim();
+
+  /* ===== 5. ELEMENT REFERENCES ===== */
+
+  const elViews        = document.getElementById('stat-views');
+  const elCommentCount = document.getElementById('stat-comments');
+  const elCommentsList = document.getElementById('comments-list');
+  const elForm         = document.getElementById('comment-form');
+  const elNama         = document.getElementById('comment-nama');
+  const elIsi          = document.getElementById('comment-isi');
+  const elNamaCount    = document.getElementById('nama-count');
+  const elIsiCount     = document.getElementById('isi-count');
+  const elSubmitBtn    = document.getElementById('comment-submit');
+  const elFormMsg      = document.getElementById('form-message');
+
+  /* ===== 6. JSONP HELPER ===== */
+  /*
+    Google Apps Script tidak mengirim CORS header yang konsisten
+    pada GET request karena redirect. Solusi: gunakan JSONP.
+    Script tag tidak terkena batasan CORS.
+    Untuk POST (addComment), gunakan mode no-cors + form-encoded.
+  */
+
+  const jsonp = (url) => {
+    return new Promise((resolve, reject) => {
+      const cbName = `_jsonp_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const script = document.createElement('script');
+
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('JSONP timeout'));
+      }, CONFIG.jsonpTimeout);
+
+      const cleanup = () => {
+        delete window[cbName];
+        script.parentNode?.removeChild(script);
+        clearTimeout(timeout);
+      };
+
+      window[cbName] = (data) => {
+        cleanup();
+        resolve(data);
+      };
+
+      script.src = `${url}&callback=${cbName}`;
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('JSONP gagal memuat script'));
+      };
+
+      document.head.appendChild(script);
+    });
+  };
+
+  /* ===== 7. VIEW COUNTER ===== */
+  /*
+    Gunakan localStorage untuk mencegah duplikasi view
+    dari browser yang sama saat refresh.
+  */
+
+  const VIEW_KEY = `viewed_${postId}`;
+
+  const sendView = async () => {
+    if (localStorage.getItem(VIEW_KEY)) return;
     try {
-      pagefind = await import('/pagefind/pagefind.js');
-      await pagefind.options({ excerptLength: 20 });
-      pagefindState = 'ready';
-    } catch {
-      pagefindState = 'failed';
-      pagefind      = null;
+      await jsonp(`${APPS_SCRIPT_URL}?action=addView&postId=${encodeURIComponent(postId)}`);
+      localStorage.setItem(VIEW_KEY, '1');
+    } catch(e) {
+      console.warn('comments.js: gagal mengirim view.', e);
     }
   };
 
-  /* --- Buat elemen pesan sederhana --- */
-  const makeMsg = (className, text) => {
-    const el = document.createElement('div');
-    el.className = className;
-    el.textContent = text;
-    return el;
+  /* ===== 8. AMBIL DAN TAMPILKAN STATISTIK ===== */
+
+  const renderStats = (stats) => {
+    if (elViews)        elViews.textContent        = (stats.views    ?? 0).toLocaleString('id-ID');
+    if (elCommentCount) elCommentCount.textContent = (stats.comments ?? 0).toLocaleString('id-ID');
   };
 
-  /* --- Sanitasi HTML sederhana untuk excerpt PageFind --- */
-  const sanitizeExcerpt = (raw) => {
-    // Hanya izinkan tag <mark> untuk highlight; buang semua tag lain
-    const temp = document.createElement('div');
-    temp.textContent = raw; // encode semua HTML sebagai teks mentah
-    // Kembalikan <mark>…</mark> yang sudah di-encode oleh textContent
-    return temp.innerHTML
-      .replace(/&lt;mark&gt;/g, '<mark>')
-      .replace(/&lt;\/mark&gt;/g, '</mark>');
+  const fetchStats = async (forceRefresh = false) => {
+    if (!forceRefresh) {
+      const cached = cache.get(CACHE_KEY_STATS);
+      if (cached) { renderStats(cached); return; }
+    }
+    try {
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getStats&postId=${encodeURIComponent(postId)}`);
+      if (data?.status === 'ok') {
+        cache.set(CACHE_KEY_STATS, data);
+        renderStats(data);
+      }
+    } catch(e) {
+      console.warn('comments.js: gagal mengambil statistik.', e);
+    }
   };
 
-  /* --- Render hasil pencarian --- */
-  const renderResults = (results) => {
-    if (!searchResults) return;
-    searchResults.innerHTML = '';
+  /* ===== 9. AMBIL DAN TAMPILKAN KOMENTAR ===== */
 
-    if (!results || results.length === 0) {
-      searchResults.appendChild(
-        makeMsg('search-result-empty', 'Tidak ada hasil ditemukan.')
-      );
+  const formatTanggal = (timestamp) => {
+    try {
+      return new Date(timestamp).toLocaleDateString('id-ID', {
+        day   : 'numeric',
+        month : 'long',
+        year  : 'numeric',
+      });
+    } catch(e) { return ''; }
+  };
+
+  const getInisial = (nama) => {
+    const parts = sanitize(nama).split(' ').filter(Boolean);
+    if (parts.length === 0) return '??';
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
+  };
+
+  const renderKomentar = (list) => {
+    if (!elCommentsList) return;
+
+    // replaceChildren() lebih aman daripada innerHTML = ''
+    elCommentsList.replaceChildren();
+
+    if (!list || list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'comments-empty';
+      empty.setAttribute('role', 'status');
+
+      const icon = document.createElement('span');
+      icon.className = 'empty-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = '💬';
+
+      const msg = document.createElement('p');
+      msg.textContent = 'Belum ada komentar. Jadilah yang pertama!';
+
+      empty.appendChild(icon);
+      empty.appendChild(msg);
+      elCommentsList.appendChild(empty);
       return;
     }
 
     const fragment = document.createDocumentFragment();
 
-    results.forEach((result) => {
-      const a = document.createElement('a');
-      a.className = 'search-result-item';
-      a.href      = result.url;
-      a.addEventListener('click', closeSearch);
+    list.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'comment-card';
 
-      const title = document.createElement('div');
-      title.className   = 'search-result-title';
-      title.textContent = result.meta?.title || 'Tanpa Judul';
+      const header = document.createElement('div');
+      header.className = 'comment-header';
 
-      const excerpt = document.createElement('div');
-      excerpt.className = 'search-result-excerpt';
-      // Sanitasi: hanya tag <mark> yang diizinkan
-      excerpt.innerHTML = sanitizeExcerpt(result.excerpt || '');
+      const avatar = document.createElement('div');
+      avatar.className = 'comment-avatar';
+      avatar.textContent = getInisial(item.nama || '?');
+      avatar.setAttribute('aria-hidden', 'true');
 
-      a.append(title, excerpt);
-      fragment.appendChild(a);
+      const meta = document.createElement('div');
+      meta.className = 'comment-meta';
+
+      const nama = document.createElement('div');
+      nama.className = 'comment-name';
+      nama.textContent = sanitize(item.nama); // textContent — aman dari XSS
+
+      const tanggal = document.createElement('div');
+      tanggal.className = 'comment-date';
+      tanggal.textContent = formatTanggal(item.timestamp);
+
+      meta.appendChild(nama);
+      meta.appendChild(tanggal);
+      header.appendChild(avatar);
+      header.appendChild(meta);
+
+      const body = document.createElement('div');
+      body.className = 'comment-body';
+      body.textContent = sanitize(item.komentar); // textContent — aman dari XSS
+
+      card.appendChild(header);
+      card.appendChild(body);
+      fragment.appendChild(card);
     });
 
-    searchResults.appendChild(fragment);
+    elCommentsList.appendChild(fragment);
   };
 
-  /* --- Jalankan pencarian dengan debounce 300ms --- */
-  const runSearch = async (query) => {
-    if (!searchResults) return;
+  const fetchKomentar = async (forceRefresh = false) => {
+    if (!elCommentsList) return;
 
-    const q = query.trim();
-
-    if (q.length < 2) {
-      searchResults.innerHTML = '';
-      return;
+    if (!forceRefresh) {
+      const cached = cache.get(CACHE_KEY_COMMENTS);
+      if (cached) { renderKomentar(cached); return; }
     }
 
-    searchResults.innerHTML = '';
-    searchResults.appendChild(makeMsg('search-result-loading', 'Mencari…'));
-
-    if (pagefindState === 'loading') {
-      // Tunggu sebentar lalu coba lagi (module sedang dimuat)
-      setTimeout(() => runSearch(query), 200);
-      return;
-    }
-
-    if (pagefindState !== 'ready') {
-      searchResults.innerHTML = '';
-      searchResults.appendChild(
-        makeMsg('search-result-empty', 'Search belum tersedia. Build proyek terlebih dahulu.')
-      );
-      return;
-    }
+    // Tampilkan loading
+    elCommentsList.replaceChildren();
+    const loading = document.createElement('div');
+    loading.className = 'comments-loading';
+    loading.setAttribute('role', 'status');
+    loading.textContent = 'Memuat komentar...';
+    elCommentsList.appendChild(loading);
 
     try {
-      const search  = await pagefind.search(q);
-      const top     = search.results.slice(0, 8);
-      const details = await Promise.all(top.map(r => r.data()));
-      renderResults(details);
-    } catch {
-      searchResults.innerHTML = '';
-      searchResults.appendChild(
-        makeMsg('search-result-empty', 'Gagal memuat hasil pencarian.')
-      );
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`);
+      if (data?.status === 'ok') {
+        cache.set(CACHE_KEY_COMMENTS, data.comments);
+        renderKomentar(data.comments);
+      }
+    } catch(e) {
+      console.warn('comments.js: gagal mengambil komentar.', e);
+
+      // Coba tampilkan cache lama jika ada, baru fallback ke pesan error
+      const staleCache = cache.get(CACHE_KEY_COMMENTS);
+      if (staleCache) {
+        renderKomentar(staleCache);
+        return;
+      }
+
+      elCommentsList.replaceChildren();
+      const errEl = document.createElement('div');
+      errEl.className = 'comments-empty';
+      errEl.setAttribute('role', 'alert');
+      errEl.textContent = 'Gagal memuat komentar. Coba refresh halaman.';
+      elCommentsList.appendChild(errEl);
     }
   };
 
-  /* --- Buka / tutup overlay --- */
-  const openSearch = async () => {
-    if (!overlay || !searchInput) return;
-    overlay.classList.add('active');
-    setTimeout(() => searchInput.focus(), 50);
-    // Mulai load PageFind saat overlay dibuka pertama kali
-    await loadPagefind();
+  /* ===== 10. CHARACTER COUNTER ===== */
+
+  const updateCount = (input, countEl, max) => {
+    if (!input || !countEl) return;
+    const len = input.value.length;
+    countEl.textContent = `${len} / ${max}`;
+    countEl.classList.toggle('over-limit', len > max);
   };
 
-  const closeSearch = () => {
-    if (!overlay || !searchInput) return;
-    overlay.classList.remove('active');
-    searchInput.value = '';
-    if (searchResults) searchResults.innerHTML = '';
-    clearTimeout(searchTimer);
+  elNama?.addEventListener('input', () => updateCount(elNama, elNamaCount, CONFIG.maxNama));
+  elIsi?.addEventListener('input',  () => updateCount(elIsi,  elIsiCount,  CONFIG.maxKomentar));
+
+  /* ===== 11. TAMPILKAN PESAN FORM ===== */
+
+  let msgTimeout = null;
+
+  const showMsg = (tipe, teks) => {
+    if (!elFormMsg) return;
+    clearTimeout(msgTimeout); // batalkan timeout sebelumnya jika ada
+    elFormMsg.className = `form-message ${tipe}`;
+    elFormMsg.textContent = teks;
+    msgTimeout = setTimeout(() => {
+      elFormMsg.className = 'form-message';
+      elFormMsg.textContent = '';
+    }, 5000);
   };
 
-  /* --- Event listeners --- */
-  btnSearch?.addEventListener('click', openSearch);
-  searchClose?.addEventListener('click', closeSearch);
+  /* ===== 12. COOLDOWN KOMENTAR ===== */
+  /*
+    Mencegah spam: satu komentar per 60 detik per postId.
+    Key localStorage: comment_cooldown_postId
+  */
 
-  overlay?.addEventListener('click', (e) => {
-    if (e.target === overlay) closeSearch();
-  });
+  const COOLDOWN_KEY = `comment_cooldown_${postId}`;
 
-  searchInput?.addEventListener('input', () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => runSearch(searchInput.value), 300);
-  });
+  const isCooldownActive = () => {
+    try {
+      const ts = localStorage.getItem(COOLDOWN_KEY);
+      if (!ts) return false;
+      const elapsed = (Date.now() - parseInt(ts, 10)) / 1000;
+      return Number.isFinite(elapsed) && elapsed < CONFIG.cooldownSecs;
+    } catch(e) { return false; }
+  };
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeSearch();
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+  const getCooldownSisa = () => {
+    try {
+      const ts = localStorage.getItem(COOLDOWN_KEY);
+      if (!ts) return 0;
+      const elapsed = (Date.now() - parseInt(ts, 10)) / 1000;
+      if (!Number.isFinite(elapsed)) return 0;
+      return Math.max(0, Math.ceil(CONFIG.cooldownSecs - elapsed));
+    } catch(e) { return 0; }
+  };
+
+  const setCooldown = () => {
+    try { localStorage.setItem(COOLDOWN_KEY, Date.now().toString()); } catch(e) {}
+  };
+
+  /* ===== 13. KIRIM KOMENTAR ===== */
+  /*
+    POST ke Google Apps Script menggunakan mode: 'no-cors' +
+    Content-Type: application/x-www-form-urlencoded.
+    Dengan no-cors, browser tidak memblokir request meski tidak
+    ada CORS header — trade-off: response tidak bisa dibaca,
+    sehingga kita asumsikan sukses jika tidak ada network error.
+
+    Form dilindungi Cloudflare Turnstile — token diambil dari
+    widget '.cf-turnstile' dan diverifikasi di sisi server
+    (Code.gs) sebelum komentar disimpan.
+  */
+
+  const setSubmitLoading = (isLoading) => {
+    if (!elSubmitBtn) return;
+    elSubmitBtn.disabled    = isLoading;
+    elSubmitBtn.textContent = isLoading ? 'Mengirim...' : 'Kirim Komentar';
+    elSubmitBtn.style.cursor = isLoading ? 'wait' : '';
+  };
+
+  if (elForm) {
+    elForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      openSearch();
-    }
-  });
 
-  /* ===== 8. READ TIME ===== */
-  // Hitung estimasi waktu baca dari konten artikel.
-  // Prioritas selector: article → .content → main
-  // Hanya aktif jika elemen #read-time ada di halaman.
+      // Cek cooldown
+      if (isCooldownActive()) {
+        showMsg('cooldown', `Tunggu ${getCooldownSisa()} detik sebelum mengirim komentar lagi.`);
+        return;
+      }
 
-  const elReadTime = qid('read-time');
+      const nama     = sanitize(elNama?.value || '');
+      const komentar = sanitize(elIsi?.value  || '');
 
-  if (elReadTime) {
-    const elContent = qs('article') ?? qs('.content') ?? qs('main');
-    if (elContent) {
-      const words = (elContent.innerText || '').trim().split(/\s+/).filter(Boolean).length;
-      const mins  = Math.max(1, Math.round(words / 200));
-      elReadTime.textContent = mins;
-    }
+      // Validasi
+      if (!nama) {
+        showMsg('error', 'Nama tidak boleh kosong.');
+        elNama?.focus();
+        return;
+      }
+      if (nama.length > CONFIG.maxNama) {
+        showMsg('error', `Nama maksimal ${CONFIG.maxNama} karakter.`);
+        elNama?.focus();
+        return;
+      }
+      if (!komentar) {
+        showMsg('error', 'Komentar tidak boleh kosong.');
+        elIsi?.focus();
+        return;
+      }
+      if (komentar.length > CONFIG.maxKomentar) {
+        showMsg('error', `Komentar maksimal ${CONFIG.maxKomentar} karakter.`);
+        elIsi?.focus();
+        return;
+      }
+
+      // Ambil token Turnstile — widget wajib diselesaikan dulu
+      const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
+      if (!turnstileToken) {
+        showMsg('error', 'Selesaikan verifikasi keamanan (Turnstile) terlebih dahulu.');
+        return;
+      }
+
+      setSubmitLoading(true);
+
+      try {
+        const payload = new URLSearchParams({
+          action: 'addComment',
+          postId,
+          nama,
+          komentar,
+          turnstileToken,
+        });
+
+        await fetch(APPS_SCRIPT_URL, {
+          method : 'POST',
+          mode   : 'no-cors',
+          body   : payload,
+        });
+
+        /*
+          Dengan no-cors, response selalu opaque (tidak bisa dibaca).
+          Asumsikan sukses jika tidak ada network error.
+        */
+        setCooldown();
+        showMsg('success', 'Komentar berhasil dikirim! Menunggu persetujuan admin.');
+        elForm.reset();
+        if (elNamaCount) elNamaCount.textContent = `0 / ${CONFIG.maxNama}`;
+        if (elIsiCount)  elIsiCount.textContent  = `0 / ${CONFIG.maxKomentar}`;
+
+        // Refresh stats (hapus cache lama)
+        cache.clear(CACHE_KEY_STATS);
+        await fetchStats(true);
+
+      } catch(e) {
+        console.warn('comments.js: gagal mengirim komentar.', e);
+        showMsg('error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.');
+      } finally {
+        setSubmitLoading(false);
+        // Token Turnstile sekali pakai — reset widget agar siap submit berikutnya
+        try { window.turnstile?.reset(); } catch(e) {}
+      }
+    });
   }
 
-  /* ===== 9. READING PROGRESS BAR ===== */
-  // Hanya aktif jika elemen #progress-bar ada di halaman.
+  /* ===== 14. INIT ===== */
+  /*
+    Catatan urutan: sendView, fetchStats, fetchKomentar dipanggil
+    paralel. View counter mungkin belum tercatat saat fetchStats
+    selesai — ini trade-off yang dapat diterima untuk performa.
+  */
 
-  const elBar = qid('progress-bar');
-
-  if (elBar) {
-    window.addEventListener('scroll', () => {
-      const scrollTop  = window.scrollY;
-      const docHeight  = document.documentElement.scrollHeight - window.innerHeight;
-      const progress   = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      elBar.style.width = `${progress}%`;
-    }, { passive: true });
-  }
+  sendView();
+  fetchStats();
+  fetchKomentar();
 
 });

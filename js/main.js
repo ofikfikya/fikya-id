@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         29;
 
       const mm = Math.floor((24 * l) / 709);
-      const dd = l - Math.floor((709 * mm) / 24);
+      const dd = Math.floor(l - Math.floor((709 * mm) / 24));
       const yy = 30 * n + J - 30;
 
       return `${dd} ${BULAN_HIJRI[mm - 1]} ${yy} H`;

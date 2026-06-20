@@ -1,6 +1,8 @@
 /* ============================================================
-   home.css — Optimized 2026
-============================================================ */
+   home.css — Style khusus halaman utama (index.html)
+   Bergantung pada: style.css (harus di-load lebih dulu)
+   Diperbarui: 2026
+   ============================================================ */
 
 /* ===== HERO ===== */
 .hero {
@@ -21,14 +23,15 @@ body.dark .hero {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 800;
   letter-spacing: -1px;
-  margin-bottom: 18px;
   line-height: 1.1;
+  margin-bottom: 18px;
 }
 
 .hero p {
   max-width: 650px;
   margin: 0 auto 35px;
   font-size: 1.125rem;
+  opacity: 0.9;
   color: var(--text-muted);
 }
 
@@ -37,8 +40,6 @@ body.dark .hero {
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
 }
 
 /* ===== MAIN WRAPPER ===== */
@@ -55,9 +56,9 @@ body.dark .hero {
 .section-title {
   font-size: 32px;
   font-weight: 800;
+  letter-spacing: -0.5px;
   margin-bottom: 30px;
   color: var(--text-main);
-  letter-spacing: -0.5px;
 }
 
 /* ===== CARDS ===== */
@@ -73,27 +74,32 @@ body.dark .hero {
   border-radius: 20px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-card);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.4s ease,
+              border-color 0.2s ease;
 }
 
 .card:hover {
   transform: translateY(-6px) scale(1.01);
-  box-shadow: var(--shadow-hover);
+  box-shadow: var(--shadow-hover, 0 20px 40px rgba(0, 0, 0, 0.1));
   border-color: var(--primary-color);
 }
 
-.card-icon { font-size: 40px; margin-bottom: 20px; }
+.card-icon {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
 
-.card-title { 
-  font-size: 20px; 
-  font-weight: 700; 
-  margin-bottom: 12px; 
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
   color: var(--text-main);
 }
 
-.card-desc { 
-  color: var(--text-muted); 
-  font-size: 15px; 
+.card-desc {
+  color: var(--text-muted);
+  font-size: 15px;
   line-height: 1.6;
 }
 
@@ -106,6 +112,7 @@ body.dark .hero {
   box-shadow: var(--shadow-card);
   position: sticky;
   top: 90px;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-title {
@@ -117,9 +124,17 @@ body.dark .hero {
   color: var(--text-main);
 }
 
-.sidebar-list { list-style: none; }
-.sidebar-list li { margin-bottom: 16px; }
-.sidebar-list li:last-child { margin-bottom: 0; }
+.sidebar-list {
+  list-style: none;
+}
+
+.sidebar-list li {
+  margin-bottom: 16px;
+}
+
+.sidebar-list li:last-child {
+  margin-bottom: 0;
+}
 
 .sidebar-link {
   display: flex;
@@ -129,7 +144,7 @@ body.dark .hero {
   color: var(--text-muted);
   font-weight: 500;
   font-size: 15px;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar-link:hover {
@@ -143,9 +158,14 @@ body.dark .hero {
     grid-template-columns: 1fr;
     gap: 50px;
   }
-  .sidebar { position: static; }
+
+  .sidebar {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {
-  .hero { padding: 80px 20px; }
+  .hero {
+    padding: 80px 20px;
+  }
 }

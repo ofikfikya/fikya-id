@@ -46,9 +46,10 @@
     <div class="search-box">
       <span style="font-size:16px;color:var(--text-muted);" aria-hidden="true">🔍</span>
       <label for="search-input" class="sr-only">Cari artikel atau proyek</label>
-      <input type="text" id="search-input" placeholder="Cari artikel, proyek...">
+      <input type="text" id="search-input" placeholder="Cari artikel, proyek..." autocomplete="off">
       <button class="search-close" id="search-close" aria-label="Tutup pencarian">✕</button>
     </div>
+    <div class="search-results" id="search-results" role="status" aria-live="polite"></div>
   </div>
 
   <section class="hero">

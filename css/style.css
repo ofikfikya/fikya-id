@@ -1,7 +1,7 @@
 /* ============================================================
    style.css — Global styles Fikya.id
    Covers: CSS Variables, reset, body, navbar, footer, buttons,
-           cards, search overlay, responsive
+           cards, search overlay, accessibility utilities, responsive
    ============================================================ */
 
 :root {
@@ -64,6 +64,25 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ===== ACCESSIBILITY UTILITIES ===== */
+
+/*
+  .sr-only — Menyembunyikan elemen secara visual, tapi tetap
+  terbaca oleh screen reader. Dipakai untuk label tersembunyi
+  pada input dan elemen dekoratif yang butuh konteks tambahan.
+*/
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ===== NAVBAR ===== */

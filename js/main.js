@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // +1 berarti tambah 1 hari, -1 kurangi 1 hari, 0 = tidak dikoreksi.
   // Ganti nilai ini jika rujukan resmi (BIMAS / ru'yat) berbeda.
   // -------------------------------------------------------
-  const HIJRI_OFFSET_DAYS = 2; // <-- ubah di sini jika perlu
+  const HIJRI_OFFSET_DAYS = 1; // <-- ubah di sini jika perlu
 
   /* ===== 2. HIJRI CALENDAR ===== */
 

@@ -1,41 +1,41 @@
 /* ============================================================
-   home.css — Style khusus halaman utama (index.html)
-   Bergantung pada: style.css (harus di-load lebih dulu)
-   ============================================================ */
+   home.css — Optimized 2026
+============================================================ */
 
 /* ===== HERO ===== */
 .hero {
-  padding: 100px 20px;
+  padding: 120px 20px;
   text-align: center;
-  background:
-    radial-gradient(circle at top left, #60a5fa 0%, transparent 35%),
-    radial-gradient(circle at right, #2563eb 0%, transparent 40%),
-    linear-gradient(135deg, #1e3a8a, #2563eb);
-  color: white;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #0f172a;
   position: relative;
   overflow: hidden;
 }
 
+body.dark .hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #f8fafc;
+}
+
 .hero h1 {
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 800;
-  margin-bottom: 15px;
-  position: relative;
-  z-index: 2;
+  letter-spacing: -1px;
+  margin-bottom: 18px;
+  line-height: 1.1;
 }
 
 .hero p {
   max-width: 650px;
   margin: 0 auto 35px;
-  opacity: 0.9;
-  position: relative;
-  z-index: 2;
+  font-size: 1.125rem;
+  color: var(--text-muted);
 }
 
 .btn-row {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 16px;
   flex-wrap: wrap;
   position: relative;
   z-index: 2;
@@ -44,83 +44,81 @@
 /* ===== MAIN WRAPPER ===== */
 .main-wrapper {
   max-width: 1200px;
-  margin: 50px auto 90px;
+  margin: 60px auto 100px;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 320px;
   gap: 40px;
   align-items: start;
 }
 
 .section-title {
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 800;
-  margin-bottom: 25px;
+  margin-bottom: 30px;
   color: var(--text-main);
-  transition: color 0.3s ease;
+  letter-spacing: -0.5px;
 }
 
 /* ===== CARDS ===== */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
 }
 
 .card {
   background: var(--bg-card);
-  padding: 35px;
-  border-radius: 22px;
+  padding: 30px;
+  border-radius: 20px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-card);
-  transition: transform 0.35s ease, box-shadow 0.35s ease, background 0.3s ease, border-color 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary-color);
 }
 
-.card-icon  { font-size: 35px; margin-bottom: 15px; }
+.card-icon { font-size: 40px; margin-bottom: 20px; }
 
 .card-title { 
   font-size: 20px; 
   font-weight: 700; 
-  margin-bottom: 10px; 
+  margin-bottom: 12px; 
   color: var(--text-main);
-  transition: color 0.3s ease; 
 }
 
-.card-desc  { 
+.card-desc { 
   color: var(--text-muted); 
-  font-size: 14px; 
-  transition: color 0.3s ease; 
+  font-size: 15px; 
+  line-height: 1.6;
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
   background: var(--bg-card);
-  padding: 25px;
-  border-radius: 22px;
+  padding: 30px;
+  border-radius: 20px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-card);
   position: sticky;
   top: 90px;
-  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-title {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--bg-element-hover);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
   color: var(--text-main);
-  transition: color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-list { list-style: none; }
-.sidebar-list li { margin-bottom: 15px; }
+.sidebar-list li { margin-bottom: 16px; }
 .sidebar-list li:last-child { margin-bottom: 0; }
 
 .sidebar-link {
@@ -131,16 +129,16 @@
   color: var(--text-muted);
   font-weight: 500;
   font-size: 15px;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .sidebar-link:hover {
   color: var(--primary-color);
-  transform: translateX(5px);
+  transform: translateX(6px);
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .main-wrapper {
     grid-template-columns: 1fr;
     gap: 50px;

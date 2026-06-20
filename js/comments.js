@@ -210,9 +210,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!list || list.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'comments-empty';
+      empty.setAttribute('role', 'status'); // screen reader membaca perubahan ini
 
       const icon = document.createElement('span');
       icon.className = 'empty-icon';
+      icon.setAttribute('aria-hidden', 'true'); // emoji dekoratif, disembunyikan dari screen reader
       icon.textContent = '💬';
 
       const msg = document.createElement('p');
@@ -278,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elCommentsList.innerHTML = '';
     const loading = document.createElement('div');
     loading.className = 'comments-loading';
+    loading.setAttribute('role', 'status'); // screen reader membaca perubahan ini
     loading.textContent = 'Memuat komentar...';
     elCommentsList.appendChild(loading);
 

@@ -1,6 +1,8 @@
 /* ============================================================
-   style.css — Global styles Fikya.id (Optimized 2026)
-============================================================ */
+   style.css — Global styles Fikya.id
+   Covers: CSS Variables, reset, body, navbar, footer, buttons,
+           cards, search overlay, accessibility utilities, responsive
+   ============================================================ */
 
 :root {
   /* --- Tema Terang (Light Mode) --- */
@@ -17,11 +19,12 @@
   --bg-element-hover: #f1f5f9;
   --bg-search-box: #ffffff;
 
+  /* Card */
   --bg-card: #ffffff;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
   --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-  
+
   --footer-border: #e2e8f0;
   --footer-text: #64748b;
 }
@@ -41,7 +44,9 @@ body.dark {
   --bg-element-hover: #1e293b;
   --bg-search-box: #1e293b;
 
+  /* Card — dibedakan dari bg-body agar card terlihat */
   --bg-card: #0f172a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
 
@@ -56,7 +61,9 @@ body.dark {
   box-sizing: border-box;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
@@ -68,17 +75,35 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Aksesibilitas keyboard — fokus terlihat jelas tanpa mengganggu tampilan mouse */
 :focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-h1, h2, h3, h4 { text-wrap: balance; }
+/* Mencegah text wrapping yang aneh pada heading */
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
 
+/* ===== ACCESSIBILITY UTILITIES ===== */
+
+/*
+  .sr-only — Menyembunyikan elemen secara visual, tapi tetap
+  terbaca oleh screen reader. Dipakai untuk label tersembunyi
+  pada input dan elemen dekoratif yang butuh konteks tambahan.
+*/
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ===== NAVBAR ===== */
@@ -92,6 +117,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   padding: 0 8%;
   height: 64px;
   background: var(--bg-nav);
+  /* saturate(180%) mempertegas warna konten di balik navbar */
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid var(--border-nav);
@@ -115,6 +141,7 @@ h1, h2, h3, h4 { text-wrap: balance; }
   color: var(--text-muted);
   font-weight: 500;
   white-space: nowrap;
+  letter-spacing: 0.01em;
   transition: color 0.3s ease;
 }
 
@@ -139,14 +166,19 @@ h1, h2, h3, h4 { text-wrap: balance; }
 }
 
 .nav-btn {
-  width: 38px; height: 38px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
+  /* Border transparan default — muncul saat hover, lebih bersih */
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
   font-size: 16px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-btn:hover {
@@ -168,6 +200,13 @@ h1, h2, h3, h4 { text-wrap: balance; }
   cursor: pointer;
 }
 
+/*
+  PERBAIKAN: Sebelumnya hardcode background: white dan color: #2563eb
+  yang hanya cocok di konteks Hero (background gelap).
+  Sekarang menggunakan CSS variable agar adaptif di light/dark mode
+  dan bisa dipakai di seluruh halaman, bukan hanya Hero section.
+  Jika dipakai di Hero, tambahkan class khusus atau override di hero.css.
+*/
 .btn-primary {
   background: var(--primary-color);
   color: #ffffff;
@@ -215,7 +254,9 @@ footer {
   padding-top: 100px;
 }
 
-.search-overlay.active { display: flex; }
+.search-overlay.active {
+  display: flex;
+}
 
 .search-box {
   background: var(--bg-search-box);
@@ -226,6 +267,7 @@ footer {
   gap: 12px;
   width: min(600px, 90vw);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  /* Border ditambahkan agar konsisten dengan search-results */
   border: 1px solid var(--border-color);
   transition: background 0.3s ease;
 }
@@ -234,24 +276,29 @@ footer {
   flex: 1;
   border: none;
   outline: none;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 16px;
   padding: 10px 8px;
   background: transparent;
   color: inherit;
 }
 
-.search-box input::placeholder { color: var(--text-muted); }
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
 
 .search-close {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   border: none;
   background: var(--bg-element-hover);
   color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
 }
 
@@ -261,6 +308,10 @@ footer {
 }
 
 /* ===== SEARCH RESULTS ===== */
+/*
+  Menampilkan hasil pencarian PageFind di dalam search overlay.
+  Muncul di bawah search-box saat ada query yang diketik.
+*/
 .search-results {
   width: min(600px, 90vw);
   max-height: 60vh;
@@ -271,11 +322,15 @@ footer {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-color);
   transition: background 0.3s ease;
+
+  /* Scrollbar tipis agar tidak mengganggu */
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
 }
 
-.search-results:empty { display: none; }
+.search-results:empty {
+  display: none;
+}
 
 .search-result-item {
   display: block;
@@ -286,34 +341,69 @@ footer {
   transition: background 0.15s ease;
 }
 
-.search-result-item:last-child { border-bottom: none; }
-.search-result-item:hover, .search-result-item:focus { background: var(--bg-element-hover); outline: none; }
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover,
+.search-result-item:focus {
+  background: var(--bg-element-hover);
+  outline: none;
+}
 
 .search-result-title {
-  font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
 }
 
 .search-result-excerpt {
-  font-size: 13.5px; color: var(--text-muted); line-height: 1.5;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  /* Potong di 2 baris */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+/* Highlight teks yang cocok dengan query */
 .search-result-excerpt mark {
-  background: rgba(37, 99, 235, 0.15); color: var(--primary-color);
-  border-radius: 4px; padding: 2px 4px; font-weight: 600;
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--primary-color);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-weight: 600;
 }
 
 body.dark .search-result-excerpt mark {
   background: rgba(96, 165, 250, 0.2);
 }
 
-.search-result-empty, .search-result-loading {
-  padding: 24px 20px; font-size: 14.5px; color: var(--text-muted); text-align: center;
+.search-result-empty,
+.search-result-loading {
+  padding: 24px 20px;
+  font-size: 14.5px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .navbar { padding: 0 16px; }
-  .nav-datetime .tgl-nav, .nav-datetime .hijri-nav, .nav-datetime .zona-nav { display: none; }
-  .nav-datetime .sep { display: none; }
+  .navbar {
+    padding: 0 16px;
+  }
+
+  /* Di mobile: sembunyikan tanggal dan hijri, tampilkan jam saja */
+  .nav-datetime .tgl-nav,
+  .nav-datetime .hijri-nav,
+  .nav-datetime .zona-nav {
+    display: none;
+  }
+
+  .nav-datetime .sep {
+    display: none;
+  }
 }

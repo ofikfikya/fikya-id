@@ -1,7 +1,7 @@
 /* ============================================================
-   style.css — Global styles Fikya.id (Refactored)
-   Covers: CSS Variables, reset, body, navbar, footer, buttons, 
-           search overlay, responsive
+   style.css — Global styles Fikya.id
+   Covers: CSS Variables, reset, body, navbar, footer, buttons,
+           cards, search overlay, responsive
    ============================================================ */
 
 :root {
@@ -12,13 +12,17 @@
   --text-sep: #cbd5e1;
   --primary-color: #2563eb;
   --border-color: #e2e8f0;
-  
+
   --bg-nav: rgba(255, 255, 255, 0.85);
   --border-nav: rgba(226, 232, 240, 0.8);
-  
+
   --bg-element-hover: #f1f5f9;
   --bg-search-box: #ffffff;
-  
+
+  /* Card — dipakai di home.css dan blog.css */
+  --bg-card: #ffffff;
+  --shadow-card: 0 4px 10px rgba(0, 0, 0, 0.03);
+
   --footer-border: #e2e8f0;
   --footer-text: #64748b;
 }
@@ -31,13 +35,17 @@ body.dark {
   --text-sep: #334155;
   --primary-color: #60a5fa; /* Sedikit lebih terang agar kontras */
   --border-color: #334155;
-  
+
   --bg-nav: rgba(15, 23, 42, 0.85);
   --border-nav: rgba(51, 65, 85, 0.8);
-  
+
   --bg-element-hover: #1e293b;
   --bg-search-box: #1e293b;
-  
+
+  /* Card */
+  --bg-card: #1e293b;
+  --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.2);
+
   --footer-border: #1e293b;
   --footer-text: #475569;
 }
@@ -238,13 +246,14 @@ footer {
     padding: 0 16px;
   }
 
+  /* Di mobile: sembunyikan tanggal dan hijri, tampilkan jam saja */
   .nav-datetime .tgl-nav,
   .nav-datetime .hijri-nav,
   .nav-datetime .zona-nav {
     display: none;
   }
 
-  .nav-datetime .sep:not(:first-of-type) {
+  .nav-datetime .sep {
     display: none;
   }
 }

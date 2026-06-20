@@ -1,34 +1,25 @@
 /* ============================================================
-   blog.css — Style khusus halaman blog & dzikir
-   Catatan: --bg-card dan --shadow-card sudah ada di style.css
-   Covers: dzikir card, progress bar, post meta, separator
-   ============================================================ */
+   blog.css — Optimized 2026
+============================================================ */
 
 :root {
-  /* --- Variabel khusus dzikir (Light Mode) --- */
-  --dzikir-title: #2563eb;
   --dzikir-arabic: #0f172a;
   --dzikir-arti: #475569;
-  --dzikir-faedah-bg: #f8fafc;
-  --dzikir-count-bg: rgba(37, 99, 235, 0.1);
+  --dzikir-faedah-bg: #f1f5f9;
+  --dzikir-count-bg: rgba(37, 99, 235, 0.08);
 }
 
 body.dark {
-  /* --- Variabel khusus dzikir (Dark Mode) --- */
-  --dzikir-title: #f1f5f9;
   --dzikir-arabic: #f8fafc;
   --dzikir-arti: #cbd5e1;
-  --dzikir-faedah-bg: #0f172a;
-  --dzikir-count-bg: rgba(96, 165, 250, 0.15);
+  --dzikir-faedah-bg: #1e293b;
+  --dzikir-count-bg: rgba(96, 165, 250, 0.1);
 }
 
 /* ===== READING PROGRESS BAR ===== */
 .progress-bar {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 0%;
-  height: 3px;
+  top: 0; left: 0; width: 0%; height: 3px;
   background: linear-gradient(to right, #2563eb, #60a5fa);
   z-index: 9999;
   transition: width 0.1s linear;
@@ -36,20 +27,21 @@ body.dark {
 
 /* ===== HERO HEADER ===== */
 .header-section {
-  padding: 60px 20px;
+  padding: 80px 20px 60px;
   text-align: center;
 }
 
 .header-section h1 {
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 800;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
 }
 
 .header-section p {
   color: var(--text-muted);
-  font-size: 16px;
-  max-width: 600px;
+  font-size: 17px;
+  max-width: 650px;
   margin: auto;
 }
 
@@ -63,134 +55,103 @@ body.dark {
 /* ===== DZIKIR CARD ===== */
 .dzikir-card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid var(--border-color);
-  padding: 30px;
-  margin-bottom: 25px;
+  padding: 35px;
+  margin-bottom: 30px;
   box-shadow: var(--shadow-card);
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .dzikir-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--dzikir-title);
-  margin-bottom: 20px;
+  color: var(--primary-color);
+  margin-bottom: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: color 0.3s ease;
 }
 
 .dzikir-arabic {
   font-family: 'Amiri', 'Times New Roman', serif;
-  font-size: 28px;
-  line-height: 2.2;
+  font-size: 30px;
+  line-height: 2.1;
   text-align: right;
   direction: rtl;
   color: var(--dzikir-arabic);
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
+  margin-bottom: 24px;
 }
 
 .dzikir-latin {
   font-size: 15px;
-  font-style: italic;
+  font-style: normal;
   color: var(--primary-color);
-  margin-bottom: 15px;
+  background: var(--dzikir-count-bg);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
   line-height: 1.6;
-  transition: color 0.3s ease;
 }
 
 .dzikir-arti {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--dzikir-arti);
-  line-height: 1.6;
-  margin-bottom: 15px;
-  transition: color 0.3s ease;
+  line-height: 1.7;
+  margin-bottom: 20px;
 }
 
 .dzikir-faedah {
   background: var(--dzikir-faedah-bg);
   border-left: 4px solid var(--primary-color);
-  padding: 15px;
-  border-radius: 0 8px 8px 0;
-  font-size: 14px;
+  padding: 16px 20px;
+  border-radius: 0 12px 12px 0;
+  font-size: 14.5px;
   color: var(--text-muted);
-  margin-top: 15px;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  margin-top: 20px;
 }
 
 .dzikir-count {
-  display: inline-block;
-  background: var(--dzikir-count-bg);
-  color: var(--primary-color);
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary-color);
+  color: #fff;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  margin-top: 5px;
-  margin-bottom: 15px;
-  transition: background 0.3s ease, color 0.3s ease;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
 }
 
-/* ===== DZIKIR SEPARATOR ===== */
-/*
-  Pengganti <hr style="..."> inline di HTML dzikir.
-  Dipakai untuk memisahkan antar surat dalam satu card
-  (mis. Al Ikhlas, Al Falaq, An Naas).
-*/
 .dzikir-separator {
   border: none;
   border-top: 1px dashed var(--border-color);
-  margin-bottom: 25px;
-  transition: border-color 0.3s ease;
+  margin: 30px 0;
 }
 
-/*
-  .dzikir-arti--spaced — Modifier untuk dzikir-arti yang
-  diikuti oleh dzikir-separator. Memberi jarak ekstra
-  di bawah terjemahan sebelum garis pemisah.
-*/
-.dzikir-arti--spaced {
-  margin-bottom: 25px;
-}
+.dzikir-arti--spaced { margin-bottom: 30px; }
 
-/* ===== POST META (author, date, read time) ===== */
+/* ===== POST META ===== */
 .post-meta {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 6px 16px;
-  margin-top: 14px;
-  font-size: 13px;
+  gap: 8px 20px;
+  margin-top: 24px;
+  font-size: 14px;
   color: var(--text-muted);
-  transition: color 0.3s ease;
 }
 
 .post-meta .meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  display: flex; align-items: center; gap: 6px; font-weight: 500;
 }
 
-.post-meta .meta-sep {
-  color: var(--text-sep);
-  transition: color 0.3s ease;
-}
+.post-meta .meta-sep { color: var(--border-color); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .dzikir-card {
-    padding: 20px;
-  }
-
-  .dzikir-arabic {
-    font-size: 24px;
-  }
-
-  .post-meta {
-    gap: 4px 12px;
-    font-size: 12px;
-  }
+  .dzikir-card { padding: 24px; }
+  .dzikir-arabic { font-size: 26px; }
+  .post-meta { gap: 6px 14px; font-size: 13px; }
 }

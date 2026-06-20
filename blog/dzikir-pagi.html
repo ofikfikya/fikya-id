@@ -16,7 +16,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest"><title>Dzikir Pagi — Fikya.id</title>
+  <link rel="manifest" href="/site.webmanifest">
+  <title>Dzikir Pagi — Fikya.id</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,14 +44,15 @@
       <span class="hijri-nav" id="nav-hijri">—</span>
     </div>
     <div class="nav-actions">
-      <button class="nav-btn" id="btn-darkmode" title="Dark / Light mode" aria-label="Toggle dark mode">🌙</button>
-      <button class="nav-btn" id="btn-search" title="Cari" aria-label="Buka pencarian">🔍</button>
+      <button class="nav-btn" id="btn-darkmode" title="Dark / Light mode" aria-label="Toggle dark mode"><span aria-hidden="true">🌙</span></button>
+      <button class="nav-btn" id="btn-search" title="Cari" aria-label="Buka pencarian"><span aria-hidden="true">🔍</span></button>
     </div>
   </nav>
 
   <div class="search-overlay" id="search-overlay">
     <div class="search-box">
-      <span style="font-size:16px;color:var(--text-muted);">🔍</span>
+      <span style="font-size:16px;color:var(--text-muted);" aria-hidden="true">🔍</span>
+      <label for="search-input" class="sr-only">Cari artikel atau proyek</label>
       <input type="text" id="search-input" placeholder="Cari artikel, proyek...">
       <button class="search-close" id="search-close" aria-label="Tutup pencarian">✕</button>
     </div>
@@ -60,11 +62,11 @@
     <h1>Dzikir Pagi</h1>
     <p>Dzikir yang dibaca di waktu pagi (dari waktu Shubuh hingga pertengahan siang)</p>
     <div class="post-meta">
-      <span class="meta-item">✍️ Rahmat Taufik</span>
+      <span class="meta-item"><span aria-hidden="true">✍️</span> Rahmat Taufik</span>
       <span class="meta-sep">•</span>
-      <span class="meta-item">📅 19 Juni 2026</span>
+      <span class="meta-item"><span aria-hidden="true">📅</span> 19 Juni 2026</span>
       <span class="meta-sep">•</span>
-      <span class="meta-item">⏱️ <span id="read-time">—</span> menit baca</span>
+      <span class="meta-item"><span aria-hidden="true">⏱️</span> <span id="read-time">—</span> menit baca</span>
     </div>
   </header>
 
@@ -88,12 +90,12 @@
       <div class="dzikir-count">Masing-masing dibaca 3 x</div>
 
       <div class="dzikir-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ <br><br> قُلْ هُوَ اللَّهُ أَحَدٌ اللَّهُ الصَّمَدُ لَمْ يَلِدْ وَلَمْ يُولَدْ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ</div>
-      <div class="dzikir-arti" style="margin-bottom:25px;">"Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah ilah yang bergantung kepada-Nya segala urusan. Dia tidak beranak dan tiada pula diperanakkan, dan tidak ada seorang pun yang setara dengan Dia." (QS. Al Ikhlas: 1-4)</div>
-      <hr style="border:none;border-top:1px dashed var(--border-color);margin-bottom:25px;">
+      <div class="dzikir-arti dzikir-arti--spaced">"Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah ilah yang bergantung kepada-Nya segala urusan. Dia tidak beranak dan tiada pula diperanakkan, dan tidak ada seorang pun yang setara dengan Dia." (QS. Al Ikhlas: 1-4)</div>
+      <hr class="dzikir-separator">
 
       <div class="dzikir-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ <br><br> قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ مِن شَرِّ مَا خَلَقَ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ</div>
-      <div class="dzikir-arti" style="margin-bottom:25px;">"Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Rabb yang menguasai Shubuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan-kejahatan wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan orang yang dengki apabila ia dengki." (QS. Al Falaq: 1-5)</div>
-      <hr style="border:none;border-top:1px dashed var(--border-color);margin-bottom:25px;">
+      <div class="dzikir-arti dzikir-arti--spaced">"Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Rabb yang menguasai Shubuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan-kejahatan wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan orang yang dengki apabila ia dengki." (QS. Al Falaq: 1-5)</div>
+      <hr class="dzikir-separator">
 
       <div class="dzikir-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ <br><br> قُلْ أَعُوذُ بِرَبِّ النَّاسِ مَلِكِ النَّاسِ إِلَهِ النَّاسِ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ مِنَ الْجِنَّةِ وَ النَّاسِ</div>
       <div class="dzikir-arti">"Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Rabb manusia. Raja manusia. Sembahan manusia, dari kejahatan (bisikan) syaitan yang biasa bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari jin dan manusia." (QS. An Naas: 1-6)</div>
@@ -229,12 +231,12 @@
       <!-- Statistik -->
       <div class="article-stats">
         <div class="stat-item">
-          <span class="stat-icon">👁️</span>
+          <span class="stat-icon" aria-hidden="true">👁️</span>
           <span class="stat-value" id="stat-views">—</span>
           <span>tayangan</span>
         </div>
         <div class="stat-item">
-          <span class="stat-icon">💬</span>
+          <span class="stat-icon" aria-hidden="true">💬</span>
           <span class="stat-value" id="stat-comments">—</span>
           <span>komentar</span>
         </div>

@@ -1,6 +1,7 @@
 /* ============================================================
    blog.css — Style khusus halaman blog & dzikir
    Catatan: --bg-card dan --shadow-card sudah ada di style.css
+   Covers: dzikir card, progress bar, post meta, separator
    ============================================================ */
 
 :root {
@@ -130,6 +131,28 @@ body.dark {
   margin-top: 5px;
   margin-bottom: 15px;
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ===== DZIKIR SEPARATOR ===== */
+/*
+  Pengganti <hr style="..."> inline di HTML dzikir.
+  Dipakai untuk memisahkan antar surat dalam satu card
+  (mis. Al Ikhlas, Al Falaq, An Naas).
+*/
+.dzikir-separator {
+  border: none;
+  border-top: 1px dashed var(--border-color);
+  margin-bottom: 25px;
+  transition: border-color 0.3s ease;
+}
+
+/*
+  .dzikir-arti--spaced — Modifier untuk dzikir-arti yang
+  diikuti oleh dzikir-separator. Memberi jarak ekstra
+  di bawah terjemahan sebelum garis pemisah.
+*/
+.dzikir-arti--spaced {
+  margin-bottom: 25px;
 }
 
 /* ===== POST META (author, date, read time) ===== */

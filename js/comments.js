@@ -72,21 +72,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const CACHE_KEY_STATS    = `stats_${postId}`;
   const CACHE_KEY_COMMENTS = `comments_${postId}`;
 
-  /* ===== 4. KEAMANAN — ESCAPE HTML ===== */
+  /* ===== 4. KEAMANAN — SANITASI ===== */
   /*
     Tidak menggunakan innerHTML untuk data pengguna.
-    Semua teks pengguna ditampilkan via textContent.
-    Fungsi ini hanya untuk keperluan sanitasi tambahan.
-  */
+    Semua teks pengguna ditampilkan via textContent, yang sudah
+    aman dari XSS dengan sendirinya (entity HTML tidak dieksekusi).
 
-  const escapeHtml = (str) => {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  };
+    Catatan: sebelumnya ada fungsi escapeHtml() yang mengubah
+    karakter seperti & dan ' menjadi entity HTML (&amp;, &#039;)
+    sebelum dikirim ke server. Ini TIDAK DIPERLUKAN karena
+    textContent sudah aman, dan justru menyebabkan bug:
+    entity tersebut tersimpan apa adanya di Sheet, lalu tampil
+    literal di layar (mis. "Allah &amp; Rasul-Nya" alih-alih
+    "Allah & Rasul-Nya") karena textContent tidak mendekode
+    entity HTML. Maka fungsi tersebut dihapus.
+  */
 
   const sanitize = (str) => String(str).trim();
 
@@ -429,8 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const payload = new URLSearchParams({
           action   : 'addComment',
           postId,
-          nama     : escapeHtml(nama),
-          komentar : escapeHtml(komentar),
+          nama,
+          komentar,
         });
 
         await fetch(APPS_SCRIPT_URL, {

@@ -28,12 +28,22 @@ document.addEventListener('DOMContentLoaded', () => {
     'Ramadan', 'Syawal', 'Dzulqaidah', 'Dzulhijjah'
   ];
 
+  // Panjang bulan Hijri dalam siklus 30 tahun (indeks 0-based, bulan ke-1..12).
+  // Ini jauh lebih akurat dari rumus genap/ganjil.
+  const HIJRI_MONTH_LENGTHS = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+
   // -------------------------------------------------------
   // KOREKSI OFFSET (hari): sesuaikan jika masih meleset.
   // +1 berarti tambah 1 hari, -1 kurangi 1 hari, 0 = tidak dikoreksi.
   // Ganti nilai ini jika rujukan resmi (BIMAS / ru'yat) berbeda.
   // -------------------------------------------------------
   const HIJRI_OFFSET_DAYS = 1; // <-- ubah di sini jika perlu
+
+  /* ===== UTILS ===== */
+
+  /** Shorthand querySelector dengan guard null */
+  const qs = (sel) => document.querySelector(sel);
+  const qid = (id)  => document.getElementById(id);
 
   /* ===== 2. HIJRI CALENDAR ===== */
 
@@ -43,17 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const getFallbackHijri = (date) => {
     try {
-      // Gunakan tanggal lokal, bukan UTC
-      let d = date.getDate();
-      let m = date.getMonth() + 1;
-      let y = date.getFullYear();
+      const d = date.getDate();
+      const m = date.getMonth() + 1;
+      const y = date.getFullYear();
 
       // Algoritma Kuwaiti (dipakai Microsoft)
       const jd = Math.floor((14 - m) / 12);
       const yt = y + 4800 - jd;
       const mt = m + 12 * jd - 3;
 
-      let jdn = d +
+      const jdn =
+        d +
         Math.floor((153 * mt + 2) / 5) +
         365 * yt +
         Math.floor(yt / 4) -
@@ -79,10 +89,33 @@ document.addEventListener('DOMContentLoaded', () => {
       const hYear  = 30 * n + j - 30;
 
       return { d: hDay, m: hMonth - 1, y: hYear }; // m: 0-based index
-
     } catch {
       return null;
     }
+  };
+
+  /**
+   * Terapkan offset hari ke hasil Hijri, dengan roll-over bulan/tahun.
+   * Menggunakan HIJRI_MONTH_LENGTHS yang lebih akurat daripada rumus genap/ganjil.
+   */
+  const applyHijriOffset = (hDay, hMonthIndex, hYear, offset) => {
+    if (offset === 0) return { hDay, hMonthIndex, hYear };
+
+    hDay += offset;
+
+    const maxDay = HIJRI_MONTH_LENGTHS[hMonthIndex] ?? 30;
+
+    if (hDay > maxDay) {
+      hDay -= maxDay;
+      hMonthIndex++;
+      if (hMonthIndex > 11) { hMonthIndex = 0; hYear++; }
+    } else if (hDay < 1) {
+      hMonthIndex--;
+      if (hMonthIndex < 0) { hMonthIndex = 11; hYear--; }
+      hDay += HIJRI_MONTH_LENGTHS[hMonthIndex] ?? 30;
+    }
+
+    return { hDay, hMonthIndex, hYear };
   };
 
   /**
@@ -97,61 +130,38 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const formatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
           day: 'numeric', month: 'long', year: 'numeric',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone // timezone lokal
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         });
 
-        const parts = formatter.formatToParts(date);
+        const parts    = formatter.formatToParts(date);
         const dayStr   = parts.find(p => p.type === 'day')?.value;
         const monthStr = parts.find(p => p.type === 'month')?.value;
         const yearStr  = parts.find(p => p.type === 'year')?.value;
 
-        // Cocokkan nama bulan Hijri ke index
         const monthIdx = BULAN_HIJRI.findIndex(
           bh => monthStr?.toLowerCase().includes(bh.toLowerCase())
         );
 
-        if (dayStr && monthIdx !== -1 && yearStr) {
-          hDay        = parseInt(dayStr, 10);
-          hMonthIndex = monthIdx;         // 0-based
-          hYear       = parseInt(yearStr, 10);
-        } else {
+        if (!dayStr || monthIdx === -1 || !yearStr) {
           throw new Error('Intl parts tidak lengkap');
         }
+
+        hDay        = parseInt(dayStr, 10);
+        hMonthIndex = monthIdx;
+        hYear       = parseInt(yearStr, 10);
 
       } catch {
         // --- Fallback algoritma ---
         const fb = getFallbackHijri(date);
         if (!fb) return '—';
         hDay        = fb.d;
-        hMonthIndex = fb.m; // 0-based
+        hMonthIndex = fb.m;
         hYear       = fb.y;
       }
 
       // --- Terapkan offset hari ---
-      if (HIJRI_OFFSET_DAYS !== 0) {
-        // Hitung hari dalam siklus Hijri secara kasar untuk rolling tanggal
-        hDay += HIJRI_OFFSET_DAYS;
-
-        // Panjang bulan Hijri: 29 atau 30 hari (estimasi sederhana: ganjil=30, genap=29)
-        const maxDay = (hMonthIndex % 2 === 0) ? 30 : 29;
-
-        if (hDay > maxDay) {
-          hDay -= maxDay;
-          hMonthIndex++;
-          if (hMonthIndex > 11) {
-            hMonthIndex = 0;
-            hYear++;
-          }
-        } else if (hDay < 1) {
-          hMonthIndex--;
-          if (hMonthIndex < 0) {
-            hMonthIndex = 11;
-            hYear--;
-          }
-          const prevMax = (hMonthIndex % 2 === 0) ? 30 : 29;
-          hDay += prevMax;
-        }
-      }
+      ({ hDay, hMonthIndex, hYear } =
+        applyHijriOffset(hDay, hMonthIndex, hYear, HIJRI_OFFSET_DAYS));
 
       return `${hDay} ${BULAN_HIJRI[hMonthIndex]} ${hYear} H`;
 
@@ -162,18 +172,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ===== 3. ELEMENT REFERENCES ===== */
 
-  const elJam   = document.getElementById('nav-jam');
-  const elTgl   = document.getElementById('nav-tgl');
-  const elHijri = document.getElementById('nav-hijri');
+  const elJam   = qid('nav-jam');
+  const elTgl   = qid('nav-tgl');
+  const elHijri = qid('nav-hijri');
 
   /* ===== 4. CLOCK ===== */
 
   const updateClock = () => {
+    if (!elJam) return;
     const now = new Date();
     const hh  = String(now.getHours()).padStart(2, '0');
     const mm  = String(now.getMinutes()).padStart(2, '0');
     const ss  = String(now.getSeconds()).padStart(2, '0');
-    if (elJam) elJam.textContent = `${hh}:${mm}:${ss}`;
+    elJam.textContent = `${hh}:${mm}:${ss}`;
   };
 
   const updateDate = () => {
@@ -185,19 +196,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elHijri) elHijri.textContent = getHijriDate(now);
   };
 
+  /**
+   * Jadwalkan update tanggal agar sinkron dengan pergantian menit sistem,
+   * bukan sekadar interval 60 detik dari waktu load halaman.
+   */
+  const scheduleDateUpdate = () => {
+    updateDate();
+    const now          = new Date();
+    const msUntilNext  = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    setTimeout(() => {
+      updateDate();
+      setInterval(updateDate, 60_000);
+    }, msUntilNext);
+  };
+
   updateClock();
-  updateDate();
+  scheduleDateUpdate();
   setInterval(updateClock, 1000);
-  setInterval(updateDate, 60000);
 
   /* ===== 5. FOOTER YEAR ===== */
 
-  const elTahun = document.getElementById('tahun');
+  const elTahun = qid('tahun');
   if (elTahun) elTahun.textContent = new Date().getFullYear();
 
   /* ===== 6. DARK MODE ===== */
 
-  const btnDark = document.getElementById('btn-darkmode');
+  const btnDark = qid('btn-darkmode');
 
   const applyDark = (isDark) => {
     document.body.classList.toggle('dark', isDark);
@@ -205,7 +229,14 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('darkmode', isDark ? '1' : '0');
   };
 
-  applyDark(localStorage.getItem('darkmode') === '1');
+  // Prioritas: localStorage → prefers-color-scheme sistem
+  const storedDark = localStorage.getItem('darkmode');
+  const prefersDark =
+    storedDark !== null
+      ? storedDark === '1'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  applyDark(prefersDark);
 
   if (btnDark) {
     btnDark.addEventListener('click', () => {
@@ -226,28 +257,49 @@ document.addEventListener('DOMContentLoaded', () => {
     atau biarkan Cloudflare Pages yang menjalankannya.
   */
 
-  const overlay      = document.getElementById('search-overlay');
-  const searchInput  = document.getElementById('search-input');
-  const searchResults = document.getElementById('search-results');
-  const btnSearch    = document.getElementById('btn-search');
-  const searchClose  = document.getElementById('search-close');
+  const overlay       = qid('search-overlay');
+  const searchInput   = qid('search-input');
+  const searchResults = qid('search-results');
+  const btnSearch     = qid('btn-search');
+  const searchClose   = qid('search-close');
 
-  let pagefind      = null;  // instance PageFind, di-load sekali
-  let searchTimer   = null;  // debounce timer
-  let pagefindReady = false; // apakah PageFind sudah berhasil di-load
+  // Tiga state untuk mencegah race condition:
+  // idle → loading → ready | failed
+  let pagefind        = null;
+  let pagefindState   = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
+  let searchTimer     = null;
 
-  /* --- Load PageFind secara lazy --- */
+  /* --- Load PageFind secara lazy, hanya sekali --- */
   const loadPagefind = async () => {
-    if (pagefind || pagefindReady) return;
+    if (pagefindState !== 'idle') return;
+    pagefindState = 'loading';
     try {
-      // Path relatif ke root site — PageFind selalu generate di /pagefind/
       pagefind = await import('/pagefind/pagefind.js');
       await pagefind.options({ excerptLength: 20 });
-      pagefindReady = true;
+      pagefindState = 'ready';
     } catch {
-      // PageFind belum di-generate (misalnya di local dev) — gagal diam-diam
-      pagefindReady = false;
+      pagefindState = 'failed';
+      pagefind      = null;
     }
+  };
+
+  /* --- Buat elemen pesan sederhana --- */
+  const makeMsg = (className, text) => {
+    const el = document.createElement('div');
+    el.className = className;
+    el.textContent = text;
+    return el;
+  };
+
+  /* --- Sanitasi HTML sederhana untuk excerpt PageFind --- */
+  const sanitizeExcerpt = (raw) => {
+    // Hanya izinkan tag <mark> untuk highlight; buang semua tag lain
+    const temp = document.createElement('div');
+    temp.textContent = raw; // encode semua HTML sebagai teks mentah
+    // Kembalikan <mark>…</mark> yang sudah di-encode oleh textContent
+    return temp.innerHTML
+      .replace(/&lt;mark&gt;/g, '<mark>')
+      .replace(/&lt;\/mark&gt;/g, '</mark>');
   };
 
   /* --- Render hasil pencarian --- */
@@ -256,35 +308,34 @@ document.addEventListener('DOMContentLoaded', () => {
     searchResults.innerHTML = '';
 
     if (!results || results.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'search-result-empty';
-      empty.textContent = 'Tidak ada hasil ditemukan.';
-      searchResults.appendChild(empty);
+      searchResults.appendChild(
+        makeMsg('search-result-empty', 'Tidak ada hasil ditemukan.')
+      );
       return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     results.forEach((result) => {
       const a = document.createElement('a');
       a.className = 'search-result-item';
-      a.href = result.url;
-
-      // Tutup overlay saat hasil diklik
-      a.addEventListener('click', () => closeSearch());
+      a.href      = result.url;
+      a.addEventListener('click', closeSearch);
 
       const title = document.createElement('div');
-      title.className = 'search-result-title';
+      title.className   = 'search-result-title';
       title.textContent = result.meta?.title || 'Tanpa Judul';
 
       const excerpt = document.createElement('div');
       excerpt.className = 'search-result-excerpt';
-      // PageFind mengembalikan excerpt dengan <mark> untuk highlight —
-      // ini aman karena hanya berisi tag <mark> dan teks, bukan script
-      excerpt.innerHTML = result.excerpt || '';
+      // Sanitasi: hanya tag <mark> yang diizinkan
+      excerpt.innerHTML = sanitizeExcerpt(result.excerpt || '');
 
-      a.appendChild(title);
-      a.appendChild(excerpt);
-      searchResults.appendChild(a);
+      a.append(title, excerpt);
+      fragment.appendChild(a);
     });
+
+    searchResults.appendChild(fragment);
   };
 
   /* --- Jalankan pencarian dengan debounce 300ms --- */
@@ -293,41 +344,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const q = query.trim();
 
-    // Kosongkan hasil jika query kurang dari 2 karakter
     if (q.length < 2) {
       searchResults.innerHTML = '';
       return;
     }
 
-    // Tampilkan loading
     searchResults.innerHTML = '';
-    const loading = document.createElement('div');
-    loading.className = 'search-result-loading';
-    loading.textContent = 'Mencari...';
-    searchResults.appendChild(loading);
+    searchResults.appendChild(makeMsg('search-result-loading', 'Mencari…'));
 
-    // PageFind belum siap (local dev atau gagal load)
-    if (!pagefindReady) {
+    if (pagefindState === 'loading') {
+      // Tunggu sebentar lalu coba lagi (module sedang dimuat)
+      setTimeout(() => runSearch(query), 200);
+      return;
+    }
+
+    if (pagefindState !== 'ready') {
       searchResults.innerHTML = '';
-      const empty = document.createElement('div');
-      empty.className = 'search-result-empty';
-      empty.textContent = 'Search belum tersedia. Build proyek terlebih dahulu.';
-      searchResults.appendChild(empty);
+      searchResults.appendChild(
+        makeMsg('search-result-empty', 'Search belum tersedia. Build proyek terlebih dahulu.')
+      );
       return;
     }
 
     try {
-      const search = await pagefind.search(q);
-      // Ambil maksimal 8 hasil teratas, load data setiap hasil secara paralel
+      const search  = await pagefind.search(q);
       const top     = search.results.slice(0, 8);
       const details = await Promise.all(top.map(r => r.data()));
       renderResults(details);
     } catch {
       searchResults.innerHTML = '';
-      const empty = document.createElement('div');
-      empty.className = 'search-result-empty';
-      empty.textContent = 'Gagal memuat hasil pencarian.';
-      searchResults.appendChild(empty);
+      searchResults.appendChild(
+        makeMsg('search-result-empty', 'Gagal memuat hasil pencarian.')
+      );
     }
   };
 
@@ -349,21 +397,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* --- Event listeners --- */
-  if (btnSearch)   btnSearch.addEventListener('click', openSearch);
-  if (searchClose) searchClose.addEventListener('click', closeSearch);
+  btnSearch?.addEventListener('click', openSearch);
+  searchClose?.addEventListener('click', closeSearch);
 
-  if (overlay) {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeSearch();
-    });
-  }
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeSearch();
+  });
 
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => runSearch(searchInput.value), 300);
-    });
-  }
+  searchInput?.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => runSearch(searchInput.value), 300);
+  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSearch();
@@ -374,29 +418,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ===== 8. READ TIME ===== */
-  // Hitung estimasi waktu baca dari konten <main>
-  // Hanya aktif jika elemen #read-time ada di halaman
+  // Hitung estimasi waktu baca dari konten artikel.
+  // Prioritas selector: article → .content → main
+  // Hanya aktif jika elemen #read-time ada di halaman.
 
-  const elReadTime = document.getElementById('read-time');
-  const elMain     = document.querySelector('main');
+  const elReadTime = qid('read-time');
 
-  if (elReadTime && elMain) {
-    const words = (elMain.innerText || '').trim().split(/\s+/).length;
-    const mins  = Math.max(1, Math.round(words / 200));
-    elReadTime.textContent = mins;
+  if (elReadTime) {
+    const elContent = qs('article') ?? qs('.content') ?? qs('main');
+    if (elContent) {
+      const words = (elContent.innerText || '').trim().split(/\s+/).filter(Boolean).length;
+      const mins  = Math.max(1, Math.round(words / 200));
+      elReadTime.textContent = mins;
+    }
   }
 
   /* ===== 9. READING PROGRESS BAR ===== */
-  // Hanya aktif jika elemen #progress-bar ada di halaman
+  // Hanya aktif jika elemen #progress-bar ada di halaman.
 
-  const elBar = document.getElementById('progress-bar');
+  const elBar = qid('progress-bar');
 
   if (elBar) {
     window.addEventListener('scroll', () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress  = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      elBar.style.width = progress + '%';
+      const scrollTop  = window.scrollY;
+      const docHeight  = document.documentElement.scrollHeight - window.innerHeight;
+      const progress   = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      elBar.style.width = `${progress}%`;
     }, { passive: true });
   }
 

@@ -1,12 +1,10 @@
 /* ============================================================
-   blog.css — Style khusus halaman blog & dzikir (Refactored)
+   blog.css — Style khusus halaman blog & dzikir
+   Catatan: --bg-card dan --shadow-card sudah ada di style.css
    ============================================================ */
 
 :root {
-  /* --- Tema Terang (Blog Specific) --- */
-  --bg-card: #ffffff;
-  --shadow-card: 0 4px 10px rgba(0, 0, 0, 0.03);
-  
+  /* --- Variabel khusus dzikir (Light Mode) --- */
   --dzikir-title: #2563eb;
   --dzikir-arabic: #0f172a;
   --dzikir-arti: #475569;
@@ -15,15 +13,12 @@
 }
 
 body.dark {
-  /* --- Tema Gelap (Blog Specific) --- */
-  --bg-card: #1e293b;
-  --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.2);
-  
+  /* --- Variabel khusus dzikir (Dark Mode) --- */
   --dzikir-title: #f1f5f9;
   --dzikir-arabic: #f8fafc;
   --dzikir-arti: #cbd5e1;
   --dzikir-faedah-bg: #0f172a;
-  --dzikir-count-bg: rgba(96, 165, 250, 0.15); /* Disesuaikan agar lebih kontras di dark mode */
+  --dzikir-count-bg: rgba(96, 165, 250, 0.15);
 }
 
 /* ===== READING PROGRESS BAR ===== */

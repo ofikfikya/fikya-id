@@ -259,6 +259,98 @@ footer {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* ===== SEARCH RESULTS ===== */
+/*
+  Menampilkan hasil pencarian PageFind di dalam search overlay.
+  Muncul di bawah search-box saat ada query yang diketik.
+*/
+.search-results {
+  width: min(560px, 90vw);
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 8px;
+  background: var(--bg-search-box);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease;
+
+  /* Scrollbar tipis agar tidak mengganggu */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.search-results:empty {
+  display: none;
+}
+
+.search-result-item {
+  display: block;
+  padding: 14px 18px;
+  text-decoration: none;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover,
+.search-result-item:focus {
+  background: var(--bg-element-hover);
+  outline: none;
+}
+
+.search-result-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+.search-result-excerpt {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  /* Potong di 2 baris */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.3s ease;
+}
+
+/* Highlight teks yang cocok dengan query */
+.search-result-excerpt mark {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--primary-color);
+  border-radius: 2px;
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+body.dark .search-result-excerpt mark {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.search-result-empty {
+  padding: 24px 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.search-result-loading {
+  padding: 20px 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .navbar {

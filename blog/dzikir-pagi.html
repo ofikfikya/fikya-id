@@ -221,7 +221,51 @@
       <div class="dzikir-arti">"Ya Allah, sungguh aku memohon kepada-Mu ilmu yang bermanfaat (bagi diriku dan orang lain), rizki yang halal dan amal yang diterima (di sisi-Mu dan mendapatkan ganjaran yang baik)."</div>
     </div>
 
-    <div id="comments"></div>
+    <div id="comments">
+
+      <!-- Statistik -->
+      <div class="article-stats">
+        <div class="stat-item">
+          <span class="stat-icon">👁️</span>
+          <span class="stat-value" id="stat-views">—</span>
+          <span>tayangan</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">💬</span>
+          <span class="stat-value" id="stat-comments">—</span>
+          <span>komentar</span>
+        </div>
+      </div>
+
+      <!-- Section Komentar -->
+      <section class="comments-section">
+        <h2 class="comments-section-title">Komentar</h2>
+
+        <!-- Form Komentar -->
+        <div class="comment-form">
+          <div class="comment-form-title">Tinggalkan Komentar</div>
+          <form id="comment-form" novalidate>
+            <div class="form-group">
+              <label for="comment-nama">Nama</label>
+              <input type="text" id="comment-nama" placeholder="Nama kamu" autocomplete="name">
+              <div class="form-char-count" id="nama-count">0 / 50</div>
+            </div>
+            <div class="form-group">
+              <label for="comment-isi">Komentar</label>
+              <textarea id="comment-isi" placeholder="Tulis komentarmu di sini..."></textarea>
+              <div class="form-char-count" id="isi-count">0 / 1000</div>
+            </div>
+            <button type="submit" class="btn-submit" id="comment-submit">Kirim Komentar</button>
+            <div class="form-message" id="form-message"></div>
+          </form>
+        </div>
+
+        <!-- Daftar Komentar -->
+        <div class="comments-list-title">Semua Komentar</div>
+        <div id="comments-list"></div>
+      </section>
+
+    </div>
   </main>
 
   <footer>

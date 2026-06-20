@@ -3,6 +3,12 @@
    Bergantung pada: style.css (harus di-load lebih dulu)
    Menggunakan CSS Variables dari style.css — tidak ada
    duplikasi variabel di sini.
+   Catatan aksesibilitas:
+   - .comments-loading dan .comments-empty dirender dinamis
+     oleh JS; tambahkan role="status" di elemen tersebut
+     agar screen reader membaca perubahannya.
+   - .empty-icon dirender via JS; pastikan aria-hidden="true"
+     diterapkan di comments.js saat createElement.
    ============================================================ */
 
 /* ===== STATISTIK ARTIKEL ===== */

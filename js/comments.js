@@ -103,7 +103,44 @@ document.addEventListener('DOMContentLoaded', () => {
   const elSubmitBtn    = document.getElementById('comment-submit');
   const elFormMsg      = document.getElementById('form-message');
 
-  /* ===== 6. VIEW COUNTER ===== */
+  /* ===== 6. JSONP HELPER ===== */
+  /*
+    Google Apps Script tidak mengirim CORS header yang konsisten
+    pada GET request karena redirect. Solusi: gunakan JSONP.
+    Script tag tidak terkena batasan CORS.
+    Untuk POST (addComment), gunakan mode no-cors + form-encoded.
+  */
+
+  const jsonp = (url) => {
+    return new Promise((resolve, reject) => {
+      const cbName = `_jsonp_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const script = document.createElement('script');
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('JSONP timeout'));
+      }, 10000);
+
+      const cleanup = () => {
+        delete window[cbName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        clearTimeout(timeout);
+      };
+
+      window[cbName] = (data) => {
+        cleanup();
+        resolve(data);
+      };
+
+      script.src = `${url}&callback=${cbName}`;
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('JSONP gagal memuat script'));
+      };
+      document.head.appendChild(script);
+    });
+  };
+
+  /* ===== 7. VIEW COUNTER ===== */
   /*
     Gunakan localStorage untuk mencegah duplikasi view
     dari browser yang sama saat refresh.
@@ -116,14 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem(VIEW_KEY)) return; // sudah pernah dibuka
 
     try {
-      await fetch(`${APPS_SCRIPT_URL}?action=addView&postId=${encodeURIComponent(postId)}`);
+      await jsonp(`${APPS_SCRIPT_URL}?action=addView&postId=${encodeURIComponent(postId)}`);
       localStorage.setItem(VIEW_KEY, '1');
     } catch(e) {
       console.warn('comments.js: gagal mengirim view.', e);
     }
   };
 
-  /* ===== 7. AMBIL DAN TAMPILKAN STATISTIK ===== */
+  /* ===== 8. AMBIL DAN TAMPILKAN STATISTIK ===== */
 
   const renderStats = (stats) => {
     if (elViews)        elViews.textContent        = (stats.views    || 0).toLocaleString('id-ID');
@@ -137,8 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res  = await fetch(`${APPS_SCRIPT_URL}?action=getStats&postId=${encodeURIComponent(postId)}`);
-      const data = await res.json();
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getStats&postId=${encodeURIComponent(postId)}`);
       if (data.status === 'ok') {
         cache.set(CACHE_KEY_STATS, data);
         renderStats(data);
@@ -148,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ===== 8. AMBIL DAN TAMPILKAN KOMENTAR ===== */
+  /* ===== 9. AMBIL DAN TAMPILKAN KOMENTAR ===== */
 
   const formatTanggal = (timestamp) => {
     try {
@@ -246,8 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elCommentsList.appendChild(loading);
 
     try {
-      const res  = await fetch(`${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`);
-      const data = await res.json();
+      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`);
       if (data.status === 'ok') {
         cache.set(CACHE_KEY_COMMENTS, data.comments);
         renderKomentar(data.comments);
@@ -262,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ===== 9. CHARACTER COUNTER ===== */
+  /* ===== 10. CHARACTER COUNTER ===== */
 
   const updateCount = (input, countEl, max) => {
     if (!input || !countEl) return;
@@ -279,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elIsi.addEventListener('input', () => updateCount(elIsi, elIsiCount, CONFIG.maxKomentar));
   }
 
-  /* ===== 10. TAMPILKAN PESAN FORM ===== */
+  /* ===== 11. TAMPILKAN PESAN FORM ===== */
 
   const showMsg = (tipe, teks) => {
     if (!elFormMsg) return;
@@ -291,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
   };
 
-  /* ===== 11. COOLDOWN KOMENTAR ===== */
+  /* ===== 12. COOLDOWN KOMENTAR ===== */
   /*
     Mencegah spam: satu komentar per 60 detik per postId.
     Key localStorage: comment_cooldown_postId
@@ -320,9 +355,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try { localStorage.setItem(COOLDOWN_KEY, Date.now().toString()); } catch(e) {}
   };
 
-  /* ===== 12. KIRIM KOMENTAR ===== */
+  /* ===== 13. KIRIM KOMENTAR ===== */
 
   /*
+    POST ke Google Apps Script menggunakan mode: 'no-cors' +
+    Content-Type: application/x-www-form-urlencoded.
+    Dengan no-cors, browser tidak memblokir request meski tidak
+    ada CORS header — trade-off: response tidak bisa dibaca,
+    sehingga kita asumsikan sukses jika tidak ada network error.
+
     INTEGRASI CLOUDFLARE TURNSTILE:
     Setelah mengaktifkan Turnstile di Cloudflare Dashboard:
     1. Tambahkan widget di HTML sebelum tombol submit:
@@ -330,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     2. Uncomment baris berikut untuk mengambil token:
        const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
        if (!turnstileToken) { showMsg('error', 'Verifikasi Turnstile gagal.'); return; }
-    3. Tambahkan turnstileToken ke body fetch di bawah
+    3. Tambahkan turnstileToken ke payload di bawah
     4. Verifikasi token di Apps Script (Code.gs) sebelum menyimpan komentar
   */
 
@@ -379,34 +420,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const body = JSON.stringify({
+        /*
+          Gunakan mode: 'no-cors' + form-encoded agar tidak diblokir CORS.
+          Apps Script perlu baca via e.parameter, bukan e.postData.
+          Maka di Code.gs, doPost harus baca dari e.parameter juga
+          (lihat catatan di bawah).
+        */
+        const payload = new URLSearchParams({
           action   : 'addComment',
           postId,
           nama     : escapeHtml(nama),
           komentar : escapeHtml(komentar),
         });
 
-        const res  = await fetch(APPS_SCRIPT_URL, {
+        await fetch(APPS_SCRIPT_URL, {
           method  : 'POST',
-          headers : { 'Content-Type': 'application/json' },
-          body,
+          mode    : 'no-cors',
+          body    : payload,
         });
 
-        const data = await res.json();
+        /*
+          Dengan no-cors, response selalu opaque (tidak bisa dibaca).
+          Kita asumsikan sukses jika tidak ada network error.
+        */
+        setCooldown();
+        showMsg('success', 'Komentar berhasil dikirim! Menunggu persetujuan admin.');
+        elForm.reset();
+        if (elNamaCount) elNamaCount.textContent = `0 / ${CONFIG.maxNama}`;
+        if (elIsiCount)  elIsiCount.textContent  = `0 / ${CONFIG.maxKomentar}`;
 
-        if (data.status === 'ok') {
-          setCooldown();
-          showMsg('success', 'Komentar berhasil dikirim! Menunggu persetujuan admin.');
-          elForm.reset();
-          if (elNamaCount) elNamaCount.textContent = `0 / ${CONFIG.maxNama}`;
-          if (elIsiCount)  elIsiCount.textContent  = `0 / ${CONFIG.maxKomentar}`;
+        /* Refresh stats (hapus cache lama) */
+        cache.clear(CACHE_KEY_STATS);
+        await fetchStats(true);
 
-          /* Refresh stats (hapus cache lama) */
-          cache.clear(CACHE_KEY_STATS);
-          await fetchStats(true);
-        } else {
-          showMsg('error', data.message || 'Terjadi kesalahan. Coba lagi.');
-        }
       } catch(e) {
         console.warn('comments.js: gagal mengirim komentar.', e);
         showMsg('error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.');
@@ -419,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ===== 13. INIT ===== */
+  /* ===== 14. INIT ===== */
 
   sendView();
   fetchStats();

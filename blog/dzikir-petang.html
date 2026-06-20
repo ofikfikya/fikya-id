@@ -25,6 +25,9 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/blog.css">
   <link rel="stylesheet" href="../css/comments.css">
+
+  <!-- Cloudflare Turnstile (proteksi spam form komentar) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -247,6 +250,9 @@
               <label for="comment-isi">Komentar</label>
               <textarea id="comment-isi" placeholder="Tulis komentarmu di sini..."></textarea>
               <div class="form-char-count" id="isi-count">0 / 1000</div>
+            </div>
+            <div class="turnstile-wrapper">
+              <div class="cf-turnstile" data-sitekey="GANTI_DENGAN_SITE_KEY_TURNSTILE_ANDA" data-theme="auto"></div>
             </div>
             <button type="submit" class="btn-submit" id="comment-submit">Kirim Komentar</button>
             <div class="form-message" id="form-message"></div>

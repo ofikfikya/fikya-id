@@ -57,16 +57,21 @@ class SiteNavbar extends HTMLElement {
     if (!btn) return;
 
     const applyDark = (isDark) => {
-      document.body.classList.toggle('dark', isDark);
+      document.documentElement.classList.toggle('dark', isDark);
       btn.querySelector('span').textContent = isDark ? '☀️' : '🌙';
     };
 
-    const savedTheme  = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    applyDark(savedTheme ? savedTheme === 'dark' : prefersDark);
+    /*
+      Inline script di <head> sudah menangani first paint.
+      Di sini kita cukup sinkronkan ikon tombol dengan state
+      yang sudah ada di <html> tanpa memanggil applyDark()
+      (yang akan mentrigger classList.toggle tidak perlu).
+    */
+    const alreadyDark = document.documentElement.classList.contains('dark');
+    btn.querySelector('span').textContent = alreadyDark ? '☀️' : '🌙';
 
     btn.addEventListener('click', () => {
-      const isDark = !document.body.classList.contains('dark');
+      const isDark = !document.documentElement.classList.contains('dark');
       applyDark(isDark);
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });

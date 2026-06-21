@@ -30,4 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProgress();
   }
 
+  /* ===== READING TIME ===== */         // ← TAMBAHKAN DI SINI
+  const elReadTime = document.getElementById('read-time');
+  if (elReadTime) {
+    const contentEl = document.querySelector('.dzikir-container') || document.querySelector('main');
+    if (contentEl) {
+      const text      = contentEl.innerText || '';
+      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+      const minutes   = Math.ceil(wordCount / 200);
+      elReadTime.textContent = minutes;
+    }
+  }
+
 });

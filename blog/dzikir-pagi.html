@@ -74,6 +74,13 @@
   <link rel="stylesheet" href="../css/comments.css">
 
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+  <!-- PageFind Search -->
+  <script type="module">
+    import * as pagefind from '/pagefind/pagefind.js';
+    await pagefind.init();
+    window.__pagefind__ = pagefind;
+  </script>
 </head>
 <body>
 

@@ -87,7 +87,28 @@ document.addEventListener('DOMContentLoaded', () => {
   updateWaktu(); // langsung tampil tanpa delay
   setInterval(updateWaktu, 1000);
 
-  /* ===== 3. SEARCH OVERLAY ===== */
+  /* ===== 3. READING PROGRESS BAR ===== */
+  /*
+    Hanya aktif di halaman yang memiliki elemen #progress-bar
+    (halaman artikel/dzikir). Di index.html elemen ini tidak ada,
+    jadi scroll listener tidak dipasang sama sekali.
+  */
+
+  const progressBar = document.getElementById('progress-bar');
+
+  if (progressBar) {
+    const updateProgress = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const pct       = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      progressBar.style.width = `${Math.min(pct, 100)}%`;
+    };
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress(); // set posisi awal jika halaman di-refresh di tengah scroll
+  }
+
+  /* ===== 4. SEARCH OVERLAY ===== */
 
   const overlay     = document.getElementById('search-overlay');
   const btnSearch   = document.getElementById('btn-search');

@@ -75,6 +75,9 @@
 
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
+  <!-- Navbar Component -->
+  <script src="/js/navbar.js"></script>
+
   <!-- PageFind Search -->
   <script type="module">
     import * as pagefind from '/pagefind/pagefind.js';
@@ -86,30 +89,7 @@
 
   <div class="progress-bar" id="progress-bar"></div>
 
-  <nav class="navbar">
-    <a href="../index.html" class="logo">Fikya.id</a>
-    <div class="nav-datetime" aria-label="Tanggal dan waktu">
-      <span class="tgl-nav" id="nav-tgl" aria-live="polite">—</span>
-      <span class="sep" aria-hidden="true">•</span>
-      <span class="jam-nav" id="nav-jam" aria-live="polite">--:--:--</span>
-      <span class="sep" aria-hidden="true">•</span>
-      <span class="hijri-nav" id="nav-hijri" aria-live="polite">—</span>
-    </div>
-    <div class="nav-actions">
-      <button class="nav-btn" id="btn-darkmode" title="Dark / Light mode" aria-label="Toggle dark mode"><span aria-hidden="true">🌙</span></button>
-      <button class="nav-btn" id="btn-search" title="Cari" aria-label="Buka pencarian"><span aria-hidden="true">🔍</span></button>
-    </div>
-  </nav>
-
-  <div class="search-overlay" id="search-overlay" role="dialog" aria-modal="true" aria-label="Pencarian">
-    <div class="search-box">
-      <span style="font-size:16px;color:var(--text-muted);" aria-hidden="true">🔍</span>
-      <label for="search-input" class="sr-only">Cari artikel atau proyek</label>
-      <input type="search" id="search-input" placeholder="Cari artikel, proyek..." autocomplete="off" aria-autocomplete="list" aria-controls="search-results">
-      <button class="search-close" id="search-close" aria-label="Tutup pencarian">✕</button>
-    </div>
-    <div class="search-results" id="search-results" role="listbox" aria-live="polite" aria-label="Hasil pencarian"></div>
-  </div>
+  <site-navbar></site-navbar>
 
   <header class="header-section">
     <h1>Dzikir Pagi</h1>

@@ -61,6 +61,13 @@
 
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/home.css">
+
+  <!-- PageFind Search -->
+  <script type="module">
+    import * as pagefind from '/pagefind/pagefind.js';
+    await pagefind.init();
+    window.__pagefind__ = pagefind;
+  </script>
 </head>
 <body>
 

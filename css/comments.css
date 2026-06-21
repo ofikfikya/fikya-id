@@ -233,9 +233,9 @@
 }
 
 /* Dark mode overrides untuk kontras teks pesan yang lebih baik */
-body.dark .form-message.success  { color: #4ade80; }
-body.dark .form-message.error    { color: #f87171; }
-body.dark .form-message.cooldown { color: #fbbf24; }
+html.dark .form-message.success  { color: #4ade80; }
+html.dark .form-message.error    { color: #f87171; }
+html.dark .form-message.cooldown { color: #fbbf24; }
 
 /* ===== DAFTAR KOMENTAR ===== */
 

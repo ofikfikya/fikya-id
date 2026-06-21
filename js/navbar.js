@@ -1,13 +1,9 @@
 /* ============================================================
    navbar.js — Web Component <site-navbar> Fikya.id
-   Penggunaan:
-     <site-navbar></site-navbar>
-
-   Setelah render selesai, dispatch custom event 'navbar:ready'
-   ke document agar main.js bisa query elemen navbar dengan aman.
-
-   Logo menggunakan absolute path '/' sehingga benar di semua
-   kedalaman folder (/blog/dzikir-pagi.html, dll.)
+   Self-contained: render navbar + inisialisasi semua fitur
+   (dark mode, jam/tanggal hijri, search, pagefind) di sini.
+   main.js hanya mengurus fitur yang tidak butuh navbar
+   (progress bar, footer tahun).
    ============================================================ */
 
 class SiteNavbar extends HTMLElement {
@@ -50,8 +46,152 @@ class SiteNavbar extends HTMLElement {
       </div>
     `;
 
-    // Beritahu main.js bahwa elemen navbar sudah ada di DOM dan siap di-query
-    document.dispatchEvent(new CustomEvent('navbar:ready'));
+    this._initDarkMode();
+    this._initWaktu();
+    this._initSearch();
+  }
+
+  /* ===== DARK MODE ===== */
+  _initDarkMode() {
+    const btn = document.getElementById('btn-darkmode');
+    if (!btn) return;
+
+    const applyDark = (isDark) => {
+      document.body.classList.toggle('dark', isDark);
+      btn.querySelector('span').textContent = isDark ? '☀️' : '🌙';
+    };
+
+    const savedTheme  = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyDark(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+    btn.addEventListener('click', () => {
+      const isDark = !document.body.classList.contains('dark');
+      applyDark(isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+  }
+
+  /* ===== JAM, TANGGAL MASEHI & HIJRI ===== */
+  _initWaktu() {
+    const elTgl   = document.getElementById('nav-tgl');
+    const elJam   = document.getElementById('nav-jam');
+    const elHijri = document.getElementById('nav-hijri');
+
+    const formatTanggal = (now) => now.toLocaleDateString('id-ID', {
+      weekday : 'short',
+      day     : 'numeric',
+      month   : 'short',
+      year    : 'numeric',
+    });
+
+    const formatJam = (now) => now.toLocaleTimeString('id-ID', {
+      hour   : '2-digit',
+      minute : '2-digit',
+      second : '2-digit',
+      hour12 : false,
+    });
+
+    const formatHijri = (now) => {
+      try {
+        return new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+          day   : 'numeric',
+          month : 'long',
+          year  : 'numeric',
+        }).format(now);
+      } catch (e) { return ''; }
+    };
+
+    const update = () => {
+      const now = new Date();
+      if (elTgl)   elTgl.textContent   = formatTanggal(now);
+      if (elJam)   elJam.textContent   = formatJam(now);
+      if (elHijri) elHijri.textContent = formatHijri(now);
+    };
+
+    update();
+    setInterval(update, 1000);
+  }
+
+  /* ===== SEARCH OVERLAY + PAGEFIND ===== */
+  _initSearch() {
+    const overlay       = document.getElementById('search-overlay');
+    const btnSearch     = document.getElementById('btn-search');
+    const btnClose      = document.getElementById('search-close');
+    const searchInput   = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+
+    const openSearch = () => {
+      overlay?.classList.add('active');
+      searchInput?.focus();
+    };
+
+    const closeSearch = () => {
+      overlay?.classList.remove('active');
+      if (searchResults) searchResults.innerHTML = '';
+      if (searchInput)   searchInput.value = '';
+    };
+
+    btnSearch?.addEventListener('click', openSearch);
+    btnClose?.addEventListener('click', closeSearch);
+
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) closeSearch();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay?.classList.contains('active')) {
+        closeSearch();
+      }
+      if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && !overlay?.classList.contains('active')) {
+        const tag = document.activeElement?.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+          e.preventDefault();
+          openSearch();
+        }
+      }
+    });
+
+    searchInput?.addEventListener('input', async () => {
+      const query = searchInput.value.trim();
+      if (!searchResults) return;
+
+      if (!query) { searchResults.innerHTML = ''; return; }
+
+      if (!window.__pagefind__) {
+        searchResults.innerHTML = `<div class="search-result-loading">Memuat mesin pencarian...</div>`;
+        let waited = 0;
+        while (!window.__pagefind__ && waited < 3000) {
+          await new Promise(r => setTimeout(r, 100));
+          waited += 100;
+        }
+      }
+
+      if (window.__pagefind__) {
+        try {
+          const results = await window.__pagefind__.search(query);
+          if (searchInput.value.trim() !== query) return;
+
+          if (results.results.length === 0) {
+            searchResults.innerHTML = `<div class="search-result-empty">Tidak ada hasil untuk "${query}"</div>`;
+            return;
+          }
+
+          const items = await Promise.all(results.results.slice(0, 8).map(r => r.data()));
+          searchResults.innerHTML = items.map(item => `
+            <a href="${item.url}" class="search-result-item">
+              <div class="search-result-title">${item.meta?.title || 'Tanpa judul'}</div>
+              <div class="search-result-excerpt">${item.excerpt}</div>
+            </a>
+          `).join('');
+        } catch (e) {
+          console.warn('navbar.js: PageFind error', e);
+          searchResults.innerHTML = `<div class="search-result-empty">Gagal memuat hasil pencarian.</div>`;
+        }
+      } else {
+        searchResults.innerHTML = `<div class="search-result-empty">Pencarian tidak tersedia.</div>`;
+      }
+    });
   }
 }
 

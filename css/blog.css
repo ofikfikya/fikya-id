@@ -13,7 +13,7 @@
   --dzikir-count-bg: rgba(37, 99, 235, 0.08);
 }
 
-body.dark {
+html.dark {
   /* --- Variabel khusus dzikir (Dark Mode) --- */
   --dzikir-arabic: #f8fafc;
   --dzikir-arti: #cbd5e1;

@@ -29,7 +29,7 @@
   --footer-text: #64748b;
 }
 
-body.dark {
+html.dark {
   /* --- Tema Gelap (Dark Mode) --- */
   --bg-body: #0b1120;
   --text-main: #f8fafc;
@@ -380,7 +380,7 @@ footer {
   font-weight: 600;
 }
 
-body.dark .search-result-excerpt mark {
+html.dark .search-result-excerpt mark {
   background: rgba(96, 165, 250, 0.2);
 }
 

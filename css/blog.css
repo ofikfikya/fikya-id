@@ -2,7 +2,8 @@
    blog.css — Style khusus halaman blog & dzikir
    Optimized 2026
    Catatan: --bg-card dan --shadow-card sudah ada di style.css
-   Covers: dzikir card, progress bar, post meta, separator
+   Covers: dzikir card, progress bar, post meta, separator,
+           dzikir counter interaktif
    ============================================================ */
 
 :root {
@@ -127,6 +128,14 @@ html.dark {
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
+/*
+  .dzikir-count — gaya badge statis asli.
+  Dipertahankan agar kartu yang tidak memiliki angka
+  (atau sebagai fallback jika JS gagal) tetap tampil rapi.
+  Saat JS aktif, elemen .dzikir-count diganti oleh JS
+  dengan .dzikir-counter-wrapper, sehingga style ini tidak
+  akan terlihat pada kartu yang sudah di-transform.
+*/
 .dzikir-count {
   display: inline-flex;
   align-items: center;
@@ -202,5 +211,251 @@ html.dark {
   .post-meta {
     gap: 6px 14px;
     font-size: 13px;
+  }
+}
+
+
+/* ============================================================
+   DZIKIR COUNTER INTERAKTIF
+   Semua class di bawah di-inject oleh dzikir-counter.js.
+   Tidak ada duplikasi variabel — semua menggunakan variabel
+   yang sudah ada di :root / html.dark di atas.
+   ============================================================ */
+
+/* ===== WRAPPER ===== */
+
+.dzikir-counter-wrapper {
+  margin-bottom: 24px;
+}
+
+.dzikir-counter-wrapper--done .dzikir-counter-display {
+  color: #22c55e;
+}
+
+html.dark .dzikir-counter-wrapper--done .dzikir-counter-display {
+  color: #4ade80;
+}
+
+/* ===== BARIS TOMBOL + ANGKA ===== */
+
+.dzikir-counter-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--dzikir-count-bg);
+  padding: 8px 12px 8px 10px;
+  border-radius: 50px;
+  border: 1px solid var(--border-color);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* ===== DISPLAY ANGKA ===== */
+
+.dzikir-counter-display {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary-color);
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+/* ===== ANIMASI POP SAAT KETUK ===== */
+
+@keyframes dzikir-pop {
+  0%   { transform: scale(1);    }
+  40%  { transform: scale(1.35); }
+  70%  { transform: scale(0.9);  }
+  100% { transform: scale(1);    }
+}
+
+.dzikir-counter-pop {
+  animation: dzikir-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ===== TOMBOL ===== */
+
+.dzikir-counter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Tombol Ketuk — besar, mudah disentuh di mobile */
+.dzikir-counter-btn--tap {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #ffffff;
+  font-size: 22px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.dzikir-counter-btn--tap::before {
+  content: '✋';
+  font-size: 22px;
+  line-height: 1;
+}
+
+.dzikir-counter-btn--tap:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+}
+
+.dzikir-counter-btn--tap:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+/* State selesai */
+.dzikir-counter-btn--tap.dzikir-counter-btn--done {
+  background: #22c55e;
+  cursor: default;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+html.dark .dzikir-counter-btn--tap.dzikir-counter-btn--done {
+  background: #16a34a;
+}
+
+.dzikir-counter-btn--tap.dzikir-counter-btn--done::before {
+  content: '✓';
+}
+
+.dzikir-counter-btn--tap:disabled {
+  cursor: default;
+  transform: none;
+}
+
+/* Tombol Reset — kecil dan discreet */
+.dzikir-counter-btn--reset {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.dzikir-counter-btn--reset:hover {
+  background: var(--bg-element-hover);
+  color: var(--text-main);
+  transform: rotate(-30deg);
+}
+
+/* ===== SVG PROGRESS RING (hanya untuk total > 1) ===== */
+
+.dzikir-counter-ring {
+  width: 54px;
+  height: 54px;
+  transform: rotate(-90deg); /* mulai dari posisi jam 12 */
+  flex-shrink: 0;
+}
+
+.dzikir-ring-track {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 4;
+  transition: stroke 0.3s ease;
+}
+
+.dzikir-ring-progress {
+  fill: none;
+  stroke: var(--primary-color);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 0.3s ease;
+}
+
+.dzikir-counter-wrapper--done .dzikir-ring-progress {
+  stroke: #22c55e;
+}
+
+html.dark .dzikir-counter-wrapper--done .dzikir-ring-progress {
+  stroke: #4ade80;
+}
+
+/* ===== GRUP "MASING-MASING" (Al-Ikhlas, Al-Falaq, An-Naas) ===== */
+
+.dzikir-counter-group {
+  margin-bottom: 24px;
+}
+
+.dzikir-counter-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+  transition: color 0.3s ease;
+}
+
+.dzikir-counter-subrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Sub-wrapper per surat */
+.dzikir-counter-wrapper--sub {
+  margin-bottom: 0;
+}
+
+.dzikir-counter-sublabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .dzikir-counter-pop {
+    animation: none;
+  }
+  .dzikir-counter-btn--tap:hover:not(:disabled) {
+    transform: none;
+  }
+  .dzikir-ring-progress {
+    transition: stroke-dashoffset 0s;
+  }
+}
+
+/* ===== RESPONSIVE COUNTER ===== */
+@media (max-width: 480px) {
+  .dzikir-counter-subrow {
+    gap: 12px;
+  }
+
+  .dzikir-counter-btn--tap {
+    width: 42px;
+    height: 42px;
+  }
+
+  .dzikir-counter-btn--tap::before {
+    font-size: 20px;
+  }
+
+  .dzikir-counter-ring {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dzikir-counter-display {
+    font-size: 20px;
   }
 }

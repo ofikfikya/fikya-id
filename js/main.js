@@ -162,9 +162,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Tunggu sebentar jika PageFind belum siap (race condition saat pertama load)
+    if (!window.__pagefind__) {
+      searchResults.innerHTML = `<div class="search-result-loading">Memuat mesin pencarian...</div>`;
+      let waited = 0;
+      while (!window.__pagefind__ && waited < 3000) {
+        await new Promise(r => setTimeout(r, 100));
+        waited += 100;
+      }
+    }
+
     if (window.__pagefind__) {
       try {
         const results = await window.__pagefind__.search(query);
+        // Abaikan hasil jika query sudah berubah saat menunggu
+        if (searchInput.value.trim() !== query) return;
+
         if (results.results.length === 0) {
           searchResults.innerHTML = `<div class="search-result-empty">Tidak ada hasil untuk "${query}"</div>`;
           return;
@@ -179,9 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
       } catch (e) {
         console.warn('main.js: PageFind error', e);
+        searchResults.innerHTML = `<div class="search-result-empty">Gagal memuat hasil pencarian.</div>`;
       }
     } else {
-      searchResults.innerHTML = `<div class="search-result-loading">Pencarian belum tersedia di mode development.</div>`;
+      searchResults.innerHTML = `<div class="search-result-empty">Pencarian tidak tersedia.</div>`;
     }
   });
 

@@ -276,6 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cached) { renderKomentar(cached); return; }
     }
 
+    /* Hapus cache lama sebelum fetch ulang */
+    cache.clear(CACHE_KEY_COMMENTS);
+
     /* Tampilkan loading */
     elCommentsList.innerHTML = '';
     const loading = document.createElement('div');
@@ -478,6 +481,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sendView();
   fetchStats();
-  fetchKomentar();
+
+  /*
+    PERBAIKAN: Sebelumnya fetchKomentar() dipanggil tanpa forceRefresh,
+    sehingga komentar diambil dari cache localStorage dan tidak pernah
+    di-fetch ulang dari server saat refresh (selama cache belum expired).
+    Kini dipanggil dengan forceRefresh=true agar komentar selalu
+    diambil dari server setiap kali halaman dimuat.
+  */
+  fetchKomentar(true);
 
 });

@@ -5,8 +5,9 @@
    Cara kerja:
    - Script membaca setiap .dzikir-count yang berisi angka
    - Mengubahnya menjadi tombol ketuk dengan hitungan mundur
-   - State disimpan di sessionStorage (reset tiap tab baru,
-     tapi bertahan saat scroll / navigasi dalam halaman)
+   - State disimpan di localStorage dengan flag sesi unik
+     per kunjungan halaman. Saat user refresh / buka tab baru,
+     counter OTOMATIS RESET ke nilai awal.
    - Kartu "masing-masing 3x" mendapat 3 counter terpisah
      (Al-Ikhlas, Al-Falaq, An-Naas)
    - Ring SVG hanya muncul untuk counter dengan total > 1;
@@ -33,22 +34,46 @@
     return match ? parseInt(match[1], 10) : null;
   };
 
-  /* ===== SESSION STORAGE KEY PER HALAMAN ===== */
+  /* ===== SESSION ID UNIK PER KUNJUNGAN ===== */
+  /*
+    Masalah sebelumnya: sessionStorage TIDAK reset saat refresh —
+    ia hanya bersih saat tab/browser ditutup.
+
+    Solusi: gunakan localStorage + session ID yang di-generate
+    tiap kali halaman dimuat (disimpan di sessionStorage).
+    - sessionStorage.sessionId → dibuat fresh tiap kunjungan/refresh
+    - localStorage key menyertakan sessionId → data lama otomatis
+      tidak terbaca karena key-nya berbeda
+    - Tidak perlu hapus data lama secara manual
+  */
+  const getSessionId = () => {
+    const SESSION_KEY = 'dzikir_session_id';
+    let id = sessionStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      sessionStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  };
+
+  const SESSION_ID = getSessionId();
+
+  /* ===== STORAGE KEY PER HALAMAN + SESI ===== */
   const pageKey = () => {
     const path = window.location.pathname.split('/').pop().replace(/\.html?$/i, '');
-    return `dzikir_counter_${path}`;
+    return `dzikir_counter_${path}_${SESSION_ID}`;
   };
 
   const loadState = () => {
     try {
-      const raw = sessionStorage.getItem(pageKey());
+      const raw = localStorage.getItem(pageKey());
       return raw ? JSON.parse(raw) : {};
     } catch (e) { return {}; }
   };
 
   const saveState = (state) => {
     try {
-      sessionStorage.setItem(pageKey(), JSON.stringify(state));
+      localStorage.setItem(pageKey(), JSON.stringify(state));
     } catch (e) {}
   };
 

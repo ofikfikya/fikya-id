@@ -3,13 +3,6 @@
    Bergantung pada: style.css (harus di-load lebih dulu)
    Menggunakan CSS Variables dari style.css — tidak ada
    duplikasi variabel di sini.
-
-   Catatan aksesibilitas:
-   - .comments-loading dan .comments-empty dirender dinamis
-     oleh JS; tambahkan role="status" di elemen tersebut
-     agar screen reader membaca perubahannya.
-   - .empty-icon dirender via JS; pastikan aria-hidden="true"
-     diterapkan di comments.js saat createElement.
    ============================================================ */
 
 /* ===== STATISTIK ARTIKEL ===== */
@@ -138,18 +131,6 @@
 }
 
 /* ===== TURNSTILE PLACEHOLDER ===== */
-/*
-  INTEGRASI CLOUDFLARE TURNSTILE:
-  1. Daftarkan domain di https://dash.cloudflare.com → Turnstile
-  2. Dapatkan Site Key
-  3. Ganti komentar di bawah dengan:
-     <div class="cf-turnstile" data-sitekey="SITE_KEY_ANDA"></div>
-  4. Tambahkan script Turnstile di <head> halaman artikel:
-     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  5. Di comments.js, ambil token sebelum submit:
-     const token = document.querySelector('[name="cf-turnstile-response"]').value;
-  6. Kirim token ke Apps Script untuk diverifikasi server-side
-*/
 
 .turnstile-wrapper {
   margin-bottom: 20px;
@@ -232,7 +213,6 @@
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
-/* Dark mode overrides untuk kontras teks pesan yang lebih baik */
 html.dark .form-message.success  { color: #4ade80; }
 html.dark .form-message.error    { color: #f87171; }
 html.dark .form-message.cooldown { color: #fbbf24; }
@@ -247,7 +227,6 @@ html.dark .form-message.cooldown { color: #fbbf24; }
   transition: color 0.3s ease;
 }
 
-.comments-loading,
 .comments-empty {
   text-align: center;
   padding: 40px 20px;
@@ -263,6 +242,166 @@ html.dark .form-message.cooldown { color: #fbbf24; }
   font-size: 36px;
   display: block;
   margin-bottom: 12px;
+}
+
+/* ===== LOADING SKELETON ===== */
+/*
+  PERBAIKAN: Mengganti teks "Memuat komentar..." dengan skeleton
+  placeholder beranimasi — terlihat lebih profesional dan memberi
+  user gambaran layout sebelum konten muncul.
+*/
+
+.comments-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px 28px;
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+.skeleton-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--border-color);
+}
+
+.skeleton-line--name  { width: 30%; }
+.skeleton-line--date  { width: 20%; }
+.skeleton-line--body1 { width: 100%; margin-bottom: 8px; }
+.skeleton-line--body2 { width: 75%; }
+
+/* Animasi shimmer — efek cahaya bergerak dari kiri ke kanan */
+@keyframes skeleton-shimmer {
+  0%   { opacity: 1;    }
+  50%  { opacity: 0.45; }
+  100% { opacity: 1;    }
+}
+
+.skeleton-avatar,
+.skeleton-line {
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Stagger animasi antar elemen agar tidak berkedip bersamaan */
+.skeleton-card:nth-child(2) .skeleton-avatar,
+.skeleton-card:nth-child(2) .skeleton-line {
+  animation-delay: 0.15s;
+}
+
+.skeleton-card:nth-child(3) .skeleton-avatar,
+.skeleton-card:nth-child(3) .skeleton-line {
+  animation-delay: 0.3s;
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+/*
+  PERBAIKAN: Toast muncul di pojok kanan bawah layar, tidak
+  menggeser layout form. Lebih modern dan tidak mengganggu
+  user yang sedang mengisi form.
+
+  Dikendalikan oleh JS via class .toast--visible dan .toast--{tipe}.
+  Toast menghilang otomatis setelah 4 detik (diatur di JS).
+*/
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none; /* klik menembus ke konten di belakang */
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 260px;
+  max-width: 360px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  border: 1px solid transparent;
+
+  /* Animasi masuk dari bawah */
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animasi keluar */
+.toast--hiding {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.toast--success {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.toast--error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.toast--cooldown {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+html.dark .toast--success  { background: #052e16; color: #4ade80; border-color: rgba(34, 197, 94, 0.2); }
+html.dark .toast--error    { background: #450a0a; color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+html.dark .toast--cooldown { background: #451a03; color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
+
+.toast-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.toast-text {
+  flex: 1;
+  line-height: 1.4;
 }
 
 /* ===== KARTU KOMENTAR ===== */
@@ -339,5 +478,34 @@ html.dark .form-message.cooldown { color: #fbbf24; }
 
   .article-stats {
     gap: 14px;
+  }
+
+  .toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .toast {
+    min-width: unset;
+    max-width: 100%;
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-avatar,
+  .skeleton-line {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .toast {
+    transition: opacity 0.1s ease;
+    transform: none;
+  }
+
+  .toast--hiding {
+    transform: none;
   }
 }

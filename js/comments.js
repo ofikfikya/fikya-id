@@ -4,6 +4,13 @@
            form komentar, tampil komentar, cache localStorage,
            validasi, XSS protection, cooldown,
            skeleton loading, toast notification
+
+   FIX v2:
+   - Cache komentar (CACHE_KEY_COMMENTS) sekarang selalu
+     di-clear saat halaman dimuat, sehingga komentar baru
+     selalu tampil setelah refresh tanpa perlu tutup browser.
+   - Cache komentar juga di-clear setelah submit berhasil
+     (sebelumnya hanya CACHE_KEY_STATS yang di-clear).
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     maxNama      : 50,
     maxKomentar  : 1000,
     cooldownSecs : 60,
-    cacheTTL     : 60 * 1000,   // 1 menit
+    cacheTTL     : 60 * 1000,   // 1 menit (hanya untuk stats)
     fetchTimeout : 10 * 1000,   // 10 detik
     toastDuration: 4000,        // durasi toast tampil (ms)
   };
@@ -84,11 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const elSubmitBtn    = document.getElementById('comment-submit');
 
   /* ===== 6. TOAST NOTIFICATION ===== */
-  /*
-    PERBAIKAN: Ganti form-message statis dengan toast di pojok
-    kanan bawah — tidak menggeser layout, lebih modern.
-    Toast dibuat dinamis dan dihapus dari DOM setelah animasi selesai.
-  */
 
   const TOAST_ICONS = {
     success : '✅',
@@ -123,12 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.appendChild(text);
     toastContainer.appendChild(toast);
 
-    /* Trigger animasi masuk */
     requestAnimationFrame(() => {
       requestAnimationFrame(() => toast.classList.add('toast--visible'));
     });
 
-    /* Animasi keluar lalu hapus dari DOM */
     const hide = () => {
       toast.classList.add('toast--hiding');
       toast.classList.remove('toast--visible');
@@ -223,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return parts[0].substring(0, 2).toUpperCase();
   };
 
-  /* PERBAIKAN: skeleton loading — 3 kartu placeholder beranimasi */
   const renderSkeleton = () => {
     if (!elCommentsList) return;
     elCommentsList.innerHTML = '';
@@ -321,8 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     cache.clear(CACHE_KEY_COMMENTS);
-
-    /* PERBAIKAN: tampilkan skeleton, bukan teks "Memuat komentar..." */
     renderSkeleton();
 
     try {
@@ -444,7 +441,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elNamaCount) elNamaCount.textContent = `0 / ${CONFIG.maxNama}`;
         if (elIsiCount)  elIsiCount.textContent  = `0 / ${CONFIG.maxKomentar}`;
 
+        /*
+          PERBAIKAN: Clear KEDUA cache (stats + komentar) setelah
+          submit. Sebelumnya hanya stats yang di-clear, sehingga
+          komentar baru tidak tampil meski sudah refresh.
+        */
         cache.clear(CACHE_KEY_STATS);
+        cache.clear(CACHE_KEY_COMMENTS);
+
         await fetchStats(true);
 
       } catch(e) {
@@ -463,6 +467,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ===== 15. INIT ===== */
+
+  /*
+    PERBAIKAN: Clear cache komentar setiap kali halaman dimuat.
+    Ini memastikan komentar yang baru disetujui admin selalu
+    tampil saat user refresh, tanpa perlu menunggu TTL habis
+    atau menutup browser.
+
+    Cache stats tetap dipertahankan (TTL 1 menit) karena
+    penghitung view/komentar tidak sepenting konten komentar
+    itu sendiri dan lebih mahal untuk di-fetch ulang.
+  */
 
   sendView();
   fetchStats();

@@ -8,6 +8,8 @@
    - State disimpan di localStorage dengan flag sesi unik
      per kunjungan halaman. Saat user refresh / buka tab baru,
      counter OTOMATIS RESET ke nilai awal.
+   - Key localStorage lama (dari sesi sebelumnya) dibersihkan
+     otomatis saat init agar tidak menumpuk.
    - Kartu "masing-masing 3x" mendapat 3 counter terpisah
      (Al-Ikhlas, Al-Falaq, An-Naas)
    - Ring SVG hanya muncul untuk counter dengan total > 1;
@@ -44,7 +46,7 @@
     - sessionStorage.sessionId → dibuat fresh tiap kunjungan/refresh
     - localStorage key menyertakan sessionId → data lama otomatis
       tidak terbaca karena key-nya berbeda
-    - Tidak perlu hapus data lama secara manual
+    - Key lama dibersihkan saat init agar localStorage tidak menumpuk
   */
   const getSessionId = () => {
     const SESSION_KEY = 'dzikir_session_id';
@@ -57,6 +59,21 @@
   };
 
   const SESSION_ID = getSessionId();
+
+  /* ===== CLEANUP KEY LOCALSTORAGE LAMA ===== */
+  /*
+    PERBAIKAN: Setiap refresh menghasilkan session ID baru,
+    sehingga key localStorage lama tidak pernah terbaca lagi
+    tapi tetap tersimpan dan menumpuk seiring waktu.
+    Hapus semua key dzikir yang bukan milik sesi ini.
+  */
+  const cleanupOldStorage = () => {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('dzikir_counter_') && !k.includes(SESSION_ID))
+        .forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+  };
 
   /* ===== STORAGE KEY PER HALAMAN + SESI ===== */
   const pageKey = () => {
@@ -112,9 +129,13 @@
     btnReset.setAttribute('title', 'Reset');
     btnReset.textContent = '↺';
 
-    /* Display angka */
+    /* Display angka
+       PERBAIKAN: tambah aria-live="polite" agar screen reader
+       membacakan perubahan angka saat user mengetuk tombol */
     const display = document.createElement('div');
     display.className = 'dzikir-counter-display';
+    display.setAttribute('aria-live', 'polite');
+    display.setAttribute('aria-atomic', 'true');
 
     /* Tombol ketuk */
     const btnTap = document.createElement('button');
@@ -213,6 +234,10 @@
 
   /* ===== PROSES SETIAP KARTU ===== */
   const initCounters = () => {
+
+    /* PERBAIKAN: bersihkan key localStorage lama sebelum init */
+    cleanupOldStorage();
+
     const cards = document.querySelectorAll('.dzikir-card');
 
     cards.forEach((card, cardIdx) => {

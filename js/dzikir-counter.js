@@ -5,15 +5,17 @@
    Cara kerja:
    - Script membaca setiap .dzikir-count yang berisi angka
    - Mengubahnya menjadi tombol ketuk dengan hitungan mundur
-   - State disimpan di localStorage dengan flag sesi unik
+   - State disimpan di localStorage dengan session ID unik
      per kunjungan halaman. Saat user refresh / buka tab baru,
      counter OTOMATIS RESET ke nilai awal.
-   - Key localStorage lama (dari sesi sebelumnya) dibersihkan
-     otomatis saat init agar tidak menumpuk.
-   - Kartu "masing-masing 3x" mendapat 3 counter terpisah
-     (Al-Ikhlas, Al-Falaq, An-Naas)
-   - Ring SVG hanya muncul untuk counter dengan total > 1;
-     counter 1x langsung tampil ✋ → ✓ tanpa ring
+
+   FIX v2:
+   - Session ID kini disimpan di window (in-memory), BUKAN
+     sessionStorage. sessionStorage bertahan selama tab hidup
+     (termasuk refresh), sehingga ID tidak pernah berubah dan
+     counter tidak pernah reset. Dengan window, ID di-generate
+     ulang setiap kali halaman dimuat — termasuk saat refresh.
+   - Key localStorage lama dibersihkan otomatis saat init.
 
    Pola teks .dzikir-count yang ditangani:
    "Dibaca 1 x"                             → countdown dari 1
@@ -36,37 +38,24 @@
     return match ? parseInt(match[1], 10) : null;
   };
 
-  /* ===== SESSION ID UNIK PER KUNJUNGAN ===== */
+  /* ===== SESSION ID UNIK PER PAGE LOAD (IN-MEMORY) ===== */
   /*
-    Masalah sebelumnya: sessionStorage TIDAK reset saat refresh —
-    ia hanya bersih saat tab/browser ditutup.
+    PERBAIKAN UTAMA:
+    Sebelumnya session ID disimpan di sessionStorage, yang
+    TIDAK bersih saat refresh — hanya bersih saat tab ditutup.
+    Akibatnya counter tidak pernah reset saat user refresh.
 
-    Solusi: gunakan localStorage + session ID yang di-generate
-    tiap kali halaman dimuat (disimpan di sessionStorage).
-    - sessionStorage.sessionId → dibuat fresh tiap kunjungan/refresh
-    - localStorage key menyertakan sessionId → data lama otomatis
-      tidak terbaca karena key-nya berbeda
-    - Key lama dibersihkan saat init agar localStorage tidak menumpuk
+    Solusi: simpan session ID di window (in-memory).
+    - Setiap kali halaman dimuat (termasuk refresh), window
+      kosong dan ID di-generate ulang dari nol.
+    - localStorage key menyertakan ID ini, sehingga data dari
+      sesi sebelumnya tidak pernah terbaca lagi.
+    - Key lama dibersihkan saat init agar localStorage tidak
+      menumpuk seiring waktu.
   */
-  const getSessionId = () => {
-    const SESSION_KEY = 'dzikir_session_id';
-    let id = sessionStorage.getItem(SESSION_KEY);
-    if (!id) {
-      id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-      sessionStorage.setItem(SESSION_KEY, id);
-    }
-    return id;
-  };
-
-  const SESSION_ID = getSessionId();
+  const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   /* ===== CLEANUP KEY LOCALSTORAGE LAMA ===== */
-  /*
-    PERBAIKAN: Setiap refresh menghasilkan session ID baru,
-    sehingga key localStorage lama tidak pernah terbaca lagi
-    tapi tetap tersimpan dan menumpuk seiring waktu.
-    Hapus semua key dzikir yang bukan milik sesi ini.
-  */
   const cleanupOldStorage = () => {
     try {
       Object.keys(localStorage)
@@ -129,9 +118,7 @@
     btnReset.setAttribute('title', 'Reset');
     btnReset.textContent = '↺';
 
-    /* Display angka
-       PERBAIKAN: tambah aria-live="polite" agar screen reader
-       membacakan perubahan angka saat user mengetuk tombol */
+    /* Display angka */
     const display = document.createElement('div');
     display.className = 'dzikir-counter-display';
     display.setAttribute('aria-live', 'polite');
@@ -196,7 +183,7 @@
 
       if (animate) {
         display.classList.remove('dzikir-counter-pop');
-        void display.offsetWidth; /* force reflow agar animasi bisa di-trigger ulang */
+        void display.offsetWidth;
         display.classList.add('dzikir-counter-pop');
       }
     };
@@ -207,7 +194,7 @@
       current--;
       if (current <= 0) {
         current = 0;
-        vibrate([20, 30, 60]); /* pola "selesai" */
+        vibrate([20, 30, 60]);
       } else {
         vibrate(10);
       }
@@ -235,26 +222,21 @@
   /* ===== PROSES SETIAP KARTU ===== */
   const initCounters = () => {
 
-    /* PERBAIKAN: bersihkan key localStorage lama sebelum init */
     cleanupOldStorage();
 
     const cards = document.querySelectorAll('.dzikir-card');
 
     cards.forEach((card, cardIdx) => {
       const countEl = card.querySelector('.dzikir-count');
-      if (!countEl) return; /* kartu tanpa .dzikir-count (mis. ta'awwudz) — lewati */
+      if (!countEl) return;
 
       const rawText  = countEl.textContent.trim();
       const isMasing = rawText.toLowerCase().includes('masing-masing');
       const total    = parseCount(rawText);
 
-      if (total === null) return; /* tidak ada angka sama sekali — lewati */
+      if (total === null) return;
 
       if (isMasing) {
-        /*
-          Kartu "Masing-masing dibaca 3x" (Al Ikhlas, Al Falaq, An Naas):
-          3 counter terpisah, masing-masing dengan stateKey unik.
-        */
         const subLabels = ['Al-Ikhlas', 'Al-Falaq', 'An-Naas'];
 
         const group = document.createElement('div');
@@ -276,7 +258,6 @@
         countEl.replaceWith(group);
 
       } else {
-        /* Counter biasa: countdown dari total */
         countEl.replaceWith(buildCounter(cardIdx, total, false, ''));
       }
     });

@@ -126,15 +126,20 @@ class SiteNavbar extends HTMLElement {
     const searchInput   = document.getElementById('search-input');
     const searchResults = document.getElementById('search-results');
 
+    /* PERBAIKAN: debounce timer agar search tidak trigger tiap ketukan */
+    let debounceTimer = null;
+
     const openSearch = () => {
       overlay?.classList.add('active');
       searchInput?.focus();
     };
 
+    /* PERBAIKAN: kembalikan fokus ke tombol search saat overlay ditutup */
     const closeSearch = () => {
       overlay?.classList.remove('active');
       if (searchResults) searchResults.innerHTML = '';
       if (searchInput)   searchInput.value = '';
+      btnSearch?.focus();
     };
 
     btnSearch?.addEventListener('click', openSearch);
@@ -157,45 +162,50 @@ class SiteNavbar extends HTMLElement {
       }
     });
 
-    searchInput?.addEventListener('input', async () => {
-      const query = searchInput.value.trim();
-      if (!searchResults) return;
+    /* PERBAIKAN: debounce 300ms — request ke PageFind hanya dikirim
+       setelah user berhenti mengetik selama 300ms */
+    searchInput?.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const query = searchInput.value.trim();
+        if (!searchResults) return;
 
-      if (!query) { searchResults.innerHTML = ''; return; }
+        if (!query) { searchResults.innerHTML = ''; return; }
 
-      if (!window.__pagefind__) {
-        searchResults.innerHTML = `<div class="search-result-loading">Memuat mesin pencarian...</div>`;
-        let waited = 0;
-        while (!window.__pagefind__ && waited < 3000) {
-          await new Promise(r => setTimeout(r, 100));
-          waited += 100;
-        }
-      }
-
-      if (window.__pagefind__) {
-        try {
-          const results = await window.__pagefind__.search(query);
-          if (searchInput.value.trim() !== query) return;
-
-          if (results.results.length === 0) {
-            searchResults.innerHTML = `<div class="search-result-empty">Tidak ada hasil untuk "${query}"</div>`;
-            return;
+        if (!window.__pagefind__) {
+          searchResults.innerHTML = `<div class="search-result-loading">Memuat mesin pencarian...</div>`;
+          let waited = 0;
+          while (!window.__pagefind__ && waited < 3000) {
+            await new Promise(r => setTimeout(r, 100));
+            waited += 100;
           }
-
-          const items = await Promise.all(results.results.slice(0, 8).map(r => r.data()));
-          searchResults.innerHTML = items.map(item => `
-            <a href="${item.url}" class="search-result-item">
-              <div class="search-result-title">${item.meta?.title || 'Tanpa judul'}</div>
-              <div class="search-result-excerpt">${item.excerpt}</div>
-            </a>
-          `).join('');
-        } catch (e) {
-          console.warn('navbar.js: PageFind error', e);
-          searchResults.innerHTML = `<div class="search-result-empty">Gagal memuat hasil pencarian.</div>`;
         }
-      } else {
-        searchResults.innerHTML = `<div class="search-result-empty">Pencarian tidak tersedia.</div>`;
-      }
+
+        if (window.__pagefind__) {
+          try {
+            const results = await window.__pagefind__.search(query);
+            if (searchInput.value.trim() !== query) return;
+
+            if (results.results.length === 0) {
+              searchResults.innerHTML = `<div class="search-result-empty">Tidak ada hasil untuk "${query}"</div>`;
+              return;
+            }
+
+            const items = await Promise.all(results.results.slice(0, 8).map(r => r.data()));
+            searchResults.innerHTML = items.map(item => `
+              <a href="${item.url}" class="search-result-item">
+                <div class="search-result-title">${item.meta?.title || 'Tanpa judul'}</div>
+                <div class="search-result-excerpt">${item.excerpt}</div>
+              </a>
+            `).join('');
+          } catch (e) {
+            console.warn('navbar.js: PageFind error', e);
+            searchResults.innerHTML = `<div class="search-result-empty">Gagal memuat hasil pencarian.</div>`;
+          }
+        } else {
+          searchResults.innerHTML = `<div class="search-result-empty">Pencarian tidak tersedia.</div>`;
+        }
+      }, 300);
     });
   }
 }

@@ -2,7 +2,8 @@
    comments.js — Sistem komentar & statistik Fikya.id
    Covers: postId dari URL, view counter, statistik,
            form komentar, tampil komentar, cache localStorage,
-           validasi, XSS protection, cooldown
+           validasi, XSS protection, cooldown,
+           skeleton loading, toast notification
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,23 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2AQEhvZTYJjnoTkk1JhHhMdfLinKonWYN0JAyXWnswP0QExe-RdiFZXGr1g87Tx1DuQ/exec';
 
   const CONFIG = {
-    maxNama      : 50,       // karakter maksimal nama
-    maxKomentar  : 1000,     // karakter maksimal komentar
-    cooldownSecs : 60,       // detik cooldown antar komentar
-    cacheTTL     : 5 * 60 * 1000, // 5 menit dalam milidetik
+    maxNama      : 50,
+    maxKomentar  : 1000,
+    cooldownSecs : 60,
+    cacheTTL     : 60 * 1000,   // 1 menit
+    fetchTimeout : 10 * 1000,   // 10 detik
+    toastDuration: 4000,        // durasi toast tampil (ms)
   };
 
   /* ===== 2. AMBIL POST ID DARI URL ===== */
-  /*
-    Contoh:
-    /blog/dzikir-pagi.html → postId = "dzikir-pagi"
-    /blog/cara-memasak.html → postId = "cara-memasak"
-  */
 
   const getPostId = () => {
     const path     = window.location.pathname;
-    const filename = path.split('/').pop();          // "dzikir-pagi.html"
-    return filename.replace(/\.html?$/i, '');        // "dzikir-pagi"
+    const filename = path.split('/').pop();
+    return filename.replace(/\.html?$/i, '');
   };
 
   const postId = getPostId();
@@ -44,11 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const cache = {
     set(key, data) {
       try {
-        localStorage.setItem(key, JSON.stringify({
-          data,
-          ts: Date.now(),
-        }));
-      } catch(e) { /* localStorage penuh atau diblokir */ }
+        localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+      } catch(e) {}
     },
 
     get(key) {
@@ -72,21 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const CACHE_KEY_STATS    = `stats_${postId}`;
   const CACHE_KEY_COMMENTS = `comments_${postId}`;
 
-  /* ===== 4. KEAMANAN — SANITASI ===== */
-  /*
-    Tidak menggunakan innerHTML untuk data pengguna.
-    Semua teks pengguna ditampilkan via textContent, yang sudah
-    aman dari XSS dengan sendirinya (entity HTML tidak dieksekusi).
-
-    Catatan: sebelumnya ada fungsi escapeHtml() yang mengubah
-    karakter seperti & dan ' menjadi entity HTML (&amp;, &#039;)
-    sebelum dikirim ke server. Ini TIDAK DIPERLUKAN karena
-    textContent sudah aman, dan justru menyebabkan bug:
-    entity tersebut tersimpan apa adanya di Sheet, lalu tampil
-    literal di layar (mis. "Allah &amp; Rasul-Nya" alih-alih
-    "Allah & Rasul-Nya") karena textContent tidak mendekode
-    entity HTML. Maka fungsi tersebut dihapus.
-  */
+  /* ===== 4. SANITASI ===== */
 
   const sanitize = (str) => String(str).trim();
 
@@ -101,15 +82,63 @@ document.addEventListener('DOMContentLoaded', () => {
   const elNamaCount    = document.getElementById('nama-count');
   const elIsiCount     = document.getElementById('isi-count');
   const elSubmitBtn    = document.getElementById('comment-submit');
-  const elFormMsg      = document.getElementById('form-message');
 
-  /* ===== 6. JSONP HELPER ===== */
+  /* ===== 6. TOAST NOTIFICATION ===== */
   /*
-    Google Apps Script tidak mengirim CORS header yang konsisten
-    pada GET request karena redirect. Solusi: gunakan JSONP.
-    Script tag tidak terkena batasan CORS.
-    Untuk POST (addComment), gunakan mode no-cors + form-encoded.
+    PERBAIKAN: Ganti form-message statis dengan toast di pojok
+    kanan bawah — tidak menggeser layout, lebih modern.
+    Toast dibuat dinamis dan dihapus dari DOM setelah animasi selesai.
   */
+
+  const TOAST_ICONS = {
+    success : '✅',
+    error   : '❌',
+    cooldown: '⏳',
+  };
+
+  let toastContainer = document.querySelector('.toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    toastContainer.setAttribute('aria-live', 'polite');
+    toastContainer.setAttribute('aria-atomic', 'false');
+    document.body.appendChild(toastContainer);
+  }
+
+  const showToast = (tipe, teks) => {
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${tipe}`;
+    toast.setAttribute('role', 'status');
+
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = TOAST_ICONS[tipe] || 'ℹ️';
+
+    const text = document.createElement('span');
+    text.className = 'toast-text';
+    text.textContent = teks;
+
+    toast.appendChild(icon);
+    toast.appendChild(text);
+    toastContainer.appendChild(toast);
+
+    /* Trigger animasi masuk */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add('toast--visible'));
+    });
+
+    /* Animasi keluar lalu hapus dari DOM */
+    const hide = () => {
+      toast.classList.add('toast--hiding');
+      toast.classList.remove('toast--visible');
+      toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    };
+
+    setTimeout(hide, CONFIG.toastDuration);
+  };
+
+  /* ===== 7. JSONP HELPER ===== */
 
   const jsonp = (url) => {
     return new Promise((resolve, reject) => {
@@ -126,32 +155,30 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(timeout);
       };
 
-      window[cbName] = (data) => {
-        cleanup();
-        resolve(data);
-      };
-
+      window[cbName] = (data) => { cleanup(); resolve(data); };
       script.src = `${url}&callback=${cbName}`;
-      script.onerror = () => {
-        cleanup();
-        reject(new Error('JSONP gagal memuat script'));
-      };
+      script.onerror = () => { cleanup(); reject(new Error('JSONP gagal memuat script')); };
       document.head.appendChild(script);
     });
   };
 
-  /* ===== 7. VIEW COUNTER ===== */
-  /*
-    Gunakan localStorage untuk mencegah duplikasi view
-    dari browser yang sama saat refresh.
-    Key: viewed_postId
-  */
+  /* ===== 8. FETCH DENGAN TIMEOUT ===== */
+
+  const fetchWithTimeout = (url, timeoutMs) => {
+    return Promise.race([
+      jsonp(url),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+      ),
+    ]);
+  };
+
+  /* ===== 9. VIEW COUNTER ===== */
 
   const VIEW_KEY = `viewed_${postId}`;
 
   const sendView = async () => {
-    if (localStorage.getItem(VIEW_KEY)) return; // sudah pernah dibuka
-
+    if (localStorage.getItem(VIEW_KEY)) return;
     try {
       await jsonp(`${APPS_SCRIPT_URL}?action=addView&postId=${encodeURIComponent(postId)}`);
       localStorage.setItem(VIEW_KEY, '1');
@@ -160,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ===== 8. AMBIL DAN TAMPILKAN STATISTIK ===== */
+  /* ===== 10. STATISTIK ===== */
 
   const renderStats = (stats) => {
     if (elViews)        elViews.textContent        = (stats.views    || 0).toLocaleString('id-ID');
@@ -172,26 +199,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const cached = cache.get(CACHE_KEY_STATS);
       if (cached) { renderStats(cached); return; }
     }
-
     try {
       const data = await jsonp(`${APPS_SCRIPT_URL}?action=getStats&postId=${encodeURIComponent(postId)}`);
-      if (data.status === 'ok') {
-        cache.set(CACHE_KEY_STATS, data);
-        renderStats(data);
-      }
+      if (data.status === 'ok') { cache.set(CACHE_KEY_STATS, data); renderStats(data); }
     } catch(e) {
       console.warn('comments.js: gagal mengambil statistik.', e);
     }
   };
 
-  /* ===== 9. AMBIL DAN TAMPILKAN KOMENTAR ===== */
+  /* ===== 11. KOMENTAR ===== */
 
   const formatTanggal = (timestamp) => {
     try {
       return new Date(timestamp).toLocaleDateString('id-ID', {
-        day   : 'numeric',
-        month : 'long',
-        year  : 'numeric',
+        day: 'numeric', month: 'long', year: 'numeric',
       });
     } catch(e) { return ''; }
   };
@@ -202,19 +223,47 @@ document.addEventListener('DOMContentLoaded', () => {
     return parts[0].substring(0, 2).toUpperCase();
   };
 
+  /* PERBAIKAN: skeleton loading — 3 kartu placeholder beranimasi */
+  const renderSkeleton = () => {
+    if (!elCommentsList) return;
+    elCommentsList.innerHTML = '';
+
+    const container = document.createElement('div');
+    container.className = 'comments-loading';
+    container.setAttribute('role', 'status');
+    container.setAttribute('aria-label', 'Memuat komentar...');
+
+    for (let i = 0; i < 3; i++) {
+      container.innerHTML += `
+        <div class="skeleton-card">
+          <div class="skeleton-header">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton-line skeleton-line--name"></div>
+              <div class="skeleton-line skeleton-line--date"></div>
+            </div>
+          </div>
+          <div class="skeleton-line skeleton-line--body1"></div>
+          <div class="skeleton-line skeleton-line--body2"></div>
+        </div>
+      `;
+    }
+
+    elCommentsList.appendChild(container);
+  };
+
   const renderKomentar = (list) => {
     if (!elCommentsList) return;
-
     elCommentsList.innerHTML = '';
 
     if (!list || list.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'comments-empty';
-      empty.setAttribute('role', 'status'); // screen reader membaca perubahan ini
+      empty.setAttribute('role', 'status');
 
       const icon = document.createElement('span');
       icon.className = 'empty-icon';
-      icon.setAttribute('aria-hidden', 'true'); // emoji dekoratif, disembunyikan dari screen reader
+      icon.setAttribute('aria-hidden', 'true');
       icon.textContent = '💬';
 
       const msg = document.createElement('p');
@@ -227,26 +276,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     list.forEach((item) => {
-      /* Card */
       const card = document.createElement('div');
       card.className = 'comment-card';
 
-      /* Header */
       const header = document.createElement('div');
       header.className = 'comment-header';
 
-      /* Avatar */
       const avatar = document.createElement('div');
       avatar.className = 'comment-avatar';
       avatar.textContent = getInisial(item.nama || '?');
 
-      /* Meta */
       const meta = document.createElement('div');
       meta.className = 'comment-meta';
 
       const nama = document.createElement('div');
       nama.className = 'comment-name';
-      nama.textContent = sanitize(item.nama); // textContent — aman dari XSS
+      nama.textContent = sanitize(item.nama);
 
       const tanggal = document.createElement('div');
       tanggal.className = 'comment-date';
@@ -257,10 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
       header.appendChild(avatar);
       header.appendChild(meta);
 
-      /* Body */
       const body = document.createElement('div');
       body.className = 'comment-body';
-      body.textContent = sanitize(item.komentar); // textContent — aman dari XSS
+      body.textContent = sanitize(item.komentar);
 
       card.appendChild(header);
       card.appendChild(body);
@@ -276,19 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cached) { renderKomentar(cached); return; }
     }
 
-    /* Hapus cache lama sebelum fetch ulang */
     cache.clear(CACHE_KEY_COMMENTS);
 
-    /* Tampilkan loading */
-    elCommentsList.innerHTML = '';
-    const loading = document.createElement('div');
-    loading.className = 'comments-loading';
-    loading.setAttribute('role', 'status'); // screen reader membaca perubahan ini
-    loading.textContent = 'Memuat komentar...';
-    elCommentsList.appendChild(loading);
+    /* PERBAIKAN: tampilkan skeleton, bukan teks "Memuat komentar..." */
+    renderSkeleton();
 
     try {
-      const data = await jsonp(`${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`);
+      const data = await fetchWithTimeout(
+        `${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`,
+        CONFIG.fetchTimeout
+      );
+
       if (data.status === 'ok') {
         cache.set(CACHE_KEY_COMMENTS, data.comments);
         renderKomentar(data.comments);
@@ -298,12 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
       elCommentsList.innerHTML = '';
       const errEl = document.createElement('div');
       errEl.className = 'comments-empty';
-      errEl.textContent = 'Gagal memuat komentar. Coba refresh halaman.';
+      errEl.textContent = e.message === 'Request timeout'
+        ? 'Server lambat merespons. Coba refresh halaman.'
+        : 'Gagal memuat komentar. Periksa koneksi internet Anda.';
       elCommentsList.appendChild(errEl);
     }
   };
 
-  /* ===== 10. CHARACTER COUNTER ===== */
+  /* ===== 12. CHARACTER COUNTER ===== */
 
   const updateCount = (input, countEl, max) => {
     if (!input || !countEl) return;
@@ -312,31 +356,10 @@ document.addEventListener('DOMContentLoaded', () => {
     countEl.classList.toggle('over-limit', len > max);
   };
 
-  if (elNama) {
-    elNama.addEventListener('input', () => updateCount(elNama, elNamaCount, CONFIG.maxNama));
-  }
+  if (elNama) elNama.addEventListener('input', () => updateCount(elNama, elNamaCount, CONFIG.maxNama));
+  if (elIsi)  elIsi.addEventListener('input',  () => updateCount(elIsi,  elIsiCount,  CONFIG.maxKomentar));
 
-  if (elIsi) {
-    elIsi.addEventListener('input', () => updateCount(elIsi, elIsiCount, CONFIG.maxKomentar));
-  }
-
-  /* ===== 11. TAMPILKAN PESAN FORM ===== */
-
-  const showMsg = (tipe, teks) => {
-    if (!elFormMsg) return;
-    elFormMsg.className = `form-message ${tipe}`;
-    elFormMsg.textContent = teks;
-    setTimeout(() => {
-      elFormMsg.className = 'form-message';
-      elFormMsg.textContent = '';
-    }, 5000);
-  };
-
-  /* ===== 12. COOLDOWN KOMENTAR ===== */
-  /*
-    Mencegah spam: satu komentar per 60 detik per postId.
-    Key localStorage: comment_cooldown_postId
-  */
+  /* ===== 13. COOLDOWN ===== */
 
   const COOLDOWN_KEY = `comment_cooldown_${postId}`;
 
@@ -344,16 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const ts = localStorage.getItem(COOLDOWN_KEY);
       if (!ts) return false;
-      const elapsed = (Date.now() - parseInt(ts, 10)) / 1000;
-      return elapsed < CONFIG.cooldownSecs;
+      return (Date.now() - parseInt(ts, 10)) / 1000 < CONFIG.cooldownSecs;
     } catch(e) { return false; }
   };
 
   const getCooldownSisa = () => {
     try {
-      const ts      = localStorage.getItem(COOLDOWN_KEY);
-      const elapsed = (Date.now() - parseInt(ts, 10)) / 1000;
-      return Math.ceil(CONFIG.cooldownSecs - elapsed);
+      const ts = localStorage.getItem(COOLDOWN_KEY);
+      return Math.ceil(CONFIG.cooldownSecs - (Date.now() - parseInt(ts, 10)) / 1000);
     } catch(e) { return 0; }
   };
 
@@ -361,115 +382,79 @@ document.addEventListener('DOMContentLoaded', () => {
     try { localStorage.setItem(COOLDOWN_KEY, Date.now().toString()); } catch(e) {}
   };
 
-  /* ===== 13. KIRIM KOMENTAR ===== */
-
-  /*
-    POST ke Google Apps Script menggunakan mode: 'no-cors' +
-    Content-Type: application/x-www-form-urlencoded.
-    Dengan no-cors, browser tidak memblokir request meski tidak
-    ada CORS header — trade-off: response tidak bisa dibaca,
-    sehingga kita asumsikan sukses jika tidak ada network error.
-
-    Form dilindungi Cloudflare Turnstile — token diambil dari
-    widget '.cf-turnstile' dan diverifikasi di sisi server
-    (Code.gs) sebelum komentar disimpan.
-  */
+  /* ===== 14. KIRIM KOMENTAR ===== */
 
   if (elForm) {
     elForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      /* Cek cooldown */
       if (isCooldownActive()) {
-        showMsg('cooldown', `Tunggu ${getCooldownSisa()} detik sebelum mengirim komentar lagi.`);
+        showToast('cooldown', `Tunggu ${getCooldownSisa()} detik sebelum mengirim komentar lagi.`);
         return;
       }
 
       const nama     = sanitize(elNama?.value || '');
       const komentar = sanitize(elIsi?.value  || '');
 
-      /* Validasi */
       if (!nama) {
-        showMsg('error', 'Nama tidak boleh kosong.');
+        showToast('error', 'Nama tidak boleh kosong.');
         elNama?.focus();
         return;
       }
 
       if (nama.length > CONFIG.maxNama) {
-        showMsg('error', `Nama maksimal ${CONFIG.maxNama} karakter.`);
+        showToast('error', `Nama maksimal ${CONFIG.maxNama} karakter.`);
         elNama?.focus();
         return;
       }
 
       if (!komentar) {
-        showMsg('error', 'Komentar tidak boleh kosong.');
+        showToast('error', 'Komentar tidak boleh kosong.');
         elIsi?.focus();
         return;
       }
 
       if (komentar.length > CONFIG.maxKomentar) {
-        showMsg('error', `Komentar maksimal ${CONFIG.maxKomentar} karakter.`);
+        showToast('error', `Komentar maksimal ${CONFIG.maxKomentar} karakter.`);
         elIsi?.focus();
         return;
       }
 
-      /* Ambil token Turnstile — widget wajib diselesaikan dulu */
       const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value;
       if (!turnstileToken) {
-        showMsg('error', 'Selesaikan verifikasi keamanan (Turnstile) terlebih dahulu.');
+        showToast('error', 'Selesaikan verifikasi keamanan (Turnstile) terlebih dahulu.');
         return;
       }
 
-      /* Disable tombol saat proses */
       if (elSubmitBtn) {
         elSubmitBtn.disabled    = true;
         elSubmitBtn.textContent = 'Mengirim...';
       }
 
       try {
-        /*
-          Gunakan mode: 'no-cors' + form-encoded agar tidak diblokir CORS.
-          Apps Script perlu baca via e.parameter, bukan e.postData.
-          Maka di Code.gs, doPost harus baca dari e.parameter juga
-          (lihat catatan di bawah).
-        */
         const payload = new URLSearchParams({
-          action   : 'addComment',
-          postId,
-          nama,
-          komentar,
-          turnstileToken,
+          action: 'addComment', postId, nama, komentar, turnstileToken,
         });
 
-        await fetch(APPS_SCRIPT_URL, {
-          method  : 'POST',
-          mode    : 'no-cors',
-          body    : payload,
-        });
+        await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: payload });
 
-        /*
-          Dengan no-cors, response selalu opaque (tidak bisa dibaca).
-          Kita asumsikan sukses jika tidak ada network error.
-        */
         setCooldown();
-        showMsg('success', 'Komentar berhasil dikirim! Menunggu persetujuan admin.');
+        showToast('success', 'Komentar berhasil dikirim! Menunggu persetujuan admin.');
         elForm.reset();
         if (elNamaCount) elNamaCount.textContent = `0 / ${CONFIG.maxNama}`;
         if (elIsiCount)  elIsiCount.textContent  = `0 / ${CONFIG.maxKomentar}`;
 
-        /* Refresh stats (hapus cache lama) */
         cache.clear(CACHE_KEY_STATS);
         await fetchStats(true);
 
       } catch(e) {
         console.warn('comments.js: gagal mengirim komentar.', e);
-        showMsg('error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.');
+        showToast('error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.');
       } finally {
         if (elSubmitBtn) {
           elSubmitBtn.disabled    = false;
           elSubmitBtn.textContent = 'Kirim Komentar';
         }
-        /* Token Turnstile sekali pakai — reset widget agar siap submit berikutnya */
         if (window.turnstile) {
           try { window.turnstile.reset(); } catch(e) {}
         }
@@ -477,18 +462,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ===== 14. INIT ===== */
+  /* ===== 15. INIT ===== */
 
   sendView();
   fetchStats();
-
-  /*
-    PERBAIKAN: Sebelumnya fetchKomentar() dipanggil tanpa forceRefresh,
-    sehingga komentar diambil dari cache localStorage dan tidak pernah
-    di-fetch ulang dari server saat refresh (selama cache belum expired).
-    Kini dipanggil dengan forceRefresh=true agar komentar selalu
-    diambil dari server setiap kali halaman dimuat.
-  */
   fetchKomentar(true);
 
 });

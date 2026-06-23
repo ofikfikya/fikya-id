@@ -128,38 +128,33 @@
     const btnTap = document.createElement('button');
     btnTap.className = 'dzikir-counter-btn dzikir-counter-btn--tap';
 
-    /* Ring SVG — hanya untuk total > 1 */
+    /* Ring SVG — selalu ditampilkan untuk semua counter agar tampilan konsisten */
     const RADIUS = 22;
     const CIRCUM = 2 * Math.PI * RADIUS;
-    let circle   = null;
 
-    if (total > 1) {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'dzikir-counter-ring');
-      svg.setAttribute('viewBox', '0 0 54 54');
-      svg.setAttribute('aria-hidden', 'true');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'dzikir-counter-ring');
+    svg.setAttribute('viewBox', '0 0 54 54');
+    svg.setAttribute('aria-hidden', 'true');
 
-      const track = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      track.setAttribute('cx', '27');
-      track.setAttribute('cy', '27');
-      track.setAttribute('r', String(RADIUS));
-      track.setAttribute('class', 'dzikir-ring-track');
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    track.setAttribute('cx', '27');
+    track.setAttribute('cy', '27');
+    track.setAttribute('r', String(RADIUS));
+    track.setAttribute('class', 'dzikir-ring-track');
 
-      circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', '27');
-      circle.setAttribute('cy', '27');
-      circle.setAttribute('r', String(RADIUS));
-      circle.setAttribute('class', 'dzikir-ring-progress');
-      circle.style.strokeDasharray  = String(CIRCUM);
-      circle.style.strokeDashoffset = String(CIRCUM);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '27');
+    circle.setAttribute('cy', '27');
+    circle.setAttribute('r', String(RADIUS));
+    circle.setAttribute('class', 'dzikir-ring-progress');
+    circle.style.strokeDasharray  = String(CIRCUM);
+    circle.style.strokeDashoffset = String(CIRCUM);
 
-      svg.appendChild(track);
-      svg.appendChild(circle);
-      row.appendChild(btnReset);
-      row.appendChild(svg);
-    } else {
-      row.appendChild(btnReset);
-    }
+    svg.appendChild(track);
+    svg.appendChild(circle);
+    row.appendChild(btnReset);
+    row.appendChild(svg);
 
     row.appendChild(display);
     row.appendChild(btnTap);
@@ -237,28 +232,25 @@
       if (total === null) return;
 
       if (isMasing) {
-        /*
-          Untuk pola "masing-masing", ambil semua .dzikir-arabic
-          di dalam kartu ini. Setiap surat dipisahkan oleh
-          .dzikir-separator, jadi urutannya sesuai subLabels.
-          Counter per surat disisipkan tepat SEBELUM .dzikir-arabic
-          masing-masing, sehingga counter Al-Ikhlas ada di atas
-          Al-Ikhlas, counter Al-Falaq di atas Al-Falaq, dst.
-        */
-        const subLabels  = ['Al-Ikhlas', 'Al-Falaq', 'An-Naas'];
-        const arabicEls  = card.querySelectorAll('.dzikir-arabic');
+        const subLabels = ['Al-Ikhlas', 'Al-Falaq', 'An-Naas'];
 
-        subLabels.forEach((label, i) => {
-          const arabicEl = arabicEls[i];
-          if (!arabicEl) return;
-          arabicEl.parentNode.insertBefore(
-            buildCounter(cardIdx, total, true, label),
-            arabicEl
-          );
+        const group = document.createElement('div');
+        group.className = 'dzikir-counter-group';
+
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'dzikir-counter-group-title';
+        groupTitle.textContent = `Masing-masing dibaca ${total}×`;
+        group.appendChild(groupTitle);
+
+        const subRow = document.createElement('div');
+        subRow.className = 'dzikir-counter-subrow';
+
+        subLabels.forEach((label) => {
+          subRow.appendChild(buildCounter(cardIdx, total, true, label));
         });
 
-        /* Hapus elemen .dzikir-count asli setelah counter disisipkan */
-        countEl.remove();
+        group.appendChild(subRow);
+        countEl.replaceWith(group);
 
       } else {
         countEl.replaceWith(buildCounter(cardIdx, total, false, ''));

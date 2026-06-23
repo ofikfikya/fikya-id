@@ -242,6 +242,7 @@ html.dark .dzikir-counter-wrapper--done .dzikir-counter-display {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  width: 220px; /* lebar tetap agar semua counter seragam */
   background: var(--dzikir-count-bg);
   padding: 8px 12px 8px 10px;
   border-radius: 50px;
@@ -255,7 +256,7 @@ html.dark .dzikir-counter-wrapper--done .dzikir-counter-display {
   font-size: 22px;
   font-weight: 800;
   color: var(--primary-color);
-  min-width: 2ch;
+  flex: 1; /* isi sisa ruang agar angka selalu terpusat */
   text-align: center;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -437,6 +438,10 @@ html.dark .dzikir-counter-wrapper--done .dzikir-ring-progress {
 
 /* ===== RESPONSIVE COUNTER ===== */
 @media (max-width: 480px) {
+  .dzikir-counter-row {
+    width: 200px; /* sesuai ukuran tombol yang lebih kecil di mobile */
+  }
+
   .dzikir-counter-subrow {
     gap: 12px;
   }

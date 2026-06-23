@@ -1,0 +1,192 @@
+/* ============================================================
+   dzikir-tools.css — Style untuk Copy Button & Back to Top
+   Bergantung pada: style.css dan blog.css (harus di-load lebih dulu)
+   Menggunakan CSS Variables dari style.css — tidak ada duplikasi.
+   ============================================================ */
+
+/* ============================================================
+   COPY BUTTON
+   ============================================================ */
+
+.dzikir-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.dzikir-copy-btn:hover {
+  background: var(--bg-element-hover);
+  color: var(--text-main);
+  border-color: var(--primary-color);
+}
+
+.dzikir-copy-btn:active {
+  transform: scale(0.96);
+}
+
+/* State tersalin */
+.dzikir-copy-btn--copied {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+html.dark .dzikir-copy-btn--copied {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.dzikir-copy-icon {
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dzikir-copy-label {
+  white-space: nowrap;
+}
+
+/* Warna aksen berbeda per tipe agar mudah dibedakan */
+.dzikir-copy-btn--dzikir-arabic {
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.dzikir-copy-btn--dzikir-arabic:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--dzikir-count-bg);
+}
+
+.dzikir-copy-btn--dzikir-latin {
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.dzikir-copy-btn--dzikir-latin:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+html.dark .dzikir-copy-btn--dzikir-latin:hover {
+  color: #a5b4fc;
+  border-color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.08);
+}
+
+.dzikir-copy-btn--dzikir-arti {
+  border-color: rgba(20, 184, 166, 0.25);
+}
+
+.dzikir-copy-btn--dzikir-arti:hover {
+  border-color: #0d9488;
+  color: #0d9488;
+  background: rgba(20, 184, 166, 0.06);
+}
+
+html.dark .dzikir-copy-btn--dzikir-arti:hover {
+  color: #2dd4bf;
+  border-color: #2dd4bf;
+  background: rgba(45, 212, 191, 0.08);
+}
+
+/* ============================================================
+   STATS ROW + BACK TO TOP
+   ============================================================ */
+
+/*
+  .dzikir-stats-row membungkus .article-stats dan tombol back to top
+  dalam satu baris flex, dengan tombol di ujung kanan.
+*/
+.dzikir-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Override margin-top bawaan .article-stats karena sudah diatur wrapper */
+.dzikir-stats-row .article-stats {
+  margin-top: 0;
+}
+
+.dzikir-back-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, transform 0.2s ease,
+              box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dzikir-back-top:hover {
+  background: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.dzikir-back-top:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .dzikir-copy-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .dzikir-stats-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dzikir-back-top {
+    align-self: flex-end;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .dzikir-copy-btn,
+  .dzikir-back-top {
+    transition: background 0.1s ease, color 0.1s ease;
+    transform: none !important;
+  }
+}

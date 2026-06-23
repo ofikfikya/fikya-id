@@ -232,25 +232,25 @@
       if (total === null) return;
 
       if (isMasing) {
-        const subLabels = ['Al-Ikhlas', 'Al-Falaq', 'An-Naas'];
+        /*
+          Counter per surat disisipkan tepat SEBELUM .dzikir-arabic
+          masing-masing, sehingga counter Al-Ikhlas ada di atas
+          Al-Ikhlas, counter Al-Falaq di atas Al-Falaq, dst.
+        */
+        const subLabels  = ['Al-Ikhlas', 'Al-Falaq', 'An-Naas'];
+        const arabicEls  = card.querySelectorAll('.dzikir-arabic');
 
-        const group = document.createElement('div');
-        group.className = 'dzikir-counter-group';
-
-        const groupTitle = document.createElement('div');
-        groupTitle.className = 'dzikir-counter-group-title';
-        groupTitle.textContent = `Masing-masing dibaca ${total}×`;
-        group.appendChild(groupTitle);
-
-        const subRow = document.createElement('div');
-        subRow.className = 'dzikir-counter-subrow';
-
-        subLabels.forEach((label) => {
-          subRow.appendChild(buildCounter(cardIdx, total, true, label));
+        subLabels.forEach((label, i) => {
+          const arabicEl = arabicEls[i];
+          if (!arabicEl) return;
+          arabicEl.parentNode.insertBefore(
+            buildCounter(cardIdx, total, true, label),
+            arabicEl
+          );
         });
 
-        group.appendChild(subRow);
-        countEl.replaceWith(group);
+        /* Hapus elemen .dzikir-count asli setelah counter disisipkan */
+        countEl.remove();
 
       } else {
         countEl.replaceWith(buildCounter(cardIdx, total, false, ''));

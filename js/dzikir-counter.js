@@ -160,15 +160,44 @@
     row.appendChild(btnTap);
     wrapper.appendChild(row);
 
+    /* ===== SETUP TRANSISI SMOOTH ===== */
+    /*
+      Gunakan opacity + max-width + overflow:hidden agar ring dan
+      angka memudar & menyempit smooth saat selesai, sebaliknya
+      muncul kembali smooth saat reset. Hindari display:none
+      karena tidak bisa di-transisi.
+    */
+    const TRANSITION = 'opacity 0.35s ease, max-width 0.35s ease, margin 0.35s ease';
+
+    svg.style.transition      = TRANSITION;
+    svg.style.overflow        = 'hidden';
+    svg.style.maxWidth        = '54px';
+    svg.style.opacity         = '1';
+
+    display.style.transition  = TRANSITION;
+    display.style.overflow    = 'hidden';
+    display.style.maxWidth    = '3ch';
+    display.style.opacity     = '1';
+
     /* ===== UPDATE TAMPILAN ===== */
     const updateDisplay = (val, animate) => {
       const done = val <= 0;
 
-      /* Saat selesai: sembunyikan ring dan display angka */
-      svg.style.display     = done ? 'none' : '';
-      display.style.display = done ? 'none' : '';
+      if (done) {
+        /* Fade out + collapse ring dan angka */
+        svg.style.opacity    = '0';
+        svg.style.maxWidth   = '0';
+        svg.style.marginRight = '0';
+        display.style.opacity  = '0';
+        display.style.maxWidth = '0';
+      } else {
+        /* Fade in + expand ring dan angka */
+        svg.style.opacity    = '1';
+        svg.style.maxWidth   = '54px';
+        svg.style.marginRight = '';
+        display.style.opacity  = '1';
+        display.style.maxWidth = '3ch';
 
-      if (!done) {
         display.textContent = String(val);
         display.setAttribute('aria-label', `Sisa ${val} dari ${total}`);
         const ratio = Math.max(0, Math.min(1, 1 - val / total));

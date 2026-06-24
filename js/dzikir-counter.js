@@ -164,19 +164,23 @@
     const updateDisplay = (val, animate) => {
       const done = val <= 0;
 
-      display.textContent = done ? '✓' : String(val);
-      display.setAttribute('aria-label', done ? 'Selesai' : `Sisa ${val} dari ${total}`);
+      /* Saat selesai: sembunyikan ring dan display angka */
+      svg.style.display     = done ? 'none' : '';
+      display.style.display = done ? 'none' : '';
+
+      if (!done) {
+        display.textContent = String(val);
+        display.setAttribute('aria-label', `Sisa ${val} dari ${total}`);
+        const ratio = Math.max(0, Math.min(1, 1 - val / total));
+        circle.style.strokeDashoffset = String(CIRCUM * (1 - ratio));
+      }
+
       btnTap.setAttribute('aria-label', done ? 'Selesai' : `Ketuk — sisa ${val}`);
       btnTap.disabled = done;
       btnTap.classList.toggle('dzikir-counter-btn--done', done);
       wrapper.classList.toggle('dzikir-counter-wrapper--done', done);
 
-      if (circle) {
-        const ratio  = Math.max(0, Math.min(1, 1 - val / total));
-        circle.style.strokeDashoffset = String(CIRCUM * (1 - ratio));
-      }
-
-      if (animate) {
+      if (animate && !done) {
         display.classList.remove('dzikir-counter-pop');
         void display.offsetWidth;
         display.classList.add('dzikir-counter-pop');

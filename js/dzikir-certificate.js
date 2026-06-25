@@ -22,7 +22,7 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbz2AQEhvZTYJjnoTkk1JhHhMdfLinKonWYN0JAyXWnswP0QExe-RdiFZXGr1g87Tx1DuQ/exec',
+    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
     SECRET_KEY      : '280526',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
@@ -112,11 +112,16 @@
   });
 
   const apiCall = (params) => {
-    /* Bangun URL persis seperti pola comments.js yang sudah terbukti bekerja */
-    const parts = Object.entries({ ...params, key: CFG.SECRET_KEY })
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    /*
+      Bangun query string manual agar action selalu di depan
+      dan tidak ada encoding ganda. Pola sama dengan comments.js.
+    */
+    const { action, ...rest } = params;
+    const base = `action=${action}`;
+    const extra = Object.entries({ ...rest, key: CFG.SECRET_KEY })
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
       .join('&');
-    return jsonp(`${CFG.APPS_SCRIPT_URL}?${parts}`);
+    return jsonp(`${CFG.APPS_SCRIPT_URL}?${base}&${extra}`);
   };
 
   /* ============================================================

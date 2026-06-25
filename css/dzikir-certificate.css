@@ -351,9 +351,14 @@ html.dark .cert-message.info    { color: #60a5fa; }
 .cert-canvas-wrap {
   width: 100%;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;       /* bisa di-scroll horizontal jika canvas lebih lebar dari modal */
+  overflow-y: auto;       /* bisa di-scroll vertikal jika canvas lebih tinggi dari modal */
+  max-height: 55vh;       /* batasi tinggi agar tombol aksi tetap terlihat */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border-color);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+  -webkit-overflow-scrolling: touch; /* scroll smooth di iOS */
 }
 
 .cert-canvas-wrap canvas {

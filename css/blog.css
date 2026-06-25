@@ -242,7 +242,7 @@ html.dark .dzikir-counter-wrapper--done .dzikir-counter-display {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  width: 220px; /* lebar tetap agar semua counter seragam */
+  width: 240px; /* lebar tetap agar semua counter seragam, cukup untuk 3 digit */
   background: var(--dzikir-count-bg);
   padding: 8px 12px 8px 10px;
   border-radius: 50px;

@@ -707,7 +707,7 @@
     /* ── Badge api & piala ── */
     /* Garis atas y=255, garis bawah y=328 → center=(255+328)/2=291
        Badge y=280: atas=262 (7px dari garis), label y=312 (16px dari garis bawah) */
-    drawBadges(ctx, W, 284, CFG.JENIS, GOLD, GOLD_LITE, DARK);
+    drawBadges(ctx, W, 280, CFG.JENIS, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
     drawThinDivider(ctx, W, 328, GOLD_LITE);
@@ -1099,13 +1099,23 @@
      ============================================================ */
 
   const injectLoginBtn = () => {
+    /*
+      Tombol "Masuk dengan ID" hanya ditampilkan dalam mode debug.
+      Tambahkan ?debug=1 di URL untuk mengaktifkan.
+      Contoh: dzikir-pagi.html?debug=1
+      User biasa tidak akan melihat tombol ini.
+    */
+    const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
+    if (!isDebug) return;
+
     const statsRow = document.querySelector('.dzikir-stats-row');
     if (!statsRow) return;
 
     const btn = document.createElement('button');
     btn.className   = 'cert-login-btn';
-    btn.textContent = '🔑 Masuk dengan ID';
-    btn.setAttribute('title', 'Masuk jika localStorage terhapus');
+    btn.textContent = '🔑 [DEBUG] Masuk dengan ID';
+    btn.setAttribute('title', 'Mode debug — masuk dengan ID tanpa menyelesaikan dzikir');
+    btn.style.outline = '2px dashed #f97316'; /* penanda visual mode debug */
     statsRow.appendChild(btn);
 
     btn.addEventListener('click', () => {
@@ -1118,12 +1128,68 @@
      INIT
      ============================================================ */
 
+  /* ============================================================
+     CEK WAKTU — sertifikat hanya bisa dibuat sesuai waktunya
+     Menggunakan waktu lokal perangkat user masing-masing.
+     Dzikir Pagi  : 04:00 — 11:59 (setelah Shubuh s/d siang)
+     Dzikir Petang: 15:00 — 23:59 (setelah Ashar s/d tengah malam)
+     ============================================================ */
+
+  const isWaktuValid = () => {
+    /* Mode debug: lewati pengecekan waktu */
+    const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
+    if (isDebug) return { valid: true };
+
+    const jam = new Date().getHours(); /* 0-23, waktu lokal user */
+
+    if (CFG.JENIS === 'pagi') {
+      /* 04:00 — 11:59 */
+      if (jam >= 4 && jam < 12) return { valid: true };
+      return {
+        valid  : false,
+        pesan  : 'Sertifikat Dzikir Pagi hanya tersedia mulai setelah Shubuh (04.00) hingga pukul 12.00 siang.',
+        saran  : 'Jazakallahu khairan telah berdzikir. Sampai jumpa besok pagi! 🌤️',
+      };
+    } else {
+      /* 15:00 — 23:59 */
+      if (jam >= 15 && jam <= 23) return { valid: true };
+      return {
+        valid  : false,
+        pesan  : 'Sertifikat Dzikir Petang hanya tersedia mulai setelah Ashar (15.00) hingga tengah malam.',
+        saran  : 'Jazakallahu khairan telah berdzikir. Sampai jumpa nanti petang! 🌆',
+      };
+    }
+  };
+
+  const showWaktuTidakValid = (info) => {
+    getInner().innerHTML = `
+      <div class="cert-modal-icon">⏰</div>
+      <div class="cert-modal-title">Belum Waktunya</div>
+      <div class="cert-modal-desc">${info.pesan}</div>
+      <div class="cert-modal-desc" style="margin-top:8px;font-style:italic;">
+        ${info.saran}
+      </div>
+      <div class="cert-btn-row" style="margin-top:24px;">
+        <button class="cert-btn cert-btn--primary" id="cert-close-waktu">Tutup</button>
+      </div>
+    `;
+    document.getElementById('cert-close-waktu')?.addEventListener('click', closeModal);
+  };
+
   const init = async () => {
     buildModal();
     injectLoginBtn();
 
     /* Tunggu semua counter selesai */
     await waitForCounters();
+
+    /* Cek waktu terlebih dahulu */
+    const waktu = isWaktuValid();
+    if (!waktu.valid) {
+      openModal();
+      showWaktuTidakValid(waktu);
+      return;
+    }
 
     /* Cek localStorage */
     const savedId   = ls.get(CFG.LS_USER_ID);

@@ -84,25 +84,39 @@
      ============================================================ */
 
   const jsonp = (url) => new Promise((resolve, reject) => {
-    const cb      = `_cert_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const cbName  = `_cert_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script  = document.createElement('script');
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, CFG.TIMEOUT_MS);
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Server lambat merespons. Coba lagi.'));
+    }, CFG.TIMEOUT_MS);
 
     const cleanup = () => {
-      delete window[cb];
+      delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
       clearTimeout(timeout);
     };
 
-    window[cb]    = (data) => { cleanup(); resolve(data); };
-    script.src    = `${url}&callback=${cb}`;
-    script.onerror = () => { cleanup(); reject(new Error('Network error')); };
+    window[cbName]  = (data) => { cleanup(); resolve(data); };
+    script.src      = `${url}&callback=${cbName}`;
+
+    /*
+      PENTING: onerror pada JSONP ke Google Apps Script TIDAK
+      dipakai sebagai rejection karena Apps Script melakukan
+      302 redirect yang kadang memicu onerror di browser meski
+      request sebenarnya berhasil. Biarkan timeout yang menangani
+      kegagalan — persis seperti pola di comments.js.
+    */
+    script.onerror  = () => { console.warn('cert: script error, menunggu callback...'); };
     document.head.appendChild(script);
   });
 
   const apiCall = (params) => {
-    const qs = new URLSearchParams({ ...params, key: CFG.SECRET_KEY }).toString();
-    return jsonp(`${CFG.APPS_SCRIPT_URL}?${qs}`);
+    /* Bangun URL persis seperti pola comments.js yang sudah terbukti bekerja */
+    const parts = Object.entries({ ...params, key: CFG.SECRET_KEY })
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+    return jsonp(`${CFG.APPS_SCRIPT_URL}?${parts}`);
   };
 
   /* ============================================================

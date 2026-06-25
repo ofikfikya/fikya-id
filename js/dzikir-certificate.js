@@ -22,8 +22,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
-    SECRET_KEY      : '280526',
+    APPS_SCRIPT_URL : 'GANTI_DENGAN_URL_APPS_SCRIPT_ANDA',
+    SECRET_KEY      : 'GANTI_DENGAN_SECRET_KEY_ANDA',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,
@@ -51,19 +51,41 @@
   const HIJRI_OFFSET_DAYS = 0;
 
   /* Format tanggal Hijriah: "Jum'at, 4 Muharram 1448 H" */
+  /* Nama hari Islam (index 0=Ahad sesuai getDay() 0=Minggu) */
+  const HARI_ISLAM = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+
+  /* Nama bulan Hijriah */
+  const BULAN_HIJRI = [
+    'Muharram', 'Safar', "Rabi'ul Awwal", "Rabi'ul Akhir",
+    'Jumadal Ula', 'Jumadal Akhirah', 'Rajab', "Sya'ban",
+    'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah',
+  ];
+
   const formatTglHijri = (date) => {
     try {
       /* Terapkan offset jika diperlukan */
       const adjusted = new Date(date);
       adjusted.setDate(adjusted.getDate() + HIJRI_OFFSET_DAYS);
 
-      const hari  = date.toLocaleDateString('id-ID', { weekday: 'long' });
-      const hijri = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+      /* Nama hari Islam dari getDay() */
+      const hari = HARI_ISLAM[date.getDay()];
+
+      /* Ambil komponen Hijriah via Intl — parse bagian angka saja */
+      const fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
         day  : 'numeric',
-        month: 'long',
+        month: 'numeric',
         year : 'numeric',
-      }).format(adjusted);
-      return `${hari}, ${hijri} H`;
+      }).formatToParts(adjusted);
+
+      const parts = {};
+      fmt.forEach(p => { parts[p.type] = p.value; });
+
+      const tgl   = parts.day   || '';
+      const bln   = parseInt(parts.month || '1', 10) - 1;
+      const thn   = (parts.year || '').replace(/[^0-9]/g, ''); /* hapus SM/AH/dll */
+      const bulan = BULAN_HIJRI[bln] || '';
+
+      return `${hari}, ${tgl} ${bulan} ${thn} H`;
     } catch (e) {
       return '';
     }
@@ -503,8 +525,14 @@
 
   const showStepSertifikat = () => {
     const canvas = document.createElement('canvas');
-    canvas.width  = 700;
-    canvas.height = 620;
+    /* Fix 6: Tingkatkan resolusi dengan devicePixelRatio */
+    const DPR     = window.devicePixelRatio || 2;
+    const CW      = 700;
+    const CH      = 680;
+    canvas.width  = CW * DPR;
+    canvas.height = CH * DPR;
+    canvas.style.width  = CW + 'px';
+    canvas.style.height = CH + 'px';
 
     getInner().innerHTML = `
       <div class="cert-steps">
@@ -574,8 +602,10 @@
 
   const drawCertificate = (canvas, data) => {
     const ctx = canvas.getContext('2d');
-    const W   = canvas.width;
-    const H   = canvas.height;
+    const DPR = window.devicePixelRatio || 2;
+    ctx.scale(DPR, DPR);
+    const W   = 700;  /* ukuran logis — bukan canvas.width yang sudah di-scale */
+    const H   = 680;
 
     const GOLD      = '#b8860b';
     const GOLD_LITE = '#d4a843';
@@ -647,13 +677,14 @@
     wrapText(ctx, 'sebab keberkahan dan penjagaan sepanjang hari"', W / 2, 237, 560, 17);
 
     /* ── Divider tengah ── */
-    drawThinDivider(ctx, W, 255, GOLD_LITE);
+    drawThinDivider(ctx, W, 258, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    drawBadges(ctx, W, 275, CFG.JENIS, GOLD, GOLD_LITE, DARK);
+    /* Tengah antara y=258 dan y=318 = y=288, badge tinggi ~60px, mulai y=258 */
+    drawBadges(ctx, W, 268, CFG.JENIS, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
-    drawThinDivider(ctx, W, 320, GOLD_LITE);
+    drawThinDivider(ctx, W, 318, GOLD_LITE);
 
     /* ── Do'a box ── */
     drawDoaBox(ctx, W, 335, GOLD, GOLD_LITE, DARK, MUTED);
@@ -877,11 +908,11 @@
 
   /* ── Helper: do'a box ── */
   const drawDoaBox = (ctx, W, y, gold, lite, dark, muted) => {
-    /* Box background */
+    /* Box background — tinggi 160 agar teks tidak menyentuh tepi bawah */
     ctx.fillStyle   = 'rgba(184,134,11,0.06)';
     ctx.strokeStyle = lite;
     ctx.lineWidth   = 1;
-    roundRect(ctx, 40, y, W - 80, 130, 6);
+    roundRect(ctx, 40, y, W - 80, 160, 6);
     ctx.fill(); ctx.stroke();
 
     const cx = W / 2;
@@ -890,34 +921,34 @@
     ctx.fillStyle = dark;
     ctx.font      = '16px "Times New Roman", serif';
     ctx.textAlign = 'center';
-    ctx.fillText('اللَّهُمَّ تَقَبَّلْ مِنَّا إِنَّكَ أَنْتَ السَّمِيعُ الْعَلِيمُ', cx, y + 24);
+    ctx.fillText('اللَّهُمَّ تَقَبَّلْ مِنَّا إِنَّكَ أَنْتَ السَّمِيعُ الْعَلِيمُ', cx, y + 26);
 
     ctx.fillStyle = muted;
     ctx.font      = 'italic 10px Inter, sans-serif';
-    ctx.fillText('Allāhumma taqabbal minnā innaka antas-samī\'ul-\'alīm', cx, y + 40);
+    ctx.fillText('Allāhumma taqabbal minnā innaka antas-samī\'ul-\'alīm', cx, y + 42);
 
     ctx.fillStyle = '#6b4c0e';
     ctx.font      = '10.5px Inter, sans-serif';
-    ctx.fillText('"Ya Allah, terimalah amal dari kami. Sesungguhnya Engkau Maha Mendengar lagi Maha Mengetahui."', cx, y + 56);
+    ctx.fillText('"Ya Allah, terimalah amal dari kami. Sesungguhnya Engkau Maha Mendengar lagi Maha Mengetahui."', cx, y + 58);
 
     /* Separator */
     ctx.strokeStyle = 'rgba(184,134,11,0.25)';
     ctx.lineWidth   = 0.8;
-    ctx.beginPath(); ctx.moveTo(W * 0.3, y + 66); ctx.lineTo(W * 0.7, y + 66); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W * 0.3, y + 72); ctx.lineTo(W * 0.7, y + 72); ctx.stroke();
 
     /* Do'a 2 */
     ctx.fillStyle = dark;
     ctx.font      = '16px "Times New Roman", serif';
-    ctx.fillText('اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ', cx, y + 86);
+    ctx.fillText('اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ', cx, y + 96);
 
     ctx.fillStyle = muted;
     ctx.font      = 'italic 10px Inter, sans-serif';
-    ctx.fillText('Allāhumma a\'innī \'alā dzikrika wa syukrika wa husni \'ibādatik', cx, y + 101);
+    ctx.fillText('Allāhumma a\'innī \'alā dzikrika wa syukrika wa husni \'ibādatik', cx, y + 112);
 
     ctx.fillStyle = '#6b4c0e';
     ctx.font      = '10.5px Inter, sans-serif';
-    ctx.fillText('"Ya Allah, tolonglah aku untuk selalu mengingat-Mu, bersyukur,', cx, y + 116);
-    ctx.fillText('dan beribadah kepada-Mu dengan sebaik-baiknya."', cx, y + 129);
+    ctx.fillText('"Ya Allah, tolonglah aku untuk selalu mengingat-Mu, bersyukur,', cx, y + 128);
+    ctx.fillText('dan beribadah kepada-Mu dengan sebaik-baiknya."', cx, y + 143);
   };
 
   /* ── Helper: footer ── */

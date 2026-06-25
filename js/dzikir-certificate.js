@@ -22,8 +22,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
-    SECRET_KEY      : '280526',
+    APPS_SCRIPT_URL : 'GANTI_DENGAN_URL_APPS_SCRIPT_ANDA',
+    SECRET_KEY      : 'GANTI_DENGAN_SECRET_KEY_ANDA',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,
@@ -31,9 +31,52 @@
     /* Deteksi jenis halaman dari path */
     JENIS : window.location.pathname.includes('petang') ? 'petang' : 'pagi',
 
-    /* Tanggal hardcode sesuai halaman */
-    TGL_HIJRI  : '14 Muharram 1448 H',
-    TGL_MASEHI : 'Ahad, 19 Juni 2026',
+    /* Tanggal dihitung dinamis saat sertifikat dibuat */
+    get TGL_HIJRI() { return formatTglHijri(new Date()); },
+    get TGL_MASEHI() { return formatTglMasehi(new Date()); },
+  };
+
+  /* ============================================================
+     FORMAT TANGGAL DINAMIS
+     ============================================================ */
+
+  /*
+    OFFSET KALENDER HIJRIAH
+    Nilai 0  = gunakan hasil Intl (default)
+    Nilai +1 = geser 1 hari ke depan (jika Intl terlalu cepat)
+    Nilai -1 = geser 1 hari ke belakang (jika Intl terlalu lambat)
+    Sesuaikan apabila tanggal Hijriah tidak sesuai dengan
+    penetapan hilal resmi di lokasi Anda (Abu Dhabi - UAE).
+  */
+  const HIJRI_OFFSET_DAYS = 0;
+
+  /* Format tanggal Hijriah: "Jum'at, 4 Muharram 1448 H" */
+  const formatTglHijri = (date) => {
+    try {
+      /* Terapkan offset jika diperlukan */
+      const adjusted = new Date(date);
+      adjusted.setDate(adjusted.getDate() + HIJRI_OFFSET_DAYS);
+
+      const hari  = date.toLocaleDateString('id-ID', { weekday: 'long' });
+      const hijri = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+        day  : 'numeric',
+        month: 'long',
+        year : 'numeric',
+      }).format(adjusted);
+      return `${hari}, ${hijri} H`;
+    } catch (e) {
+      return '';
+    }
+  };
+
+  /* Format tanggal Masehi: "Jum'at, 19 Juni 2026" */
+  const formatTglMasehi = (date) => {
+    return date.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day    : 'numeric',
+      month  : 'long',
+      year   : 'numeric',
+    });
   };
 
   /* ============================================================
@@ -129,7 +172,7 @@
      MODAL
      ============================================================ */
 
-  let overlay, modal, stepDots, certData = {};
+  let overlay, modal, certData = {};
 
   const buildModal = () => {
     overlay = document.createElement('div');
@@ -442,7 +485,7 @@
   const showStepSertifikat = () => {
     const canvas = document.createElement('canvas');
     canvas.width  = 700;
-    canvas.height = 520;
+    canvas.height = 620;
 
     getInner().innerHTML = `
       <div class="cert-steps">
@@ -594,7 +637,7 @@
     drawThinDivider(ctx, W, 320, GOLD_LITE);
 
     /* ── Do'a box ── */
-    drawDoaBox(ctx, W, 330, GOLD, GOLD_LITE, DARK, MUTED);
+    drawDoaBox(ctx, W, 335, GOLD, GOLD_LITE, DARK, MUTED);
 
     /* ── Footer ── */
     drawFooter(ctx, W, H, data, GOLD, GOLD_LITE, DARK, MUTED);
@@ -860,7 +903,7 @@
 
   /* ── Helper: footer ── */
   const drawFooter = (ctx, W, H, data, gold, lite, dark, muted) => {
-    const y  = H - 68;
+    const y  = H - 90;
     const cx = W / 2;
 
     /* Garis footer */

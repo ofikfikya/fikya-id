@@ -184,16 +184,33 @@
       const done = val <= 0;
 
       if (done) {
-        /* Fade out + collapse ring dan angka */
-        svg.style.opacity    = '0';
-        svg.style.maxWidth   = '0';
-        svg.style.marginRight = '0';
-        display.style.opacity  = '0';
-        display.style.maxWidth = '0';
+        /*
+          Saat selesai: ring diisi penuh dulu (hijau),
+          tunggu animasi circle selesai (~350ms),
+          baru fade out ring dan angka secara smooth.
+          Ini memastikan counter 1x tidak langsung geser
+          melainkan menampilkan circle penuh terlebih dahulu.
+        */
+        circle.style.strokeDashoffset = '0'; /* ring penuh */
+
+        btnTap.setAttribute('aria-label', 'Selesai');
+        btnTap.disabled = true;
+        btnTap.classList.add('dzikir-counter-btn--done');
+        wrapper.classList.add('dzikir-counter-wrapper--done');
+
+        /* Tunggu animasi ring penuh selesai, baru fade out */
+        setTimeout(() => {
+          svg.style.opacity     = '0';
+          svg.style.maxWidth    = '0';
+          svg.style.marginRight = '0';
+          display.style.opacity  = '0';
+          display.style.maxWidth = '0';
+        }, 400); /* 400ms = durasi ring progress (0.35s) + sedikit jeda */
+
       } else {
         /* Fade in + expand ring dan angka */
-        svg.style.opacity    = '1';
-        svg.style.maxWidth   = '54px';
+        svg.style.opacity     = '1';
+        svg.style.maxWidth    = '54px';
         svg.style.marginRight = '';
         display.style.opacity  = '1';
         display.style.maxWidth = '3ch';
@@ -202,12 +219,12 @@
         display.setAttribute('aria-label', `Sisa ${val} dari ${total}`);
         const ratio = Math.max(0, Math.min(1, 1 - val / total));
         circle.style.strokeDashoffset = String(CIRCUM * (1 - ratio));
-      }
 
-      btnTap.setAttribute('aria-label', done ? 'Selesai' : `Ketuk — sisa ${val}`);
-      btnTap.disabled = done;
-      btnTap.classList.toggle('dzikir-counter-btn--done', done);
-      wrapper.classList.toggle('dzikir-counter-wrapper--done', done);
+        btnTap.setAttribute('aria-label', `Ketuk — sisa ${val}`);
+        btnTap.disabled = false;
+        btnTap.classList.remove('dzikir-counter-btn--done');
+        wrapper.classList.remove('dzikir-counter-wrapper--done');
+      }
 
       if (animate && !done) {
         display.classList.remove('dzikir-counter-pop');

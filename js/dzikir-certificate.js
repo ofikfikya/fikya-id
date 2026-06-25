@@ -682,7 +682,7 @@
     /* ── Badge api & piala ── */
     /* Garis atas y=255, garis bawah y=328 → center=(255+328)/2=291
        Badge y=280: atas=262 (7px dari garis), label y=312 (16px dari garis bawah) */
-    drawBadges(ctx, W, 280, CFG.JENIS, GOLD, GOLD_LITE, DARK);
+    drawBadges(ctx, W, 288, CFG.JENIS, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
     drawThinDivider(ctx, W, 328, GOLD_LITE);

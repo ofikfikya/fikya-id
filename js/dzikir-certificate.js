@@ -572,10 +572,35 @@
 
     /* Download PNG */
     document.getElementById('cert-download').addEventListener('click', () => {
-      const link    = document.createElement('a');
-      link.download = `sertifikat-dzikir-${CFG.JENIS}-${certData.nomorSertifikat}.png`;
-      link.href     = canvas.toDataURL('image/png');
-      link.click();
+      const btn = document.getElementById('cert-download');
+
+      /* Feedback: sedang memproses */
+      btn.disabled    = true;
+      btn.textContent = '⏳ Menyiapkan...';
+
+      /* toDataURL bisa memakan waktu untuk canvas besar — beri jeda agar
+         browser sempat render perubahan tombol sebelum proses berat dimulai */
+      setTimeout(() => {
+        try {
+          const link    = document.createElement('a');
+          link.download = `sertifikat-dzikir-${CFG.JENIS}-${certData.nomorSertifikat}.png`;
+          link.href     = canvas.toDataURL('image/png');
+          link.click();
+
+          /* Feedback: berhasil */
+          btn.textContent = '✅ Tersimpan!';
+          setTimeout(() => {
+            btn.textContent = '⬇️ Download PNG';
+            btn.disabled    = false;
+          }, 2500);
+        } catch (e) {
+          btn.textContent = '❌ Gagal';
+          setTimeout(() => {
+            btn.textContent = '⬇️ Download PNG';
+            btn.disabled    = false;
+          }, 2000);
+        }
+      }, 80);
     });
 
     /* Share WhatsApp */

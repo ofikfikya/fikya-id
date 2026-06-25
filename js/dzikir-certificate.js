@@ -22,8 +22,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
-    SECRET_KEY      : '280526',
+    APPS_SCRIPT_URL : 'GANTI_DENGAN_URL_APPS_SCRIPT_ANDA',
+    SECRET_KEY      : 'GANTI_DENGAN_SECRET_KEY_ANDA',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,
@@ -677,17 +677,18 @@
     wrapText(ctx, 'sebab keberkahan dan penjagaan sepanjang hari"', W / 2, 237, 560, 17);
 
     /* ── Divider tengah ── */
-    drawThinDivider(ctx, W, 258, GOLD_LITE);
+    drawThinDivider(ctx, W, 255, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    /* Tengah antara y=258 dan y=318 = y=288, badge tinggi ~60px, mulai y=258 */
-    drawBadges(ctx, W, 268, CFG.JENIS, GOLD, GOLD_LITE, DARK);
+    /* Garis atas y=255, garis bawah y=328 → center=(255+328)/2=291
+       Badge y=280: atas=262 (7px dari garis), label y=312 (16px dari garis bawah) */
+    drawBadges(ctx, W, 280, CFG.JENIS, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
-    drawThinDivider(ctx, W, 318, GOLD_LITE);
+    drawThinDivider(ctx, W, 328, GOLD_LITE);
 
     /* ── Do'a box ── */
-    drawDoaBox(ctx, W, 335, GOLD, GOLD_LITE, DARK, MUTED);
+    drawDoaBox(ctx, W, 343, GOLD, GOLD_LITE, DARK, MUTED);
 
     /* ── Footer ── */
     drawFooter(ctx, W, H, data, GOLD, GOLD_LITE, DARK, MUTED);

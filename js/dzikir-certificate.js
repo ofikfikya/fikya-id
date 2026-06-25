@@ -22,8 +22,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'GANTI_DENGAN_URL_APPS_SCRIPT_ANDA',
-    SECRET_KEY      : 'GANTI_DENGAN_SECRET_KEY_ANDA',
+    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbz2AQEhvZTYJjnoTkk1JhHhMdfLinKonWYN0JAyXWnswP0QExe-RdiFZXGr1g87Tx1DuQ/exec',
+    SECRET_KEY      : '280526',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,

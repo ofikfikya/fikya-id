@@ -176,7 +176,7 @@
 
     display.style.transition  = TRANSITION;
     display.style.overflow    = 'hidden';
-    display.style.maxWidth    = '3ch';
+    display.style.maxWidth    = '48px';
     display.style.opacity     = '1';
 
     /* ===== UPDATE TAMPILAN ===== */
@@ -213,7 +213,7 @@
         svg.style.maxWidth    = '54px';
         svg.style.marginRight = '';
         display.style.opacity  = '1';
-        display.style.maxWidth = '3ch';
+        display.style.maxWidth = '48px';
 
         display.textContent = String(val);
         display.setAttribute('aria-label', `Sisa ${val} dari ${total}`);

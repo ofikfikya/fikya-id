@@ -719,7 +719,7 @@
     drawThinDivider(ctx, W, 255, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    drawBadges(ctx, W, 280, CFG.JENIS, data.streak || 1, GOLD, GOLD_LITE, DARK);
+    drawBadges(ctx, W, 284, CFG.JENIS, data.streak || 1, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
     drawThinDivider(ctx, W, 328, GOLD_LITE);

@@ -33,8 +33,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : '******',
-    SECRET_KEY      : '******',
+    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
+    SECRET_KEY      : '280526',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,

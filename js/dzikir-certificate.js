@@ -12,6 +12,17 @@
    6. Tombol download PNG dan share WhatsApp
 
    Tidak ada dependency eksternal — vanilla JS murni.
+
+   CHANGELOG v2:
+   - FIX: waitForCounters() — hapus duplikasi logika, interval
+     dijamin di-clear di semua jalur resolve, tidak ada bocor.
+   - FIX: injectLoginBtn() dipindah ke setelah waitForCounters()
+     selesai, sehingga .dzikir-stats-row (dibuat dzikir-tools.js)
+     sudah pasti ada saat diakses.
+   - FIX: DPR canvas dibatasi maksimal 2 agar tidak crash di
+     layar 3x/4x saat memanggil toDataURL().
+   - FIX: innerHTML dinamis dengan e.message dan info.pesan/saran
+     diganti DOM API untuk mencegah potensi XSS.
    ============================================================ */
 
 (function () {
@@ -32,7 +43,7 @@
     JENIS : window.location.pathname.includes('petang') ? 'petang' : 'pagi',
 
     /* Tanggal dihitung dinamis saat sertifikat dibuat */
-    get TGL_HIJRI() { return formatTglHijri(new Date()); },
+    get TGL_HIJRI()  { return formatTglHijri(new Date());  },
     get TGL_MASEHI() { return formatTglMasehi(new Date()); },
   };
 
@@ -50,7 +61,6 @@
   */
   const HIJRI_OFFSET_DAYS = 0;
 
-  /* Format tanggal Hijriah: "Jum'at, 4 Muharram 1448 H" */
   /* Nama hari Islam (index 0=Ahad sesuai getDay() 0=Minggu) */
   const HARI_ISLAM = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
 
@@ -61,16 +71,14 @@
     'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah',
   ];
 
+  /* Format tanggal Hijriah: "Jum'at, 4 Muharram 1448 H" */
   const formatTglHijri = (date) => {
     try {
-      /* Terapkan offset jika diperlukan */
       const adjusted = new Date(date);
       adjusted.setDate(adjusted.getDate() + HIJRI_OFFSET_DAYS);
 
-      /* Nama hari Islam dari getDay() */
       const hari = HARI_ISLAM[date.getDay()];
 
-      /* Ambil komponen Hijriah via Intl — parse bagian angka saja */
       const fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
         day  : 'numeric',
         month: 'numeric',
@@ -82,7 +90,7 @@
 
       const tgl   = parts.day   || '';
       const bln   = parseInt(parts.month || '1', 10) - 1;
-      const thn   = (parts.year || '').replace(/[^0-9]/g, ''); /* hapus SM/AH/dll */
+      const thn   = (parts.year || '').replace(/[^0-9]/g, '');
       const bulan = BULAN_HIJRI[bln] || '';
 
       return `${hari}, ${tgl} ${bulan} ${thn} H`;
@@ -119,8 +127,8 @@
       clearTimeout(timeout);
     };
 
-    window[cbName]  = (data) => { cleanup(); resolve(data); };
-    script.src      = `${url}&callback=${cbName}`;
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.src     = `${url}&callback=${cbName}`;
 
     /*
       PENTING: onerror pada JSONP ke Google Apps Script TIDAK
@@ -129,17 +137,13 @@
       request sebenarnya berhasil. Biarkan timeout yang menangani
       kegagalan — persis seperti pola di comments.js.
     */
-    script.onerror  = () => { console.warn('cert: script error, menunggu callback...'); };
+    script.onerror = () => { console.warn('cert: script error, menunggu callback...'); };
     document.head.appendChild(script);
   });
 
   const apiCall = (params) => {
-    /*
-      Bangun query string manual agar action selalu di depan
-      dan tidak ada encoding ganda. Pola sama dengan comments.js.
-    */
     const { action, ...rest } = params;
-    const base = `action=${action}`;
+    const base  = `action=${action}`;
     const extra = Object.entries({ ...rest, key: CFG.SECRET_KEY })
       .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
       .join('&');
@@ -151,9 +155,9 @@
      ============================================================ */
 
   const ls = {
-    get  : (k)    => { try { return localStorage.getItem(k); }      catch(e) { return null; } },
-    set  : (k, v) => { try { localStorage.setItem(k, v); }          catch(e) {} },
-    clear: (k)    => { try { localStorage.removeItem(k); }          catch(e) {} },
+    get  : (k)    => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+    set  : (k, v) => { try { localStorage.setItem(k, v); }    catch(e) {} },
+    clear: (k)    => { try { localStorage.removeItem(k); }    catch(e) {} },
   };
 
   /* ============================================================
@@ -161,51 +165,43 @@
      ============================================================ */
 
   /*
-    Counter selesai ketika tombol tap punya class
-    'dzikir-counter-btn--done'. Polling setiap 1 detik
-    karena counter di-inject oleh dzikir-counter.js secara
-    async dan jumlahnya bisa berubah-ubah per halaman.
+    FIX v2: Versi sebelumnya menduplikasi logika pengecekan dua
+    kali dalam satu setInterval callback, dan interval bisa bocor
+    jika resolve() dipanggil dari jalur click-listener sementara
+    interval belum di-clear.
+
+    Versi baru:
+    - Satu fungsi isAllDone() sebagai sumber kebenaran tunggal.
+    - setInterval dan click-listener keduanya memanggil fungsi
+      yang sama: tryResolve().
+    - tryResolve() menjaga flag 'resolved' agar resolve() hanya
+      dipanggil sekali, dan clearInterval() dipanggil di satu
+      tempat yang sama.
   */
   const waitForCounters = () => new Promise((resolve) => {
-    const check = () => {
-      const allBtns  = document.querySelectorAll('.dzikir-counter-btn--tap');
-      if (allBtns.length === 0) return; /* Belum ada counter, tunggu lagi */
+    let resolved = false;
+    let interval = null;
 
-      const allDone = [...allBtns].every(btn =>
-        btn.classList.contains('dzikir-counter-btn--done')
-      );
-
-      if (allDone) resolve();
+    const isAllDone = () => {
+      const allBtns = document.querySelectorAll('.dzikir-counter-btn--tap');
+      if (allBtns.length === 0) return false;
+      return [...allBtns].every(btn => btn.classList.contains('dzikir-counter-btn--done'));
     };
 
-    const interval = setInterval(() => {
-      check();
-      /* Cek apakah semua sudah selesai */
-      const allBtns = document.querySelectorAll('.dzikir-counter-btn--tap');
-      if (allBtns.length > 0) {
-        const allDone = [...allBtns].every(btn =>
-          btn.classList.contains('dzikir-counter-btn--done')
-        );
-        if (allDone) {
-          clearInterval(interval);
-          resolve();
-        }
-      }
-    }, 800);
+    const tryResolve = () => {
+      if (resolved) return;
+      if (!isAllDone()) return;
+      resolved = true;
+      clearInterval(interval);
+      resolve();
+    };
 
-    /* Observer untuk deteksi klik real-time lebih responsif */
+    /* Polling setiap 800ms untuk mendeteksi setelah counter di-inject */
+    interval = setInterval(tryResolve, 800);
+
+    /* Deteksi real-time setelah setiap klik — lebih responsif */
     document.addEventListener('click', () => {
-      setTimeout(() => {
-        const allBtns = document.querySelectorAll('.dzikir-counter-btn--tap');
-        if (allBtns.length === 0) return;
-        const allDone = [...allBtns].every(btn =>
-          btn.classList.contains('dzikir-counter-btn--done')
-        );
-        if (allDone) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 400);
+      setTimeout(tryResolve, 400);
     }, { passive: true });
   });
 
@@ -352,7 +348,7 @@
     const btn   = document.getElementById('cert-submit-baru');
 
     const showMsg = (tipe, teks) => {
-      msgEl.className = `cert-message ${tipe}`;
+      msgEl.className   = `cert-message ${tipe}`;
       msgEl.textContent = teks;
     };
 
@@ -369,7 +365,6 @@
       const res = await apiCall({ action: 'registerUser', nama, email });
 
       if (res.status === 'ok' || res.status === 'exists') {
-        /* Simpan ke localStorage */
         ls.set(CFG.LS_USER_ID,   res.userId);
         ls.set(CFG.LS_USER_NAMA, res.nama);
         certData = { userId: res.userId, nama: res.nama };
@@ -443,7 +438,7 @@
     const btn    = document.getElementById('cert-submit-lama');
 
     const showMsg = (tipe, teks) => {
-      msgEl.className = `cert-message ${tipe}`;
+      msgEl.className   = `cert-message ${tipe}`;
       msgEl.textContent = teks;
     };
 
@@ -491,7 +486,6 @@
     `;
 
     try {
-      /* Generate nomor sertifikat dari backend */
       const res = await apiCall({
         action : 'generateCert',
         userId : certData.userId,
@@ -505,15 +499,21 @@
 
       showStepSertifikat();
     } catch (e) {
-      getInner().innerHTML = `
+      /*
+        FIX v2: e.message dimasukkan via textContent, bukan innerHTML,
+        untuk mencegah potensi XSS jika pesan error mengandung HTML.
+      */
+      const inner = getInner();
+      inner.innerHTML = `
         <div class="cert-modal-icon">⚠️</div>
         <div class="cert-modal-title">Gagal Membuat Sertifikat</div>
-        <div class="cert-modal-desc">${e.message}</div>
+        <div class="cert-modal-desc" id="cert-err-desc"></div>
         <div class="cert-btn-row">
           <button class="cert-btn cert-btn--secondary" id="cert-retry">Coba Lagi</button>
           <button class="cert-btn cert-btn--primary" id="cert-close-err">Tutup</button>
         </div>
       `;
+      document.getElementById('cert-err-desc').textContent = e.message;
       document.getElementById('cert-retry')?.addEventListener('click', showStepGenerate);
       document.getElementById('cert-close-err')?.addEventListener('click', closeModal);
     }
@@ -525,8 +525,15 @@
 
   const showStepSertifikat = () => {
     const canvas = document.createElement('canvas');
-    /* Fix 6: Tingkatkan resolusi dengan devicePixelRatio */
-    const DPR     = window.devicePixelRatio || 2;
+
+    /*
+      FIX v2: DPR dibatasi maksimal 2.
+      devicePixelRatio bisa bernilai 3 atau 4 di perangkat modern.
+      Canvas 700×680 dengan DPR=4 menjadi 2800×2720px (7.6 megapiksel)
+      yang bisa menyebabkan lag atau crash saat toDataURL() dipanggil.
+      Kualitas sertifikat tetap tajam di DPR=2 (retina).
+    */
+    const DPR     = Math.min(window.devicePixelRatio || 2, 2);
     const CW      = 700;
     const CH      = 680;
     canvas.width  = CW * DPR;
@@ -547,11 +554,11 @@
         <div class="cert-info-box">
           <div class="cert-info-item">
             <span class="cert-info-label">ID User</span>
-            <span class="cert-info-value">${certData.userId}</span>
+            <span class="cert-info-value" id="cert-info-userid"></span>
           </div>
           <div class="cert-info-item">
             <span class="cert-info-label">No. Sertifikat</span>
-            <span class="cert-info-value">${certData.nomorSertifikat}</span>
+            <span class="cert-info-value" id="cert-info-nomor"></span>
           </div>
         </div>
         <div class="cert-action-row">
@@ -566,6 +573,14 @@
       </div>
     `;
 
+    /*
+      FIX v2: certData.userId dan certData.nomorSertifikat dimasukkan
+      via textContent, bukan interpolasi string di innerHTML,
+      untuk mencegah potensi XSS.
+    */
+    document.getElementById('cert-info-userid').textContent = certData.userId        || '-';
+    document.getElementById('cert-info-nomor').textContent  = certData.nomorSertifikat || '-';
+
     /* Render canvas */
     document.getElementById('cert-canvas-wrap').appendChild(canvas);
     drawCertificate(canvas, certData);
@@ -574,7 +589,6 @@
     document.getElementById('cert-download').addEventListener('click', () => {
       const btn = document.getElementById('cert-download');
 
-      /* Feedback: sedang memproses */
       btn.disabled    = true;
       btn.textContent = '⏳ Menyiapkan...';
 
@@ -587,7 +601,6 @@
           link.href     = canvas.toDataURL('image/png');
           link.click();
 
-          /* Feedback: berhasil */
           btn.textContent = '✅ Tersimpan!';
           setTimeout(() => {
             btn.textContent = '⬇️ Download PNG';
@@ -627,9 +640,9 @@
 
   const drawCertificate = (canvas, data) => {
     const ctx = canvas.getContext('2d');
-    const DPR = window.devicePixelRatio || 2;
+    const DPR = Math.min(window.devicePixelRatio || 2, 2);
     ctx.scale(DPR, DPR);
-    const W   = 700;  /* ukuran logis — bukan canvas.width yang sudah di-scale */
+    const W   = 700;
     const H   = 680;
 
     const GOLD      = '#b8860b';
@@ -666,8 +679,8 @@
     ctx.fillText('بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ', W / 2, 72);
 
     /* ── Fikya.id ── */
-    ctx.fillStyle   = MUTED;
-    ctx.font        = '600 10px Inter, sans-serif';
+    ctx.fillStyle     = MUTED;
+    ctx.font          = '600 10px Inter, sans-serif';
     ctx.letterSpacing = '3px';
     ctx.fillText('FIKYA.ID', W / 2, 90);
     ctx.letterSpacing = '0px';
@@ -705,8 +718,6 @@
     drawThinDivider(ctx, W, 255, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    /* Garis atas y=255, garis bawah y=328 → center=(255+328)/2=291
-       Badge y=280: atas=262 (7px dari garis), label y=312 (16px dari garis bawah) */
     drawBadges(ctx, W, 280, CFG.JENIS, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
@@ -808,7 +819,6 @@
   const drawBadges = (ctx, W, y, jenis, gold, lite, dark) => {
     const cx = W / 2;
 
-    /* Badge api — kiri tengah */
     const ax = cx - 60;
     drawFireBadge(ctx, ax, y, gold, lite);
     ctx.fillStyle   = '#8a6820';
@@ -816,14 +826,12 @@
     ctx.textAlign   = 'center';
     ctx.fillText('1 HARI BERTURUT', ax, y + 32);
 
-    /* Garis pemisah vertikal */
     ctx.strokeStyle = lite;
     ctx.lineWidth   = 0.8;
     ctx.globalAlpha = 0.5;
     ctx.beginPath(); ctx.moveTo(cx, y - 14); ctx.lineTo(cx, y + 28); ctx.stroke();
     ctx.globalAlpha = 1;
 
-    /* Badge piala — kanan tengah */
     const px = cx + 60;
     drawTrophyBadge(ctx, px, y, jenis, gold, lite);
     ctx.fillStyle = '#8a6820';
@@ -835,14 +843,12 @@
     ctx.save();
     ctx.translate(cx, cy);
 
-    /* Lingkaran latar */
     ctx.fillStyle   = '#fff7e6';
     ctx.strokeStyle = gold;
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
 
-    /* Api */
     ctx.fillStyle = '#f97316';
     ctx.beginPath();
     ctx.moveTo(0, 14); ctx.bezierCurveTo(-8, 14, -12, 8, -12, 3);
@@ -870,7 +876,6 @@
     ctx.bezierCurveTo(4, 12, 2, 12, 0, 12);
     ctx.closePath(); ctx.fill();
 
-    /* Angka 1 */
     ctx.fillStyle = '#92400e';
     ctx.font      = 'bold 10px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -883,14 +888,12 @@
     ctx.save();
     ctx.translate(cx, cy);
 
-    /* Lingkaran latar */
     ctx.fillStyle   = '#fffbeb';
     ctx.strokeStyle = gold;
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
 
-    /* Piala */
     ctx.fillStyle = gold;
     ctx.beginPath();
     ctx.moveTo(-8, -10); ctx.lineTo(8, -10);
@@ -898,7 +901,6 @@
     ctx.bezierCurveTo(-3, 8, -6, 6, -6, 2);
     ctx.closePath(); ctx.fill();
 
-    /* Gagang kiri kanan */
     ctx.strokeStyle = '#b8860b';
     ctx.lineWidth   = 2;
     ctx.lineCap     = 'round';
@@ -907,18 +909,15 @@
     ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(12, -10);
     ctx.lineTo(12, -6); ctx.bezierCurveTo(12, -2, 9, -1, 6, -1); ctx.stroke();
 
-    /* Kaki piala */
     ctx.fillStyle = '#b8860b';
     ctx.fillRect(-2, 8, 4, 4);
     ctx.fillRect(-5, 12, 10, 2);
 
-    /* Bintang di piala */
     ctx.fillStyle = '#fef9c3';
     ctx.font      = '9px serif';
     ctx.textAlign = 'center';
     ctx.fillText('★', 0, -2);
 
-    /* Ikon matahari pagi (hanya dzikir pagi) */
     if (jenis === 'pagi') {
       ctx.fillStyle = '#fbbf24';
       ctx.beginPath(); ctx.arc(10, -12, 4, 0, Math.PI * 2); ctx.fill();
@@ -934,7 +933,6 @@
 
   /* ── Helper: do'a box ── */
   const drawDoaBox = (ctx, W, y, gold, lite, dark, muted) => {
-    /* Box background — tinggi 160 agar teks tidak menyentuh tepi bawah */
     ctx.fillStyle   = 'rgba(184,134,11,0.06)';
     ctx.strokeStyle = lite;
     ctx.lineWidth   = 1;
@@ -943,7 +941,6 @@
 
     const cx = W / 2;
 
-    /* Do'a 1 */
     ctx.fillStyle = dark;
     ctx.font      = '16px "Times New Roman", serif';
     ctx.textAlign = 'center';
@@ -957,12 +954,10 @@
     ctx.font      = '10.5px Inter, sans-serif';
     ctx.fillText('"Ya Allah, terimalah amal dari kami. Sesungguhnya Engkau Maha Mendengar lagi Maha Mengetahui."', cx, y + 58);
 
-    /* Separator */
     ctx.strokeStyle = 'rgba(184,134,11,0.25)';
     ctx.lineWidth   = 0.8;
     ctx.beginPath(); ctx.moveTo(W * 0.3, y + 72); ctx.lineTo(W * 0.7, y + 72); ctx.stroke();
 
-    /* Do'a 2 */
     ctx.fillStyle = dark;
     ctx.font      = '16px "Times New Roman", serif';
     ctx.fillText('اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ', cx, y + 96);
@@ -982,12 +977,10 @@
     const y  = H - 90;
     const cx = W / 2;
 
-    /* Garis footer */
     ctx.strokeStyle = lite;
     ctx.lineWidth   = 0.8;
     ctx.beginPath(); ctx.moveTo(40, y - 8); ctx.lineTo(W - 40, y - 8); ctx.stroke();
 
-    /* Kiri — Tanggal Hijriah (menonjol) + Masehi */
     ctx.fillStyle = '#a07820';
     ctx.font      = '600 9px Inter, sans-serif';
     ctx.textAlign = 'left';
@@ -1001,10 +994,8 @@
     ctx.font      = '10px Inter, sans-serif';
     ctx.fillText(CFG.TGL_MASEHI, 50, y + 38);
 
-    /* Tengah — stempel */
     drawSeal(ctx, cx, y + 16, gold, lite, muted);
 
-    /* Kanan — ID User + No. Sertifikat */
     ctx.fillStyle = '#a07820';
     ctx.font      = '600 9px Inter, sans-serif';
     ctx.textAlign = 'right';
@@ -1025,7 +1016,6 @@
 
   /* ── Helper: stempel ── */
   const drawSeal = (ctx, cx, cy, gold, lite, muted) => {
-    /* Bintang 12 sudut */
     ctx.save();
     ctx.translate(cx, cy);
     ctx.strokeStyle = gold;
@@ -1103,11 +1093,16 @@
       Tombol "Masuk dengan ID" hanya ditampilkan dalam mode debug.
       Tambahkan ?debug=1 di URL untuk mengaktifkan.
       Contoh: dzikir-pagi.html?debug=1
-      User biasa tidak akan melihat tombol ini.
     */
     const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
     if (!isDebug) return;
 
+    /*
+      FIX v2: .dzikir-stats-row dibuat oleh dzikir-tools.js, bukan
+      ada di HTML. Fungsi ini dipanggil setelah waitForCounters()
+      selesai (dari dalam init()), sehingga dzikir-tools.js sudah
+      pasti selesai berjalan dan elemen ini sudah ada di DOM.
+    */
     const statsRow = document.querySelector('.dzikir-stats-row');
     if (!statsRow) return;
 
@@ -1115,7 +1110,7 @@
     btn.className   = 'cert-login-btn';
     btn.textContent = '🔑 [DEBUG] Masuk dengan ID';
     btn.setAttribute('title', 'Mode debug — masuk dengan ID tanpa menyelesaikan dzikir');
-    btn.style.outline = '2px dashed #f97316'; /* penanda visual mode debug */
+    btn.style.outline = '2px dashed #f97316';
     statsRow.appendChild(btn);
 
     btn.addEventListener('click', () => {
@@ -1125,10 +1120,6 @@
   };
 
   /* ============================================================
-     INIT
-     ============================================================ */
-
-  /* ============================================================
      CEK WAKTU — sertifikat hanya bisa dibuat sesuai waktunya
      Menggunakan waktu lokal perangkat user masing-masing.
      Dzikir Pagi  : 04:00 — 11:59 (setelah Shubuh s/d siang)
@@ -1136,54 +1127,65 @@
      ============================================================ */
 
   const isWaktuValid = () => {
-    /* Mode debug: lewati pengecekan waktu */
     const isDebug = new URLSearchParams(window.location.search).get('debug') === '1';
     if (isDebug) return { valid: true };
 
-    const jam = new Date().getHours(); /* 0-23, waktu lokal user */
+    const jam = new Date().getHours();
 
     if (CFG.JENIS === 'pagi') {
-      /* 04:00 — 11:59 */
       if (jam >= 4 && jam < 12) return { valid: true };
       return {
-        valid  : false,
-        pesan  : 'Sertifikat Dzikir Pagi hanya tersedia mulai setelah Shubuh (04.00) hingga pukul 12.00 siang.',
-        saran  : 'Jazakallahu khairan telah berdzikir. Sampai jumpa besok pagi! 🌤️',
+        valid : false,
+        pesan : 'Sertifikat Dzikir Pagi hanya tersedia mulai setelah Shubuh (04.00) hingga pukul 12.00 siang.',
+        saran : 'Jazakallahu khairan telah berdzikir. Sampai jumpa besok pagi! 🌤️',
       };
     } else {
-      /* 15:00 — 23:59 */
       if (jam >= 15 && jam <= 23) return { valid: true };
       return {
-        valid  : false,
-        pesan  : 'Sertifikat Dzikir Petang hanya tersedia mulai setelah Ashar (15.00) hingga tengah malam.',
-        saran  : 'Jazakallahu khairan telah berdzikir. Sampai jumpa nanti petang! 🌆',
+        valid : false,
+        pesan : 'Sertifikat Dzikir Petang hanya tersedia mulai setelah Ashar (15.00) hingga tengah malam.',
+        saran : 'Jazakallahu khairan telah berdzikir. Sampai jumpa nanti petang! 🌆',
       };
     }
   };
 
   const showWaktuTidakValid = (info) => {
-    getInner().innerHTML = `
+    /*
+      FIX v2: info.pesan dan info.saran dimasukkan via textContent
+      untuk mencegah potensi XSS.
+    */
+    const inner = getInner();
+    inner.innerHTML = `
       <div class="cert-modal-icon">⏰</div>
       <div class="cert-modal-title">Belum Waktunya</div>
-      <div class="cert-modal-desc">${info.pesan}</div>
-      <div class="cert-modal-desc" style="margin-top:8px;font-style:italic;">
-        ${info.saran}
-      </div>
+      <div class="cert-modal-desc" id="cert-waktu-pesan"></div>
+      <div class="cert-modal-desc" style="margin-top:8px;font-style:italic;" id="cert-waktu-saran"></div>
       <div class="cert-btn-row" style="margin-top:24px;">
         <button class="cert-btn cert-btn--primary" id="cert-close-waktu">Tutup</button>
       </div>
     `;
+    document.getElementById('cert-waktu-pesan').textContent = info.pesan;
+    document.getElementById('cert-waktu-saran').textContent = info.saran;
     document.getElementById('cert-close-waktu')?.addEventListener('click', closeModal);
   };
 
+  /* ============================================================
+     INIT
+     ============================================================ */
+
   const init = async () => {
     buildModal();
+
+    /*
+      FIX v2: injectLoginBtn() dipindah ke sini, setelah
+      waitForCounters() resolve. Pada saat ini dzikir-tools.js
+      sudah selesai berjalan dan .dzikir-stats-row sudah ada.
+      Sebelumnya dipanggil di awal init() sebelum counter
+      bahkan di-inject, sehingga querySelector mengembalikan null.
+    */
+    await waitForCounters();
     injectLoginBtn();
 
-    /* Tunggu semua counter selesai */
-    await waitForCounters();
-
-    /* Cek waktu terlebih dahulu */
     const waktu = isWaktuValid();
     if (!waktu.valid) {
       openModal();
@@ -1191,17 +1193,14 @@
       return;
     }
 
-    /* Cek localStorage */
     const savedId   = ls.get(CFG.LS_USER_ID);
     const savedNama = ls.get(CFG.LS_USER_NAMA);
 
     if (savedId && savedNama) {
-      /* User sudah dikenal — langsung generate sertifikat */
       certData = { userId: savedId, nama: savedNama };
       openModal();
       await showStepGenerate();
     } else {
-      /* User belum dikenal — tampilkan pilihan */
       openModal();
       showStepPilihan();
     }

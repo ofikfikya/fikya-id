@@ -33,8 +33,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
-    SECRET_KEY      : '280526',
+    APPS_SCRIPT_URL : '******',
+    SECRET_KEY      : '******',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,
@@ -496,6 +496,7 @@
 
       certData.nomorSertifikat = res.nomorSertifikat;
       certData.tanggal         = res.tanggal;
+      certData.streak          = res.streak || 1;
 
       showStepSertifikat();
     } catch (e) {
@@ -718,7 +719,7 @@
     drawThinDivider(ctx, W, 255, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    drawBadges(ctx, W, 280, CFG.JENIS, GOLD, GOLD_LITE, DARK);
+    drawBadges(ctx, W, 280, CFG.JENIS, data.streak || 1, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
     drawThinDivider(ctx, W, 328, GOLD_LITE);
@@ -816,15 +817,15 @@
   };
 
   /* ── Helper: badge api & piala ── */
-  const drawBadges = (ctx, W, y, jenis, gold, lite, dark) => {
+  const drawBadges = (ctx, W, y, jenis, streak, gold, lite, dark) => {
     const cx = W / 2;
 
     const ax = cx - 60;
-    drawFireBadge(ctx, ax, y, gold, lite);
+    drawFireBadge(ctx, ax, y, streak, gold, lite);
     ctx.fillStyle   = '#8a6820';
     ctx.font        = '600 9px Inter, sans-serif';
     ctx.textAlign   = 'center';
-    ctx.fillText('1 HARI BERTURUT', ax, y + 32);
+    ctx.fillText(`${streak} HARI BERTURUT`, ax, y + 32);
 
     ctx.strokeStyle = lite;
     ctx.lineWidth   = 0.8;
@@ -839,7 +840,7 @@
     ctx.fillText(jenis === 'pagi' ? 'DZIKIR PAGI' : 'DZIKIR PETANG', px, y + 32);
   };
 
-  const drawFireBadge = (ctx, cx, cy, gold, lite) => {
+  const drawFireBadge = (ctx, cx, cy, streak, gold, lite) => {
     ctx.save();
     ctx.translate(cx, cy);
 
@@ -877,9 +878,13 @@
     ctx.closePath(); ctx.fill();
 
     ctx.fillStyle = '#92400e';
-    ctx.font      = 'bold 10px Inter, sans-serif';
+    /* Font adaptif agar angka streak tidak overflow lingkaran (r=18):
+       1-9  → 10px, 10-99 → 8px, 100+ → 7px */
+    ctx.font      = streak >= 100 ? 'bold 7px Inter, sans-serif'
+                  : streak >= 10  ? 'bold 8px Inter, sans-serif'
+                  : 'bold 10px Inter, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('1', 0, 10);
+    ctx.fillText(String(streak), 0, 10);
 
     ctx.restore();
   };

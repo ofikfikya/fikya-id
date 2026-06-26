@@ -16,9 +16,9 @@
    CHANGELOG v2:
    - FIX: waitForCounters() — hapus duplikasi logika, interval
      dijamin di-clear di semua jalur resolve, tidak ada bocor.
-   - FIX: injectLoginBtn() dipindah ke setelah waitForCounters()
-     selesai, sehingga .dzikir-stats-row (dibuat dzikir-tools.js)
-     sudah pasti ada saat diakses.
+   - FIX: injectLoginBtn() menggunakan pola retry internal sehingga
+     tombol debug muncul segera tanpa menunggu counter selesai,
+     sekaligus tetap aman dari race condition dengan dzikir-tools.js.
    - FIX: DPR canvas dibatasi maksimal 2 agar tidak crash di
      layar 3x/4x saat memanggil toDataURL().
    - FIX: innerHTML dinamis dengan e.message dan info.pesan/saran
@@ -1098,25 +1098,37 @@
     if (!isDebug) return;
 
     /*
-      FIX v2: .dzikir-stats-row dibuat oleh dzikir-tools.js, bukan
-      ada di HTML. Fungsi ini dipanggil setelah waitForCounters()
-      selesai (dari dalam init()), sehingga dzikir-tools.js sudah
-      pasti selesai berjalan dan elemen ini sudah ada di DOM.
+      FIX v3: .dzikir-stats-row dibuat oleh dzikir-tools.js secara
+      async — belum tentu ada saat injectLoginBtn() pertama dipanggil.
+      Solusi: coba inject segera, jika elemen belum ada, ulangi setiap
+      500ms sampai berhasil. Ini memperbaiki race condition tanpa harus
+      menunggu waitForCounters() selesai, sehingga tombol debug tetap
+      muncul segera saat halaman dibuka tanpa perlu selesaikan dzikir.
     */
-    const statsRow = document.querySelector('.dzikir-stats-row');
-    if (!statsRow) return;
+    const tryInject = () => {
+      const statsRow = document.querySelector('.dzikir-stats-row');
+      if (!statsRow) {
+        setTimeout(tryInject, 500);
+        return;
+      }
 
-    const btn = document.createElement('button');
-    btn.className   = 'cert-login-btn';
-    btn.textContent = '🔑 [DEBUG] Masuk dengan ID';
-    btn.setAttribute('title', 'Mode debug — masuk dengan ID tanpa menyelesaikan dzikir');
-    btn.style.outline = '2px dashed #f97316';
-    statsRow.appendChild(btn);
+      /* Cegah inject ganda jika tryInject dipanggil ulang */
+      if (statsRow.querySelector('.cert-login-btn')) return;
 
-    btn.addEventListener('click', () => {
-      openModal();
-      showStepFormLama();
-    });
+      const btn = document.createElement('button');
+      btn.className   = 'cert-login-btn';
+      btn.textContent = '🔑 [DEBUG] Masuk dengan ID';
+      btn.setAttribute('title', 'Mode debug — masuk dengan ID tanpa menyelesaikan dzikir');
+      btn.style.outline = '2px dashed #f97316';
+      statsRow.appendChild(btn);
+
+      btn.addEventListener('click', () => {
+        openModal();
+        showStepFormLama();
+      });
+    };
+
+    tryInject();
   };
 
   /* ============================================================
@@ -1177,14 +1189,13 @@
     buildModal();
 
     /*
-      FIX v2: injectLoginBtn() dipindah ke sini, setelah
-      waitForCounters() resolve. Pada saat ini dzikir-tools.js
-      sudah selesai berjalan dan .dzikir-stats-row sudah ada.
-      Sebelumnya dipanggil di awal init() sebelum counter
-      bahkan di-inject, sehingga querySelector mengembalikan null.
+      injectLoginBtn() dipanggil segera — fungsi ini sudah menangani
+      race condition secara internal dengan pola retry (setTimeout).
+      Tidak perlu menunggu waitForCounters() selesai.
     */
-    await waitForCounters();
     injectLoginBtn();
+
+    await waitForCounters();
 
     const waktu = isWaktuValid();
     if (!waktu.valid) {

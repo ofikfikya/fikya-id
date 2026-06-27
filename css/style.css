@@ -27,6 +27,11 @@
 
   --footer-border: #e2e8f0;
   --footer-text: #64748b;
+
+  /* btn-outline — adaptif per konteks */
+  --btn-outline-color: var(--primary-color);
+  --btn-outline-border: var(--primary-color);
+  --btn-outline-bg: transparent;
 }
 
 html.dark {
@@ -52,6 +57,11 @@ html.dark {
 
   --footer-border: #1e293b;
   --footer-text: #475569;
+
+  /* btn-outline dark mode */
+  --btn-outline-color: var(--primary-color);
+  --btn-outline-border: var(--primary-color);
+  --btn-outline-bg: transparent;
 }
 
 /* ===== RESET ===== */
@@ -221,12 +231,29 @@ h1, h2, h3, h4 {
 }
 
 .btn-outline {
+  border: 1px solid var(--btn-outline-border);
+  color: var(--btn-outline-color);
+  background: var(--btn-outline-bg);
+}
+
+.btn-outline:hover {
+  background: var(--bg-element-hover);
+  transform: translateY(-2px);
+}
+
+/*
+  .btn-outline--hero — override khusus untuk Hero section
+  yang memiliki background gelap (gradient biru).
+  Gunakan class ini di index.html untuk tombol "Lihat Konten"
+  agar tetap terlihat di atas background gelap Hero.
+*/
+.btn-outline--hero {
   border: 1px solid rgba(255, 255, 255, 0.5);
   color: #ffffff;
   background: rgba(255, 255, 255, 0.05);
 }
 
-.btn-outline:hover {
+.btn-outline--hero:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }

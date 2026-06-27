@@ -97,14 +97,14 @@ class SiteNavbar extends HTMLElement {
       hour12 : false,
     });
 
+    /*
+      formatHijri menggunakan window.HijriCalendar dari hijri.js —
+      satu sumber kebenaran untuk semua format tanggal Hijriah.
+      Offset dan nama bulan diatur di hijri.js saja.
+    */
     const formatHijri = (now) => {
-      try {
-        return new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
-          day   : 'numeric',
-          month : 'long',
-          year  : 'numeric',
-        }).format(now);
-      } catch (e) { return ''; }
+      if (window.HijriCalendar) return window.HijriCalendar.formatShort(now);
+      return '';
     };
 
     const update = () => {

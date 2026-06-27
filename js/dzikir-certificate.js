@@ -33,8 +33,8 @@
      ============================================================ */
 
   const CFG = {
-    APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbwhc8NArp7jqycJV-GnZvOb6TmFKdWtVGPfNPAx6-LxXlWalGq18iY3cEKMmOkQmc3N/exec',
-    SECRET_KEY      : '280526',
+    APPS_SCRIPT_URL : '******',
+    SECRET_KEY      : '******',
     LS_USER_ID      : 'fikya_user_id',
     LS_USER_NAMA    : 'fikya_user_nama',
     TIMEOUT_MS      : 12000,
@@ -52,51 +52,13 @@
      ============================================================ */
 
   /*
-    OFFSET KALENDER HIJRIAH
-    Nilai 0  = gunakan hasil Intl (default)
-    Nilai +1 = geser 1 hari ke depan (jika Intl terlalu cepat)
-    Nilai -1 = geser 1 hari ke belakang (jika Intl terlalu lambat)
-    Sesuaikan apabila tanggal Hijriah tidak sesuai dengan
-    penetapan hilal resmi di lokasi Anda (Abu Dhabi - UAE).
+    formatTglHijri menggunakan window.HijriCalendar dari hijri.js —
+    satu sumber kebenaran untuk semua format tanggal Hijriah.
+    Offset dan nama bulan diatur di hijri.js saja.
   */
-  const HIJRI_OFFSET_DAYS = 0;
-
-  /* Nama hari Islam (index 0=Ahad sesuai getDay() 0=Minggu) */
-  const HARI_ISLAM = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
-
-  /* Nama bulan Hijriah */
-  const BULAN_HIJRI = [
-    'Muharram', 'Safar', "Rabi'ul Awwal", "Rabi'ul Akhir",
-    'Jumadal Ula', 'Jumadal Akhirah', 'Rajab', "Sya'ban",
-    'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah',
-  ];
-
-  /* Format tanggal Hijriah: "Jum'at, 4 Muharram 1448 H" */
   const formatTglHijri = (date) => {
-    try {
-      const adjusted = new Date(date);
-      adjusted.setDate(adjusted.getDate() + HIJRI_OFFSET_DAYS);
-
-      const hari = HARI_ISLAM[date.getDay()];
-
-      const fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
-        day  : 'numeric',
-        month: 'numeric',
-        year : 'numeric',
-      }).formatToParts(adjusted);
-
-      const parts = {};
-      fmt.forEach(p => { parts[p.type] = p.value; });
-
-      const tgl   = parts.day   || '';
-      const bln   = parseInt(parts.month || '1', 10) - 1;
-      const thn   = (parts.year || '').replace(/[^0-9]/g, '');
-      const bulan = BULAN_HIJRI[bln] || '';
-
-      return `${hari}, ${tgl} ${bulan} ${thn} H`;
-    } catch (e) {
-      return '';
-    }
+    if (window.HijriCalendar) return window.HijriCalendar.format(date);
+    return '';
   };
 
   /* Format tanggal Masehi: "Jum'at, 19 Juni 2026" */
@@ -719,7 +681,7 @@
     drawThinDivider(ctx, W, 255, GOLD_LITE);
 
     /* ── Badge api & piala ── */
-    drawBadges(ctx, W, 284, CFG.JENIS, data.streak || 1, GOLD, GOLD_LITE, DARK);
+    drawBadges(ctx, W, 280, CFG.JENIS, data.streak || 1, GOLD, GOLD_LITE, DARK);
 
     /* ── Divider ── */
     drawThinDivider(ctx, W, 328, GOLD_LITE);

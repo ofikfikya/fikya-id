@@ -65,21 +65,26 @@
   };
 
   /* ===== STORAGE KEY PER HALAMAN + SESI ===== */
-  const pageKey = () => {
+  /*
+    PAGE_KEY dihoist menjadi konstanta — nilainya tidak pernah
+    berubah selama sesi, jadi tidak perlu dihitung ulang setiap
+    kali loadState() atau saveState() dipanggil (setiap ketukan).
+  */
+  const PAGE_KEY = (() => {
     const path = window.location.pathname.split('/').pop().replace(/\.html?$/i, '');
     return `dzikir_counter_${path}_${SESSION_ID}`;
-  };
+  })();
 
   const loadState = () => {
     try {
-      const raw = localStorage.getItem(pageKey());
+      const raw = localStorage.getItem(PAGE_KEY);
       return raw ? JSON.parse(raw) : {};
     } catch (e) { return {}; }
   };
 
   const saveState = (state) => {
     try {
-      localStorage.setItem(pageKey(), JSON.stringify(state));
+      localStorage.setItem(PAGE_KEY, JSON.stringify(state));
     } catch (e) {}
   };
 

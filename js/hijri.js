@@ -38,7 +38,7 @@
      Index 0 = Ahad (sesuai getDay() 0 = Minggu)
   ============================================================ */
   const HARI_ISLAM = [
-    'Al Ahad', 'Al Ithnayn', 'Ath Thulatha', 'Al Arbia', 'Al Khamis', "Al Jumuah", 'As Sabt',
+    'Al Ahad', 'Al Ithnayn', 'Ath Thulatha', 'Al Arbia', 'Al Khamis', 'Al Jumuah', 'As Sabt',
   ];
 
   /* ============================================================

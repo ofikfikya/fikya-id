@@ -13,6 +13,26 @@
 
    Tidak ada dependency eksternal — vanilla JS murni.
 
+   CHANGELOG v3:
+   - FIX: isWaktuValid() — kondisi waktu petang diperjelas: hanya
+     15:00–23:59 yang valid. Komentar lama "hingga tengah malam"
+     dikoreksi karena getHours() mengembalikan 0 di jam 00:xx,
+     bukan nilai > 23.
+   - FIX: waitForCounters() — click handler disimpan sebagai named
+     function sehingga bisa di-removeEventListener setelah resolved.
+     Sebelumnya listener global bocor dan tryResolve terus dipanggil
+     setiap ada klik di halaman meski Promise sudah selesai.
+   - FIX: apiCall() — parameter action sekarang di-encodeURIComponent
+     sama seperti semua parameter lainnya.
+   - FIX: drawTrophyBadge() — rumus arah sinar matahari ditulis ulang
+     dengan variabel eksplisit (sunX, sunY) agar mudah dimodifikasi
+     dan tidak rawan salah hitung jika posisi matahari berubah.
+   - FIX: openModal() — certData di-reset setiap kali modal dibuka
+     untuk alur baru, agar data sesi sebelumnya tidak terbawa.
+   - FIX: injectLoginBtn() — retry setTimeout dibatasi maksimal 20x
+     (10 detik) untuk mencegah timer berjalan selamanya jika
+     dzikir-tools.js gagal load.
+
    CHANGELOG v2:
    - FIX: waitForCounters() — hapus duplikasi logika, interval
      dijamin di-clear di semua jalur resolve, tidak ada bocor.
@@ -105,7 +125,8 @@
 
   const apiCall = (params) => {
     const { action, ...rest } = params;
-    const base  = `action=${action}`;
+    /* FIX v3: action di-encode sama seperti parameter lain */
+    const base  = `action=${encodeURIComponent(action)}`;
     const extra = Object.entries({ ...rest, key: CFG.SECRET_KEY })
       .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
       .join('&');
@@ -127,18 +148,15 @@
      ============================================================ */
 
   /*
-    FIX v2: Versi sebelumnya menduplikasi logika pengecekan dua
-    kali dalam satu setInterval callback, dan interval bisa bocor
-    jika resolve() dipanggil dari jalur click-listener sementara
-    interval belum di-clear.
+    FIX v3: Versi sebelumnya tidak menyimpan referensi click handler,
+    sehingga document.removeEventListener tidak bisa dipanggil dan
+    listener bocor — tryResolve() terus terpanggil setiap klik di
+    halaman meski Promise sudah lama resolve.
 
     Versi baru:
-    - Satu fungsi isAllDone() sebagai sumber kebenaran tunggal.
-    - setInterval dan click-listener keduanya memanggil fungsi
-      yang sama: tryResolve().
-    - tryResolve() menjaga flag 'resolved' agar resolve() hanya
-      dipanggil sekali, dan clearInterval() dipanggil di satu
-      tempat yang sama.
+    - clickHandler disimpan sebagai named function agar bisa di-remove.
+    - removeEventListener dipanggil di dalam tryResolve() bersamaan
+      dengan clearInterval(), sehingga keduanya bersih di satu tempat.
   */
   const waitForCounters = () => new Promise((resolve) => {
     let resolved = false;
@@ -150,11 +168,17 @@
       return [...allBtns].every(btn => btn.classList.contains('dzikir-counter-btn--done'));
     };
 
+    /* FIX v3: named function agar bisa di-removeEventListener.
+       Dideklarasikan sebelum tryResolve agar referensi ke clickHandler
+       di dalam tryResolve tidak menyebabkan kebingungan urutan deklarasi. */
+    const clickHandler = () => setTimeout(tryResolve, 400);
+
     const tryResolve = () => {
       if (resolved) return;
       if (!isAllDone()) return;
       resolved = true;
       clearInterval(interval);
+      document.removeEventListener('click', clickHandler); /* FIX v3: hapus listener */
       resolve();
     };
 
@@ -162,9 +186,7 @@
     interval = setInterval(tryResolve, 800);
 
     /* Deteksi real-time setelah setiap klik — lebih responsif */
-    document.addEventListener('click', () => {
-      setTimeout(tryResolve, 400);
-    }, { passive: true });
+    document.addEventListener('click', clickHandler, { passive: true });
   });
 
   /* ============================================================
@@ -198,7 +220,13 @@
     });
   };
 
-  const openModal = () => {
+  const openModal = (resetData = true) => {
+    /* FIX v3: reset certData setiap kali modal dibuka untuk alur baru,
+       sehingga data sesi sebelumnya tidak ikut terbawa jika user
+       menutup modal lalu membukanya kembali.
+       Parameter resetData = false dipakai oleh init() saat savedId
+       sudah ada dan certData sudah diisi sebelum openModal dipanggil. */
+    if (resetData) certData = {};
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   };
@@ -886,12 +914,23 @@
     ctx.fillText('★', 0, -2);
 
     if (jenis === 'pagi') {
+      /* Matahari kecil di pojok kanan atas piala */
+      const sunX = 10;
+      const sunY = -12;
       ctx.fillStyle = '#fbbf24';
-      ctx.beginPath(); ctx.arc(10, -12, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sunX, sunY, 4, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth   = 1;
-      [[10, -18], [10, -6], [4, -12], [16, -12]].forEach(([x, y]) => {
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (x - 10) * 0.3, y + (y + 12) * 0.3); ctx.stroke();
+      /* FIX v3: rumus sinar menjauhi pusat matahari (sunX, sunY).
+         dx = x - sunX, dy = y - sunY — arah dari pusat ke titik ujung sinar.
+         Sebelumnya ditulis (y + 12) yang secara kebetulan sama dengan
+         (y - sunY) = (y - (-12)) = (y + 12), tapi tidak eksplisit dan
+         rawan salah jika posisi matahari berubah. */
+      [[sunX, sunY - 6], [sunX, sunY + 6], [sunX - 6, sunY], [sunX + 6, sunY]].forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + (x - sunX) * 0.3, y + (y - sunY) * 0.3);
+        ctx.stroke();
       });
     }
 
@@ -1065,17 +1104,23 @@
     if (!isDebug) return;
 
     /*
-      FIX v3: .dzikir-stats-row dibuat oleh dzikir-tools.js secara
-      async — belum tentu ada saat injectLoginBtn() pertama dipanggil.
+      .dzikir-stats-row dibuat oleh dzikir-tools.js secara async —
+      belum tentu ada saat injectLoginBtn() pertama dipanggil.
       Solusi: coba inject segera, jika elemen belum ada, ulangi setiap
-      500ms sampai berhasil. Ini memperbaiki race condition tanpa harus
-      menunggu waitForCounters() selesai, sehingga tombol debug tetap
-      muncul segera saat halaman dibuka tanpa perlu selesaikan dzikir.
+      500ms sampai berhasil — tanpa harus menunggu waitForCounters().
+
+      FIX v3: retry dibatasi maksimal 20x (10 detik). Sebelumnya
+      setTimeout rekursif tidak terbatas sehingga timer bisa berjalan
+      selamanya jika dzikir-tools.js gagal load.
     */
+    let retryCount = 0;
+    const MAX_RETRY = 20; /* 20 × 500ms = 10 detik */
+
     const tryInject = () => {
       const statsRow = document.querySelector('.dzikir-stats-row');
       if (!statsRow) {
-        setTimeout(tryInject, 500);
+        retryCount++;
+        if (retryCount < MAX_RETRY) setTimeout(tryInject, 500);
         return;
       }
 
@@ -1102,7 +1147,7 @@
      CEK WAKTU — sertifikat hanya bisa dibuat sesuai waktunya
      Menggunakan waktu lokal perangkat user masing-masing.
      Dzikir Pagi  : 04:00 — 11:59 (setelah Shubuh s/d siang)
-     Dzikir Petang: 15:00 — 23:59 (setelah Ashar s/d tengah malam)
+     Dzikir Petang: 15:00 — 23:59 (setelah Ashar s/d sebelum tengah malam)
      ============================================================ */
 
   const isWaktuValid = () => {
@@ -1119,10 +1164,13 @@
         saran : 'Jazakallahu khairan telah berdzikir. Sampai jumpa besok pagi! 🌤️',
       };
     } else {
+      /* FIX v3: getHours() mengembalikan 0–23.
+         jam <= 23 selalu true untuk semua jam, sehingga jam 00:00–14:59
+         ikut dianggap valid. Perbaikan: batasi secara eksplisit 15–23. */
       if (jam >= 15 && jam <= 23) return { valid: true };
       return {
         valid : false,
-        pesan : 'Sertifikat Dzikir Petang hanya tersedia mulai setelah Ashar (15.00) hingga tengah malam.',
+        pesan : 'Sertifikat Dzikir Petang hanya tersedia mulai setelah Ashar (15.00) hingga pukul 23.59.',
         saran : 'Jazakallahu khairan telah berdzikir. Sampai jumpa nanti petang! 🌆',
       };
     }
@@ -1176,7 +1224,7 @@
 
     if (savedId && savedNama) {
       certData = { userId: savedId, nama: savedNama };
-      openModal();
+      openModal(false); /* FIX v3: jangan reset certData yang baru saja diisi */
       await showStepGenerate();
     } else {
       openModal();

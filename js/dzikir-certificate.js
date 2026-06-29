@@ -524,7 +524,7 @@
       yang bisa menyebabkan lag atau crash saat toDataURL() dipanggil.
       Kualitas sertifikat tetap tajam di DPR=2 (retina).
     */
-    const DPR     = Math.min(window.devicePixelRatio || 2, 2);
+    const DPR     = Math.min(window.devicePixelRatio || 3, 3);
     const CW      = 700;
     const CH      = 680;
     canvas.width  = CW * DPR;
@@ -631,7 +631,7 @@
 
   const drawCertificate = (canvas, data) => {
     const ctx = canvas.getContext('2d');
-    const DPR = Math.min(window.devicePixelRatio || 2, 2);
+    const DPR = Math.min(window.devicePixelRatio || 3, 3);
     ctx.scale(DPR, DPR);
     const W   = 700;
     const H   = 680;

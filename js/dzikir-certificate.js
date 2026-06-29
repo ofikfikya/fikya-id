@@ -208,8 +208,8 @@
       Jika ada, polling menunggu counter selesai di-inject oleh JS.
     */
     const hasCounterElements =
-	  document.querySelectorAll('.dzikir-counter-wrapper').length > 0 ||
-	  document.querySelectorAll('.dzikir-count').length > 0;
+      document.querySelectorAll('.dzikir-counter-wrapper').length > 0 ||
+      document.querySelectorAll('.dzikir-count').length > 0;
     if (!hasCounterElements) {
       resolve();
       return;
@@ -638,16 +638,16 @@
       Fallback ke 3 sebelumnya menyebabkan canvas dibuat 3× lebih besar
       dari perlu tanpa benefit visual apapun, membuang memori dan CPU.
     */
-    const DPR     = Math.min(window.devicePixelRatio || 3, 3);
+    const DPR     = Math.min(window.devicePixelRatio || 1, 3);
     const CW      = 700;
     const CH      = 680;
     canvas.width  = CW * DPR;
     canvas.height = CH * DPR;
     canvas.style.width  = CW + 'px';
     canvas.style.height = CH + 'px';
-	
-	const ctx = canvas.getContext('2d');
-	ctx.scale(DPR, DPR);
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
 
     getInner().innerHTML = `
       <div class="cert-steps">
@@ -807,24 +807,24 @@
     /* ── Nama ── */
     ctx.fillStyle = DARK;
 
-	let displayNama = data.nama || 'Nama User'; // Definisikan di atas sekali saja
-	let nameFontSize = 34;
-	const maxNameW = W - 120; 
+    let displayNama = data.nama || 'Nama User';
+    let nameFontSize = 34;
+    const maxNameW = W - 120;
 
-	ctx.font = `bold ${nameFontSize}px Georgia, serif`;
-	while (nameFontSize > 18 && ctx.measureText(displayNama).width > maxNameW) {
-	  nameFontSize -= 2;
-	  ctx.font = `bold ${nameFontSize}px Georgia, serif`;
-	}
+    ctx.font = `bold ${nameFontSize}px Georgia, serif`;
+    while (nameFontSize > 18 && ctx.measureText(displayNama).width > maxNameW) {
+      nameFontSize -= 2;
+      ctx.font = `bold ${nameFontSize}px Georgia, serif`;
+    }
 
-	if (ctx.measureText(displayNama).width > maxNameW) {
-	  while (ctx.measureText(displayNama + '…').width > maxNameW && displayNama.length > 0) {
-		displayNama = displayNama.slice(0, -1);
-	  }
-	  displayNama += '…';
-	}
+    if (ctx.measureText(displayNama).width > maxNameW) {
+      while (ctx.measureText(displayNama + '…').width > maxNameW && displayNama.length > 0) {
+        displayNama = displayNama.slice(0, -1);
+      }
+      displayNama += '…';
+    }
 
-	ctx.fillText(displayNama, W / 2, 182);
+    ctx.fillText(displayNama, W / 2, 182);
 
     /* ── Subtitle ── */
     ctx.fillStyle = '#7a5a10';

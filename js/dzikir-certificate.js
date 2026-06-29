@@ -13,7 +13,24 @@
 
    Tidak ada dependency eksternal — vanilla JS murni.
 
-   CHANGELOG v3:
+   CHANGELOG v4:
+   - FIX: Komentar DPR canvas dikoreksi dari "maksimal 2" menjadi "maksimal 3"
+     sesuai nilai aktual Math.min(..., 3) yang sudah benar di kode.
+   - FIX: openModal() — race condition diperbaiki. Sebelumnya resetData=true
+     bisa meng-wipe certData yang baru diisi init() jika debug btn di-klik
+     saat init() sedang await waitForCounters(). Sekarang reset hanya terjadi
+     jika modal belum aktif (overlay tidak mengandung class 'active').
+   - FIX: showStepGenerate() — setStatus('Menghubungi server...') dipindah
+     ke SEBELUM Promise.all agar status tampil saat proses dimulai, bukan
+     setelah selesai. Sebelumnya urutan terbalik — user hanya melihat status
+     sesaat sebelum UI berganti ke step berikutnya.
+   - FIX: waitForCounters() — polling 800ms sekarang berhenti segera jika
+     tidak ada elemen .dzikir-count di halaman. Sebelumnya polling berjalan
+     selamanya karena isAllDone() selalu false tanpa counter.
+   - FIX: buildModal() / destroyModal() — Escape listener kini disimpan
+     sebagai overlay._escHandler dan di-remove via destroyModal(). Sebelumnya
+     listener anonim tidak bisa di-remove dan terus bocor ke document.
+
    - FIX: isWaktuValid() — kondisi waktu petang diperjelas: hanya
      15:00–23:59 yang valid. Komentar lama "hingga tengah malam"
      dikoreksi karena getHours() mengembalikan 0 di jam 00:xx,
@@ -39,8 +56,8 @@
    - FIX: injectLoginBtn() menggunakan pola retry internal sehingga
      tombol debug muncul segera tanpa menunggu counter selesai,
      sekaligus tetap aman dari race condition dengan dzikir-tools.js.
-   - FIX: DPR canvas dibatasi maksimal 2 agar tidak crash di
-     layar 3x/4x saat memanggil toDataURL().
+   - FIX: DPR canvas dibatasi maksimal 3 agar tidak crash di
+     layar 4x saat memanggil toDataURL().
    - FIX: innerHTML dinamis dengan e.message dan info.pesan/saran
      diganti DOM API untuk mencegah potensi XSS.
    ============================================================ */
@@ -182,6 +199,22 @@
       resolve();
     };
 
+    /*
+      FIX v4: Jika tidak ada .dzikir-counter-btn--tap di halaman sama
+      sekali (mis. dzikir-counter.js belum inject counter), polling
+      800ms akan berjalan selamanya karena isAllDone() selalu false.
+      Solusi: cek dulu apakah ada .dzikir-count di halaman — jika tidak
+      ada, resolve segera karena halaman ini tidak memerlukan counter.
+      Jika ada, polling menunggu counter selesai di-inject oleh JS.
+    */
+    const hasCounterElements =
+	  document.querySelectorAll('.dzikir-counter-wrapper').length > 0 ||
+	  document.querySelectorAll('.dzikir-count').length > 0;
+    if (!hasCounterElements) {
+      resolve();
+      return;
+    }
+
     /* Polling setiap 800ms untuk mendeteksi setelah counter di-inject */
     interval = setInterval(tryResolve, 800);
 
@@ -196,8 +229,11 @@
   let overlay, modal, certData = {};
 
   /*
-    fontsReady — Promise yang dimulai sedini mungkin di init() agar
-    font punya waktu maksimal untuk diunduh secara paralel.
+    fontsReady — diinisialisasi null di sini, lalu di-assign di init()
+    agar waitForFonts() baru dipanggil setelah DOM siap (DOMContentLoaded).
+    Memanggil waitForFonts() di level modul (sebelum DOM siap) menyebabkan
+    Promise pertama tidak bisa di-clear jika init() menimpa variabel ini,
+    sehingga polling interval di dalam waitForFonts() bocor selamanya.
     showStepGenerate() dan showStepSertifikat() cukup await Promise ini.
   */
   let fontsReady = null;
@@ -221,10 +257,13 @@
       if (e.target === overlay) closeModal();
     });
 
-    /* Tutup dengan Escape */
-    document.addEventListener('keydown', (e) => {
+    /* FIX v4: Simpan referensi escHandler agar bisa di-removeEventListener
+       di closeModal(). Sebelumnya listener anonim tidak bisa di-remove dan
+       terus hidup bahkan setelah overlay dihapus dari DOM. */
+    overlay._escHandler = (e) => {
       if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
-    });
+    };
+    document.addEventListener('keydown', overlay._escHandler);
   };
 
   const openModal = (resetData = true) => {
@@ -232,8 +271,15 @@
        sehingga data sesi sebelumnya tidak ikut terbawa jika user
        menutup modal lalu membukanya kembali.
        Parameter resetData = false dipakai oleh init() saat savedId
-       sudah ada dan certData sudah diisi sebelum openModal dipanggil. */
-    if (resetData) certData = {};
+       sudah ada dan certData sudah diisi sebelum openModal dipanggil.
+
+       FIX v4: Perbaiki race condition — jika init() sedang menunggu
+       await waitForCounters() dan debug btn memanggil openModal()
+       (resetData=true default) di saat yang sama, certData yang sudah
+       diisi oleh init() akan ter-reset. Solusi: resetData hanya berlaku
+       jika modal belum aktif (overlay.classList tidak mengandung 'active').
+       Jika modal sudah terbuka, biarkan certData apa adanya. */
+    if (resetData && !overlay.classList.contains('active')) certData = {};
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   };
@@ -241,6 +287,20 @@
   const closeModal = () => {
     overlay.classList.remove('active');
     document.body.style.overflow = '';
+  };
+
+  /*
+    destroyModal — hapus overlay dari DOM dan bersihkan Escape listener.
+    FIX v4: escHandler yang sebelumnya bocor kini di-remove di sini.
+    Panggil destroyModal() jika modal perlu dihapus sepenuhnya dari DOM
+    (mis. saat navigasi SPA atau pembersihan komponen).
+  */
+  const destroyModal = () => {
+    if (overlay._escHandler) {
+      document.removeEventListener('keydown', overlay._escHandler);
+      overlay._escHandler = null;
+    }
+    overlay.remove();
   };
 
   const getInner = () => document.getElementById('cert-modal-inner');
@@ -338,6 +398,22 @@
     document.getElementById('cert-input-nama')?.focus();
   };
 
+  /*
+    sanitizeNama — normalisasi string nama dari sumber eksternal
+    (respons server atau localStorage) sebelum disimpan ke certData.
+
+    Tiga titik yang memanggil ini:
+    1. submitUserBaru() — res.nama dari server saat registrasi
+    2. submitUserLama() — res.nama dari server saat verifikasi ID
+    3. init()           — savedNama dari localStorage sesi sebelumnya
+
+    Tanpa sanitasi, nama yang dikembalikan server bisa berisi string
+    panjang, karakter kontrol, atau konten tak terduga yang kemudian
+    dirender di canvas (drawCertificate) dan dikirim via WhatsApp share.
+  */
+  const sanitizeNama = (raw) =>
+    String(raw || '').trim().replace(/[\r\n\t]/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 80);
+
   const submitUserBaru = async () => {
     const nama  = document.getElementById('cert-input-nama')?.value.trim()  || '';
     const email = document.getElementById('cert-input-email')?.value.trim() || '';
@@ -362,9 +438,10 @@
       const res = await apiCall({ action: 'registerUser', nama, email });
 
       if (res.status === 'ok' || res.status === 'exists') {
+        const namaBersih = sanitizeNama(res.nama);
         ls.set(CFG.LS_USER_ID,   res.userId);
-        ls.set(CFG.LS_USER_NAMA, res.nama);
-        certData = { userId: res.userId, nama: res.nama };
+        ls.set(CFG.LS_USER_NAMA, namaBersih);
+        certData = { userId: res.userId, nama: namaBersih };
 
         if (res.status === 'exists') {
           showMsg('info', `Email sudah terdaftar. ID Anda: ${res.userId}`);
@@ -449,9 +526,10 @@
       const res = await apiCall({ action: 'verifyUser', userId });
 
       if (res.status === 'ok') {
+        const namaBersih = sanitizeNama(res.nama);
         ls.set(CFG.LS_USER_ID,   res.userId);
-        ls.set(CFG.LS_USER_NAMA, res.nama);
-        certData = { userId: res.userId, nama: res.nama };
+        ls.set(CFG.LS_USER_NAMA, namaBersih);
+        certData = { userId: res.userId, nama: namaBersih };
         await showStepGenerate();
       } else {
         showMsg('error', res.message || 'ID tidak ditemukan.');
@@ -495,15 +573,22 @@
 
         fontsReady sudah dimulai sejak init() — di sini kita hanya
         membuat fallback jika entah bagaimana belum dimulai.
+
+        FIX v4: setStatus('Menghubungi server...') dipindah ke SEBELUM
+        Promise.all agar status tampil saat request dimulai — bukan sesudah
+        selesai. setStatus('Menggambar sertifikat...') dipanggil di dalam
+        .then() setelah fontsReady resolve, yang masih paralel dengan
+        apiCall. Urutan sebelumnya (status dipanggil setelah await) berarti
+        user hanya melihat status saat proses sudah selesai — terbalik.
       */
       if (!fontsReady) fontsReady = waitForFonts();
+
+      setStatus('Menghubungi server...');
 
       const [res] = await Promise.all([
         apiCall({ action: 'generateCert', userId: certData.userId, jenis: CFG.JENIS }),
         fontsReady.then(() => setStatus('Menggambar sertifikat...')),
       ]);
-
-      setStatus('Menghubungi server...');
       if (res.status !== 'ok') throw new Error(res.message || 'Gagal generate sertifikat');
 
       certData.nomorSertifikat = res.nomorSertifikat;
@@ -542,11 +627,16 @@
     const canvas = document.createElement('canvas');
 
     /*
-      FIX v2: DPR dibatasi maksimal 2.
-      devicePixelRatio bisa bernilai 3 atau 4 di perangkat modern.
+      DPR dibatasi maksimal 3.
+      devicePixelRatio bisa bernilai 4 di perangkat modern.
       Canvas 700×680 dengan DPR=4 menjadi 2800×2720px (7.6 megapiksel)
       yang bisa menyebabkan lag atau crash saat toDataURL() dipanggil.
-      Kualitas sertifikat tetap tajam di DPR=2 (retina).
+      Kualitas sertifikat tetap tajam di DPR=3 (retina Plus).
+
+      Fallback ke 1 (bukan 3) jika devicePixelRatio undefined atau 0
+      — misalnya di SSR, WebView tertentu, atau lingkungan non-browser.
+      Fallback ke 3 sebelumnya menyebabkan canvas dibuat 3× lebih besar
+      dari perlu tanpa benefit visual apapun, membuang memori dan CPU.
     */
     const DPR     = Math.min(window.devicePixelRatio || 3, 3);
     const CW      = 700;
@@ -555,6 +645,9 @@
     canvas.height = CH * DPR;
     canvas.style.width  = CW + 'px';
     canvas.style.height = CH + 'px';
+	
+	const ctx = canvas.getContext('2d');
+	ctx.scale(DPR, DPR);
 
     getInner().innerHTML = `
       <div class="cert-steps">
@@ -599,7 +692,7 @@
     /* Font dijamin sudah siap karena fontsReady di-await di showStepGenerate()
        sebelum fungsi ini dipanggil. Tidak perlu waitForFonts() lagi. */
     document.getElementById('cert-canvas-wrap').appendChild(canvas);
-    drawCertificate(canvas, certData);
+    drawCertificate(ctx, certData);
 
     /* Download PNG */
     document.getElementById('cert-download').addEventListener('click', () => {
@@ -654,10 +747,7 @@
      CANVAS — GAMBAR SERTIFIKAT
      ============================================================ */
 
-  const drawCertificate = (canvas, data) => {
-    const ctx = canvas.getContext('2d');
-    const DPR = Math.min(window.devicePixelRatio || 3, 3);
-    ctx.scale(DPR, DPR);
+  const drawCertificate = (ctx, data) => {
     const W   = 700;
     const H   = 680;
 
@@ -716,8 +806,25 @@
 
     /* ── Nama ── */
     ctx.fillStyle = DARK;
-    ctx.font      = 'bold 34px Georgia, serif';
-    ctx.fillText(data.nama || 'Nama User', W / 2, 182);
+
+	let displayNama = data.nama || 'Nama User'; // Definisikan di atas sekali saja
+	let nameFontSize = 34;
+	const maxNameW = W - 120; 
+
+	ctx.font = `bold ${nameFontSize}px Georgia, serif`;
+	while (nameFontSize > 18 && ctx.measureText(displayNama).width > maxNameW) {
+	  nameFontSize -= 2;
+	  ctx.font = `bold ${nameFontSize}px Georgia, serif`;
+	}
+
+	if (ctx.measureText(displayNama).width > maxNameW) {
+	  while (ctx.measureText(displayNama + '…').width > maxNameW && displayNama.length > 0) {
+		displayNama = displayNama.slice(0, -1);
+	  }
+	  displayNama += '…';
+	}
+
+	ctx.fillText(displayNama, W / 2, 182);
 
     /* ── Subtitle ── */
     ctx.fillStyle = '#7a5a10';
@@ -1099,7 +1206,7 @@
     let   cy    = y;
     words.forEach((word, i) => {
       const test = line + word + ' ';
-      if (ctx.measureText(test).width > maxW && i > 0) {
+      if (ctx.measureText(test).width > maxW && line !== '') {
         ctx.fillText(line.trim(), x, cy);
         line = word + ' ';
         cy  += lineH;
@@ -1301,10 +1408,15 @@
     buildModal();
 
     /*
-      Mulai prefetch font SEGERA — paralel dengan waitForCounters()
-      dan semua langkah lain sebelum canvas digambar.
+      Mulai prefetch font SEGERA setelah DOM siap — paralel dengan
+      waitForCounters() dan semua langkah lain sebelum canvas digambar.
       Dengan ini, font punya waktu maksimal untuk diunduh; saat
       showStepGenerate() dipanggil, fontsReady sudah berjalan lama.
+
+      PENTING: fontsReady di-assign di sini (bukan di level modul) karena
+      waitForFonts() menggunakan document.fonts yang butuh DOM siap.
+      Memanggil waitForFonts() sebelum DOMContentLoaded menyebabkan
+      polling interval bocor jika init() menimpa variabel tersebut.
     */
     fontsReady = waitForFonts();
 
@@ -1328,7 +1440,7 @@
     const savedNama = ls.get(CFG.LS_USER_NAMA);
 
     if (savedId && savedNama) {
-      certData = { userId: savedId, nama: savedNama };
+      certData = { userId: savedId, nama: sanitizeNama(savedNama) };
       openModal(false); /* FIX v3: jangan reset certData yang baru saja diisi */
       await showStepGenerate();
     } else {

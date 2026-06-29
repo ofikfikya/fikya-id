@@ -195,6 +195,13 @@
 
   let overlay, modal, certData = {};
 
+  /*
+    fontsReady — Promise yang dimulai sedini mungkin di init() agar
+    font punya waktu maksimal untuk diunduh secara paralel.
+    showStepGenerate() dan showStepSertifikat() cukup await Promise ini.
+  */
+  let fontsReady = null;
+
   const buildModal = () => {
     overlay = document.createElement('div');
     overlay.className = 'cert-overlay';
@@ -471,23 +478,40 @@
       </div>
       <div class="cert-loading">
         <div class="cert-spinner"></div>
-        <div class="cert-loading-text">Membuat sertifikat Anda...</div>
+        <div class="cert-loading-text" id="cert-loading-text">Menghubungi server...</div>
       </div>
     `;
 
-    try {
-      const res = await apiCall({
-        action : 'generateCert',
-        userId : certData.userId,
-        jenis  : CFG.JENIS,
-      });
+    const setStatus = (teks) => {
+      const el = document.getElementById('cert-loading-text');
+      if (el) el.textContent = teks;
+    };
 
+    try {
+      /*
+        Jalankan apiCall dan waitForFonts secara PARALEL.
+        Keduanya bisa memakan waktu (network), jadi tidak ada alasan
+        menunggu satu selesai dulu sebelum memulai yang lain.
+
+        fontsReady sudah dimulai sejak init() — di sini kita hanya
+        membuat fallback jika entah bagaimana belum dimulai.
+      */
+      if (!fontsReady) fontsReady = waitForFonts();
+
+      const [res] = await Promise.all([
+        apiCall({ action: 'generateCert', userId: certData.userId, jenis: CFG.JENIS }),
+        fontsReady.then(() => setStatus('Menggambar sertifikat...')),
+      ]);
+
+      setStatus('Menghubungi server...');
       if (res.status !== 'ok') throw new Error(res.message || 'Gagal generate sertifikat');
 
       certData.nomorSertifikat = res.nomorSertifikat;
       certData.tanggal         = res.tanggal;
       certData.streak          = res.streak || 1;
 
+      /* Font sudah pasti siap di sini karena fontsReady sudah di-await
+         di dalam Promise.all di atas */
       await showStepSertifikat();
     } catch (e) {
       /*
@@ -572,21 +596,8 @@
     document.getElementById('cert-info-userid').textContent = certData.userId        || '-';
     document.getElementById('cert-info-nomor').textContent  = certData.nomorSertifikat || '-';
 
-    /* Render canvas — muat font secara eksplisit sebelum menggambar.
-       document.fonts.ready TIDAK cukup untuk font Google Fonts dengan
-       font-display:swap, karena browser menganggap font sudah "ready"
-       meski file belum selesai diunduh (fallback font langsung dipakai).
-       Solusi: panggil document.fonts.load() untuk setiap font yang
-       dipakai canvas secara eksplisit, sehingga browser benar-benar
-       menunggu hingga file font terunduh sebelum canvas digambar. */
-    await Promise.all([
-      document.fonts.load('400 16px Inter'),
-      document.fonts.load('600 16px Inter'),
-      document.fonts.load('700 16px Inter'),
-      document.fonts.load('800 16px Inter'),
-      document.fonts.load('italic 16px Georgia'),
-      document.fonts.load('bold 16px Georgia'),
-    ]);
+    /* Font dijamin sudah siap karena fontsReady di-await di showStepGenerate()
+       sebelum fungsi ini dipanggil. Tidak perlu waitForFonts() lagi. */
     document.getElementById('cert-canvas-wrap').appendChild(canvas);
     drawCertificate(canvas, certData);
 
@@ -1103,6 +1114,77 @@
   const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
   /* ============================================================
+     FONT LOADER — menjamin font benar-benar terunduh sebelum
+     canvas digambar.
+
+     Masalah dengan pendekatan lama (Promise.all + fonts.load):
+     1. fonts.load() mengembalikan array kosong [] tanpa error jika
+        @font-face rules belum di-parse (race condition di mode debug).
+     2. Promise tetap resolve meski hasil kosong — tidak ada yang
+        mendeteksi bahwa font sebenarnya belum termuat.
+     3. Georgia adalah system font, tidak ada di document.fonts —
+        fonts.load() untuk Georgia selalu resolve [] dan tidak ada
+        yang perlu ditunggu.
+
+     Solusi: waitForFonts() melakukan dua lapis pengecekan:
+     1. Coba fonts.load() terlebih dahulu — jika hasilnya tidak kosong,
+        berarti font sudah ada dan berhasil dimuat.
+     2. Jika hasilnya kosong (font belum ada di @font-face / belum
+        di-parse), polling fonts.check() setiap 100ms sampai font
+        benar-benar terdeteksi atau timeout tercapai.
+     3. Timeout 5 detik — jika Google Fonts gagal diunduh (offline /
+        lambat), canvas tetap digambar dengan fallback font daripada
+        hang selamanya.
+     ============================================================ */
+
+  const waitForFonts = async () => {
+    /* Daftar font web yang dipakai canvas. Georgia tidak disertakan
+       karena merupakan system font — tidak ada di document.fonts
+       dan tidak perlu ditunggu. */
+    const webFonts = [
+      { spec: '400 16px Inter',  check: '400 1em Inter'  },
+      { spec: '600 16px Inter',  check: '600 1em Inter'  },
+      { spec: '700 16px Inter',  check: '700 1em Inter'  },
+      { spec: '800 16px Inter',  check: '800 1em Inter'  },
+    ];
+
+    const POLL_INTERVAL = 100;  /* ms antar polling */
+    const TIMEOUT_FONT  = 5000; /* ms batas maksimal menunggu */
+
+    /* Tunggu satu font: coba load(), jika gagal polling check() */
+    const waitOne = ({ spec, check }) => new Promise((resolve) => {
+      /* Coba melalui fonts.load() — akan berhasil jika @font-face
+         sudah di-parse dan file font sudah atau sedang diunduh */
+      document.fonts.load(spec).then((loaded) => {
+        if (loaded.length > 0) {
+          /* Font berhasil dimuat via fonts.load() */
+          resolve();
+          return;
+        }
+        /* Hasil kosong: @font-face belum di-parse saat load() dipanggil.
+           Alihkan ke polling fonts.check() */
+        const start   = Date.now();
+        const interval = setInterval(() => {
+          if (document.fonts.check(check)) {
+            clearInterval(interval);
+            resolve();
+          } else if (Date.now() - start >= TIMEOUT_FONT) {
+            /* Timeout — lanjutkan dengan fallback font */
+            clearInterval(interval);
+            console.warn(`cert: font timeout — "${spec}" tidak terunduh, menggunakan fallback.`);
+            resolve();
+          }
+        }, POLL_INTERVAL);
+      }).catch(() => {
+        /* fonts.load() tidak tersedia atau error — resolve langsung */
+        resolve();
+      });
+    });
+
+    await Promise.all(webFonts.map(waitOne));
+  };
+
+  /* ============================================================
      TOMBOL MASUK DENGAN ID (di halaman)
      Tampil di samping back-to-top, berguna jika localStorage
      terhapus dan user ingin masuk kembali dengan ID lama.
@@ -1216,6 +1298,14 @@
 
   const init = async () => {
     buildModal();
+
+    /*
+      Mulai prefetch font SEGERA — paralel dengan waitForCounters()
+      dan semua langkah lain sebelum canvas digambar.
+      Dengan ini, font punya waktu maksimal untuk diunduh; saat
+      showStepGenerate() dipanggil, fontsReady sudah berjalan lama.
+    */
+    fontsReady = waitForFonts();
 
     /*
       injectLoginBtn() dipanggil segera — fungsi ini sudah menangani

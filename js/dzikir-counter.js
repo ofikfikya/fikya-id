@@ -17,6 +17,24 @@
      ulang setiap kali halaman dimuat — termasuk saat refresh.
    - Key localStorage lama dibersihkan otomatis saat init.
 
+   FIX v3:
+   - [BUG 1] setTimeout "done" tidak di-cancel saat reset cepat.
+     Ditambahkan doneTimer per-counter; btnReset kini memanggil
+     clearTimeout(doneTimer) sebelum memulihkan tampilan, sehingga
+     fade-out yang sedang berjalan dibatalkan dan tidak menghapus
+     ring/angka yang baru saja di-restore.
+   - [BUG 2] aria-label pada elemen display tidak diperbarui saat
+     state selesai (done). Screen reader membacakan "Sisa 1 dari N"
+     alih-alih sesuatu yang bermakna. Sekarang display diberi
+     aria-label "Selesai" saat done, dan dikosongkan saat reset
+     (konten textContent yang berbicara).
+   - [BUG 3] cleanupOldStorage() menghapus key dari tab lain yang
+     masih aktif di halaman yang sama, karena setiap tab punya
+     SESSION_ID berbeda dan saling menganggap key lawan sebagai
+     "lama". Diperbaiki dengan menambahkan PAGE_SLUG ke prefix key
+     cleanup — hanya key dari halaman & slug yang sama yang
+     dihapus, bukan seluruh key dzikir_counter_*.
+
    Pola teks .dzikir-count yang ditangani:
    "Dibaca 1 x"                             → countdown dari 1
    "Dibaca 3 x" / "Dibaca 4 x" / dst       → countdown dari angka tersebut
@@ -40,26 +58,39 @@
 
   /* ===== SESSION ID UNIK PER PAGE LOAD (IN-MEMORY) ===== */
   /*
-    PERBAIKAN UTAMA:
-    Sebelumnya session ID disimpan di sessionStorage, yang
-    TIDAK bersih saat refresh — hanya bersih saat tab ditutup.
-    Akibatnya counter tidak pernah reset saat user refresh.
-
-    Solusi: simpan session ID di window (in-memory).
-    - Setiap kali halaman dimuat (termasuk refresh), window
-      kosong dan ID di-generate ulang dari nol.
-    - localStorage key menyertakan ID ini, sehingga data dari
-      sesi sebelumnya tidak pernah terbaca lagi.
-    - Key lama dibersihkan saat init agar localStorage tidak
-      menumpuk seiring waktu.
+    Setiap kali halaman dimuat (termasuk refresh), window kosong
+    dan ID di-generate ulang dari nol. localStorage key menyertakan
+    ID ini sehingga data sesi sebelumnya tidak pernah terbaca lagi.
   */
   const SESSION_ID = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+  /* ===== PAGE SLUG — bagian nama halaman dari pathname ===== */
+  /*
+    Diekstrak sekali dan dipakai di PAGE_KEY maupun CLEANUP_PREFIX.
+    Contoh: "/blog/dzikir-pagi.html" → "dzikir-pagi"
+  */
+  const PAGE_SLUG = window.location.pathname.split('/').pop().replace(/\.html?$/i, '');
+
   /* ===== CLEANUP KEY LOCALSTORAGE LAMA ===== */
+  /*
+    FIX v3 [BUG 3]:
+    Versi sebelumnya memfilter dengan prefix umum "dzikir_counter_",
+    sehingga cleanup di tab A menghapus key tab B yang masih aktif
+    di halaman yang sama (kedua tab punya SESSION_ID berbeda, dan
+    keduanya menganggap key lawan sebagai "lama").
+
+    Solusi: sertakan PAGE_SLUG dalam prefix cleanup.
+    Dengan begitu, tab A hanya membersihkan key dari halaman yang
+    sama (dzikir-pagi) dengan SESSION_ID berbeda — key halaman lain
+    (dzikir-petang) atau tab lain dengan PAGE_SLUG berbeda tidak
+    tersentuh.
+  */
+  const CLEANUP_PREFIX = `dzikir_counter_${PAGE_SLUG}_`;
+
   const cleanupOldStorage = () => {
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith('dzikir_counter_') && !k.includes(SESSION_ID))
+        .filter(k => k.startsWith(CLEANUP_PREFIX) && !k.includes(SESSION_ID))
         .forEach(k => localStorage.removeItem(k));
     } catch (e) {}
   };
@@ -70,10 +101,7 @@
     berubah selama sesi, jadi tidak perlu dihitung ulang setiap
     kali loadState() atau saveState() dipanggil (setiap ketukan).
   */
-  const PAGE_KEY = (() => {
-    const path = window.location.pathname.split('/').pop().replace(/\.html?$/i, '');
-    return `dzikir_counter_${path}_${SESSION_ID}`;
-  })();
+  const PAGE_KEY = `${CLEANUP_PREFIX}${SESSION_ID}`;
 
   const loadState = () => {
     try {
@@ -100,6 +128,16 @@
     const state    = loadState();
     const stateKey = isSub ? `${cardIdx}_${subLabel}` : `${cardIdx}`;
     let current    = state[stateKey] !== undefined ? state[stateKey] : total;
+
+    /*
+      FIX v3 [BUG 1]:
+      Timer fade-out "done" kini disimpan per-counter sehingga
+      btnReset bisa membatalkannya (clearTimeout) sebelum memulihkan
+      tampilan. Tanpa ini, jika user reset dalam 400ms setelah counter
+      selesai, callback setTimeout tetap berjalan dan meng-hide ring
+      serta angka yang baru saja di-restore.
+    */
+    let doneTimer = null;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'dzikir-counter-wrapper' + (isSub ? ' dzikir-counter-wrapper--sub' : '');
@@ -203,8 +241,20 @@
         btnTap.classList.add('dzikir-counter-btn--done');
         wrapper.classList.add('dzikir-counter-wrapper--done');
 
-        /* Tunggu animasi ring penuh selesai, baru fade out */
-        setTimeout(() => {
+        /*
+          FIX v3 [BUG 2]:
+          display diberi aria-label "Selesai" agar screen reader
+          tidak membacakan nilai teks terakhir ("1") atau aria-label
+          lama ("Sisa 1 dari N") yang tertinggal dari ketukan sebelumnya.
+          Nilai textContent tetap dipertahankan (tidak dikosongkan) karena
+          elemen akan di-fade-out oleh setTimeout di bawah — mengosongkan
+          teks saat masih visible akan terlihat janggal secara visual.
+        */
+        display.setAttribute('aria-label', 'Selesai');
+
+        /* FIX v3 [BUG 1]: simpan timer ID agar bisa di-cancel saat reset */
+        doneTimer = setTimeout(() => {
+          doneTimer = null;
           svg.style.opacity     = '0';
           svg.style.maxWidth    = '0';
           svg.style.marginRight = '0';
@@ -256,6 +306,29 @@
 
     /* ===== HANDLER RESET ===== */
     btnReset.addEventListener('click', () => {
+      /*
+        FIX v3 [BUG 1]:
+        Batalkan fade-out yang mungkin sedang berjalan (doneTimer)
+        sebelum memulihkan tampilan. Tanpa clearTimeout ini, jika
+        user reset dalam 400ms setelah counter selesai, callback
+        setTimeout akan tetap berjalan setelah updateDisplay(total)
+        dan kembali meng-hide ring serta angka yang baru di-restore.
+      */
+      if (doneTimer !== null) {
+        clearTimeout(doneTimer);
+        doneTimer = null;
+      }
+      /*
+        FIX v3 [BUG 2] — sisi reset:
+        Hapus aria-label override "Selesai" yang dipasang saat done.
+        Setelah ini updateDisplay() akan menulis aria-label baru
+        ("Sisa N dari total") lewat branch else-nya, tapi jika tidak
+        dihapus dulu, ada window singkat di mana label lama masih
+        terbaca oleh screen reader sebelum updateDisplay selesai.
+        removeAttribute memastikan label lama benar-benar hilang
+        sebelum teks baru ditulis.
+      */
+      display.removeAttribute('aria-label');
       current = total;
       const s = loadState();
       s[stateKey] = current;

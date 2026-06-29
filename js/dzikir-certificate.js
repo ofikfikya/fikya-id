@@ -572,11 +572,21 @@
     document.getElementById('cert-info-userid').textContent = certData.userId        || '-';
     document.getElementById('cert-info-nomor').textContent  = certData.nomorSertifikat || '-';
 
-    /* Render canvas — tunggu semua font selesai dimuat sebelum menggambar.
-       Tanpa ini, mode debug (?debug=1) menghasilkan canvas dengan font
-       fallback karena font belum sempat dimuat, sehingga file PNG kecil
-       dan teks terlihat kabur saat dicetak. */
-    await document.fonts.ready;
+    /* Render canvas — muat font secara eksplisit sebelum menggambar.
+       document.fonts.ready TIDAK cukup untuk font Google Fonts dengan
+       font-display:swap, karena browser menganggap font sudah "ready"
+       meski file belum selesai diunduh (fallback font langsung dipakai).
+       Solusi: panggil document.fonts.load() untuk setiap font yang
+       dipakai canvas secara eksplisit, sehingga browser benar-benar
+       menunggu hingga file font terunduh sebelum canvas digambar. */
+    await Promise.all([
+      document.fonts.load('400 16px Inter'),
+      document.fonts.load('600 16px Inter'),
+      document.fonts.load('700 16px Inter'),
+      document.fonts.load('800 16px Inter'),
+      document.fonts.load('italic 16px Georgia'),
+      document.fonts.load('bold 16px Georgia'),
+    ]);
     document.getElementById('cert-canvas-wrap').appendChild(canvas);
     drawCertificate(canvas, certData);
 

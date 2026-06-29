@@ -1138,6 +1138,7 @@
      ============================================================ */
 
   const waitForFonts = async () => {
+     await document.fonts.ready;
     /* Daftar font web yang dipakai canvas. Georgia tidak disertakan
        karena merupakan system font — tidak ada di document.fonts
        dan tidak perlu ditunggu. */

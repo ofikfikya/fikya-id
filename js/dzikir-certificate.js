@@ -488,7 +488,7 @@
       certData.tanggal         = res.tanggal;
       certData.streak          = res.streak || 1;
 
-      showStepSertifikat();
+      await showStepSertifikat();
     } catch (e) {
       /*
         FIX v2: e.message dimasukkan via textContent, bukan innerHTML,
@@ -514,7 +514,7 @@
      STEP 3 — TAMPIL SERTIFIKAT + CANVAS
      ============================================================ */
 
-  const showStepSertifikat = () => {
+  const showStepSertifikat = async () => {
     const canvas = document.createElement('canvas');
 
     /*
@@ -572,7 +572,11 @@
     document.getElementById('cert-info-userid').textContent = certData.userId        || '-';
     document.getElementById('cert-info-nomor').textContent  = certData.nomorSertifikat || '-';
 
-    /* Render canvas */
+    /* Render canvas — tunggu semua font selesai dimuat sebelum menggambar.
+       Tanpa ini, mode debug (?debug=1) menghasilkan canvas dengan font
+       fallback karena font belum sempat dimuat, sehingga file PNG kecil
+       dan teks terlihat kabur saat dicetak. */
+    await document.fonts.ready;
     document.getElementById('cert-canvas-wrap').appendChild(canvas);
     drawCertificate(canvas, certData);
 

@@ -425,10 +425,11 @@ html.dark .search-result-excerpt mark {
     padding: 0 16px;
   }
 
-  /* Di mobile: sembunyikan tanggal dan hijri, tampilkan jam saja */
+  /* Di mobile: sembunyikan tanggal dan hijri, tampilkan jam saja.
+     (Selector .zona-nav dihapus — elemen ini tidak pernah dirender
+     oleh navbar.js, jadi rule sebelumnya yatim piatu / tidak berefek.) */
   .nav-datetime .tgl-nav,
-  .nav-datetime .hijri-nav,
-  .nav-datetime .zona-nav {
+  .nav-datetime .hijri-nav {
     display: none;
   }
 

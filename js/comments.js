@@ -5,6 +5,32 @@
            validasi, XSS protection, cooldown,
            skeleton loading, toast notification
 
+   FIX v3:
+   - Hapus fetchWithTimeout() — fungsi ini membungkus jsonp()
+     dengan Promise.race() dan timeout KEDUA, padahal jsonp()
+     sudah punya timeout sendiri. Akibatnya ada dua timer
+     berjalan bersamaan untuk request yang sama: jika timer
+     internal jsonp() menang, script callback sudah dibersihkan
+     duluan tapi Promise.race() di fetchWithTimeout() belum
+     resolve — race condition, cleanup tidak konsisten.
+   - fetchKomentar() sekarang memanggil jsonp() langsung,
+     tanpa pembungkus tambahan.
+   - Timeout di jsonp() yang sebelumnya hardcoded 10000 kini
+     dibaca dari CONFIG.fetchTimeout, supaya hanya ada SATU
+     sumber kebenaran untuk nilai timeout. Sebelumnya nilai
+     hardcoded ini kebetulan sama dengan CONFIG.fetchTimeout,
+     tapi keduanya didefinisikan terpisah — mengubah salah
+     satu tanpa yang lain akan menyebabkan timeout yang
+     berbeda secara diam-diam, tanpa error apapun.
+   - Pesan error "Server lambat merespons" sebelumnya dicek via
+     e.message === 'Request timeout', yaitu string yang hanya
+     pernah dilempar oleh fetchWithTimeout(). Setelah fungsi itu
+     dihapus, kondisi ini tidak akan pernah true lagi — cabang
+     pesan ramah ini jadi dead code dan user akan selalu melihat
+     pesan generik meski penyebabnya memang timeout. Diperbaiki
+     untuk mencocokkan 'JSONP timeout', string yang benar-benar
+     dilempar oleh jsonp().
+
    FIX v2:
    - Cache komentar (CACHE_KEY_COMMENTS) sekarang selalu
      di-clear saat halaman dimuat, sehingga komentar baru
@@ -147,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const timeout = setTimeout(() => {
         cleanup();
         reject(new Error('JSONP timeout'));
-      }, 10000);
+      }, CONFIG.fetchTimeout);
 
       const cleanup = () => {
         delete window[cbName];
@@ -162,18 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  /* ===== 8. FETCH DENGAN TIMEOUT ===== */
-
-  const fetchWithTimeout = (url, timeoutMs) => {
-    return Promise.race([
-      jsonp(url),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
-      ),
-    ]);
-  };
-
-  /* ===== 9. VIEW COUNTER ===== */
+  /* ===== 8. VIEW COUNTER ===== */
 
   const VIEW_KEY = `viewed_${postId}`;
 
@@ -187,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ===== 10. STATISTIK ===== */
+  /* ===== 9. STATISTIK ===== */
 
   const renderStats = (stats) => {
     if (elViews)        elViews.textContent        = (stats.views    || 0).toLocaleString('id-ID');
@@ -207,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ===== 11. KOMENTAR ===== */
+  /* ===== 10. KOMENTAR ===== */
 
   const formatTanggal = (timestamp) => {
     try {
@@ -323,9 +338,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSkeleton();
 
     try {
-      const data = await fetchWithTimeout(
-        `${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`,
-        CONFIG.fetchTimeout
+      const data = await jsonp(
+        `${APPS_SCRIPT_URL}?action=getComments&postId=${encodeURIComponent(postId)}`
       );
 
       if (data.status === 'ok') {
@@ -337,14 +351,14 @@ document.addEventListener('DOMContentLoaded', () => {
       elCommentsList.innerHTML = '';
       const errEl = document.createElement('div');
       errEl.className = 'comments-empty';
-      errEl.textContent = e.message === 'Request timeout'
+      errEl.textContent = e.message === 'JSONP timeout'
         ? 'Server lambat merespons. Coba refresh halaman.'
         : 'Gagal memuat komentar. Periksa koneksi internet Anda.';
       elCommentsList.appendChild(errEl);
     }
   };
 
-  /* ===== 12. CHARACTER COUNTER ===== */
+  /* ===== 11. CHARACTER COUNTER ===== */
 
   const updateCount = (input, countEl, max) => {
     if (!input || !countEl) return;
@@ -356,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (elNama) elNama.addEventListener('input', () => updateCount(elNama, elNamaCount, CONFIG.maxNama));
   if (elIsi)  elIsi.addEventListener('input',  () => updateCount(elIsi,  elIsiCount,  CONFIG.maxKomentar));
 
-  /* ===== 13. COOLDOWN ===== */
+  /* ===== 12. COOLDOWN ===== */
 
   const COOLDOWN_KEY = `comment_cooldown_${postId}`;
 
@@ -379,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { localStorage.setItem(COOLDOWN_KEY, Date.now().toString()); } catch(e) {}
   };
 
-  /* ===== 14. KIRIM KOMENTAR ===== */
+  /* ===== 13. KIRIM KOMENTAR ===== */
 
   if (elForm) {
     elForm.addEventListener('submit', async (e) => {
@@ -466,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ===== 15. INIT ===== */
+  /* ===== 14. INIT ===== */
 
   /*
     PERBAIKAN: Clear cache komentar setiap kali halaman dimuat.

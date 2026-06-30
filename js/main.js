@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (elReadTime) {
     const contentEl = document.querySelector('.dzikir-container') || document.querySelector('main');
     if (contentEl) {
-      const text      = contentEl.innerText || '';
+      const text      = contentEl.textContent || '';
       const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
       const minutes   = Math.ceil(wordCount / 200);
       elReadTime.textContent = minutes;

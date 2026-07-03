@@ -6,8 +6,9 @@
    1. Tombol copy untuk setiap .dzikir-arabic, .dzikir-latin,
       dan .dzikir-arti dalam setiap .dzikir-card.
       Teks yang disalin adalah teks bersih (tanpa HTML).
-   2. Tombol back to top — muncul saat scroll > 300px,
-      diletakkan di samping stat tayangan & komentar.
+   2. Tombol back to top — statis, diletakkan di samping stat
+      tayangan & komentar di akhir konten (bukan floating/
+      muncul berdasarkan posisi scroll).
 
    Tidak ada dependency — vanilla JS murni.
    ============================================================ */
@@ -38,6 +39,14 @@
     btn.setAttribute('title', cfg.label);
     btn.innerHTML    = `<span class="dzikir-copy-icon" aria-hidden="true">${cfg.icon}</span><span class="dzikir-copy-label">${cfg.label}</span>`;
 
+    /* FIX: simpan id timeout revert supaya bisa di-clearTimeout kalau
+       tombol yang sama diklik lagi sebelum revert sebelumnya selesai.
+       Tanpa ini, klik berulang dalam <2 detik membuat feedback
+       "Tersalin!" reset lebih cepat dari yang seharusnya, karena
+       setiap klik menjadwalkan timernya sendiri tanpa membatalkan
+       timer klik sebelumnya. */
+    let revertTimer = null;
+
     btn.addEventListener('click', async () => {
       /* Ambil teks bersih — hapus teks <br> yang jadi newline di innerText */
       const text = targetEl.innerText.trim();
@@ -55,17 +64,27 @@
         document.body.removeChild(ta);
       }
 
+      if (revertTimer !== null) clearTimeout(revertTimer);
+
       /* Feedback visual sementara */
       const iconEl  = btn.querySelector('.dzikir-copy-icon');
       const labelEl = btn.querySelector('.dzikir-copy-label');
       iconEl.textContent  = cfg.iconDone;
       labelEl.textContent = cfg.labelDone;
       btn.classList.add('dzikir-copy-btn--copied');
+      /* FIX: aria-label & title ikut diperbarui, bukan cuma teks
+         visual, supaya pengguna pembaca layar juga mendapat
+         konfirmasi bahwa teksnya berhasil disalin. */
+      btn.setAttribute('aria-label', cfg.labelDone);
+      btn.setAttribute('title', cfg.labelDone);
 
-      setTimeout(() => {
+      revertTimer = setTimeout(() => {
+        revertTimer = null;
         iconEl.textContent  = cfg.icon;
         labelEl.textContent = cfg.label;
         btn.classList.remove('dzikir-copy-btn--copied');
+        btn.setAttribute('aria-label', cfg.label);
+        btn.setAttribute('title', cfg.label);
       }, 2000);
     });
 
@@ -117,6 +136,10 @@
   const initBackToTop = () => {
     const statsEl = document.querySelector('.article-stats');
     if (!statsEl) return;
+    /* FIX (jaga-jaga): kalau initBackToTop() ke-panggil lebih dari
+       sekali (mis. script ter-include ganda tanpa sengaja),
+       jangan bungkus .article-stats dua kali. */
+    if (statsEl.closest('.dzikir-stats-row')) return;
 
     /* Buat tombol */
     const btn = document.createElement('button');

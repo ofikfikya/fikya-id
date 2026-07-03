@@ -60,23 +60,41 @@
   ];
 
   /* ============================================================
+     FORMATTER — dibuat SEKALI di scope modul, bukan di dalam
+     getParts(). Konstruksi Intl.DateTimeFormat relatif berat
+     (negosiasi locale), dan opsinya di sini tidak pernah berubah.
+     navbar.js memanggil formatShort() setiap detik lewat
+     setInterval — kalau formatter dibuat ulang di setiap panggilan,
+     itu berarti membuat & membuang objek Intl 60x/menit tanpa
+     alasan. Dibuat sekali di sini, dipakai berulang oleh getParts().
+  ============================================================ */
+  const hijriFormatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
+    day  : 'numeric',
+    month: 'numeric',
+    year : 'numeric',
+  });
+
+  /* ============================================================
      HELPER — parse Intl ke bagian-bagian terpisah
   ============================================================ */
   const getParts = (date) => {
     const adjusted = new Date(date);
     adjusted.setDate(adjusted.getDate() + HIJRI_OFFSET_DAYS);
 
-    const fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
-      day  : 'numeric',
-      month: 'numeric',
-      year : 'numeric',
-    }).formatToParts(adjusted);
+    const fmt = hijriFormatter.formatToParts(adjusted);
 
     const parts = {};
     fmt.forEach(p => { parts[p.type] = p.value; });
 
     return {
-      hari  : HARI_ISLAM[date.getDay()],
+      /* FIX: pakai `adjusted.getDay()`, bukan `date.getDay()`.
+         Sebelumnya nama hari dihitung dari tanggal ASLI sementara
+         tgl/bulan/tahun Hijriah dihitung dari tanggal yang SUDAH
+         digeser oleh HIJRI_OFFSET_DAYS — kalau offset diubah jadi
+         bukan 0, nama hari dan tanggal Hijriah jadi menjelaskan
+         dua hari kalender yang berbeda. Sekarang keduanya konsisten,
+         sama-sama bersumber dari `adjusted`. */
+      hari  : HARI_ISLAM[adjusted.getDay()],
       tgl   : parts.day  || '',
       bulan : BULAN_HIJRI[parseInt(parts.month || '1', 10) - 1] || '',
       tahun : (parts.year || '').replace(/[^0-9]/g, ''),
@@ -98,6 +116,7 @@
         const { hari, tgl, bulan, tahun } = getParts(date);
         return `${hari}, ${tgl} ${bulan} ${tahun} H`;
       } catch (e) {
+        console.warn('HijriCalendar.format() gagal:', e);
         return '';
       }
     },
@@ -112,6 +131,7 @@
         const { tgl, bulan, tahun } = getParts(date);
         return `${tgl} ${bulan} ${tahun} H`;
       } catch (e) {
+        console.warn('HijriCalendar.formatShort() gagal:', e);
         return '';
       }
     },

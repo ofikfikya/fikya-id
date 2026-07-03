@@ -51,6 +51,24 @@ class SiteNavbar extends HTMLElement {
     this._initSearch();
   }
 
+  /* FIX: bersihkan resource yang hidup di luar elemen navbar itu
+     sendiri (interval jam & listener keydown di document). Spesifikasi
+     Custom Elements mengizinkan connectedCallback terpanggil lebih
+     dari sekali kalau elemen ini sampai dilepas lalu dipasang ulang
+     ke DOM — tanpa disconnectedCallback ini, setiap siklus itu akan
+     menumpuk satu interval dan satu listener keydown baru yang tidak
+     pernah dibuang. */
+  disconnectedCallback() {
+    if (this._clockInterval) {
+      clearInterval(this._clockInterval);
+      this._clockInterval = null;
+    }
+    if (this._searchKeydownHandler) {
+      document.removeEventListener('keydown', this._searchKeydownHandler);
+      this._searchKeydownHandler = null;
+    }
+  }
+
   /* ===== DARK MODE ===== */
   _initDarkMode() {
     const btn = document.getElementById('btn-darkmode');
@@ -73,7 +91,15 @@ class SiteNavbar extends HTMLElement {
     btn.addEventListener('click', () => {
       const isDark = !document.documentElement.classList.contains('dark');
       applyDark(isDark);
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      /* FIX: bungkus try/catch — localStorage bisa throw di beberapa
+         pengaturan privasi browser (mis. Safari "Block All Cookies").
+         Tanpa ini, tampilan sudah berubah tapi exception yang tak
+         tertangani membuat preferensi gagal tersimpan secara diam-diam. */
+      try {
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      } catch (e) {
+        console.warn('navbar.js: gagal menyimpan preferensi tema.', e);
+      }
     });
   }
 
@@ -115,7 +141,9 @@ class SiteNavbar extends HTMLElement {
     };
 
     update();
-    setInterval(update, 1000);
+    /* FIX: simpan id interval di instance (this), bukan dibuang begitu
+       saja, supaya disconnectedCallback() bisa memanggil clearInterval(). */
+    this._clockInterval = setInterval(update, 1000);
   }
 
   /* ===== SEARCH OVERLAY + PAGEFIND ===== */
@@ -149,21 +177,37 @@ class SiteNavbar extends HTMLElement {
       if (e.target === overlay) closeSearch();
     });
 
-    document.addEventListener('keydown', (e) => {
+    /* FIX: simpan referensi handler ini (bukan fungsi anonim yang
+       langsung dibuang) supaya disconnectedCallback() bisa memanggil
+       document.removeEventListener() dengan referensi yang sama. */
+    this._searchKeydownHandler = (e) => {
       if (e.key === 'Escape' && overlay?.classList.contains('active')) {
         closeSearch();
       }
-      if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && !overlay?.classList.contains('active')) {
+      /* FIX: tambahkan e.metaKey supaya Cmd+K di macOS juga berfungsi,
+         tidak cuma Ctrl+K (konvensi Windows/Linux). Shortcut "/" sudah
+         berfungsi di semua platform sehingga tidak perlu diubah. */
+      if ((e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key === 'k')) && !overlay?.classList.contains('active')) {
         const tag = document.activeElement?.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
           e.preventDefault();
           openSearch();
         }
       }
-    });
+    };
+    document.addEventListener('keydown', this._searchKeydownHandler);
 
     /* PERBAIKAN: debounce 300ms — request ke PageFind hanya dikirim
        setelah user berhenti mengetik selama 300ms */
+    /* FIX: helper escape HTML — dipakai untuk field yang TIDAK
+       sengaja mengandung markup (title, url). item.excerpt sengaja
+       DIBIARKAN mentah karena PageFind menyisipkan tag <mark> di
+       dalamnya untuk highlight kata yang cocok; meng-escape excerpt
+       akan merusak fitur highlight tersebut. */
+    const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+
     searchInput?.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(async () => {
@@ -193,8 +237,8 @@ class SiteNavbar extends HTMLElement {
 
             const items = await Promise.all(results.results.slice(0, 8).map(r => r.data()));
             searchResults.innerHTML = items.map(item => `
-              <a href="${item.url}" class="search-result-item">
-                <div class="search-result-title">${item.meta?.title || 'Tanpa judul'}</div>
+              <a href="${escapeHtml(item.url)}" class="search-result-item">
+                <div class="search-result-title">${escapeHtml(item.meta?.title || 'Tanpa judul')}</div>
                 <div class="search-result-excerpt">${item.excerpt}</div>
               </a>
             `).join('');

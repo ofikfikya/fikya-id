@@ -103,13 +103,6 @@
     document.querySelectorAll('.dzikir-card').forEach((card) => {
       ['dzikir-arabic', 'dzikir-latin', 'dzikir-arti'].forEach((type) => {
         card.querySelectorAll(`.${type}`).forEach((el) => {
-          /*
-            Hindari menyisipkan tombol pada elemen .dzikir-arti
-            yang sebenarnya adalah .dzikir-faedah (tidak ada, tapi
-            untuk jaga-jaga dari selector yang overlap).
-          */
-          if (type === 'dzikir-arti' && el.classList.contains('dzikir-faedah')) return;
-
           const btn = buildCopyBtn(el, type);
 
           /*

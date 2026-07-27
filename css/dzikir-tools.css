@@ -8,12 +8,20 @@
    COPY BUTTON
    ============================================================ */
 
+/* Nolkan margin-bottom elemen teks HANYA kalau diikuti tombol salin,
+   supaya jarak di atas & di bawah tombol bisa dibuat simetris. */
+.dzikir-arabic:has(+ .dzikir-copy-btn),
+.dzikir-latin:has(+ .dzikir-copy-btn),
+.dzikir-arti:has(+ .dzikir-copy-btn) {
+  margin-bottom: 0;
+}
+
 .dzikir-copy-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  margin-top: 10px 0;
+  margin: 16px 0;
   border: 1px solid var(--border-color);
   border-radius: 20px;
   background: transparent;

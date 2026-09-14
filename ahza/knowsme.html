@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ahza Site</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Courier New", monospace;
+            background: #000;
+        }
+
+        /* =========================
+           MATRIX BACKGROUND
+        ========================= */
+
+        #matrix {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #000;
+        }
+
+        /* Dark overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(0, 255, 100, 0.06),
+                    rgba(0, 0, 0, 0.75) 55%,
+                    rgba(0, 0, 0, 0.95)
+                );
+        }
+
+        /* Scanline effect */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.015) 0px,
+                rgba(255, 255, 255, 0.015) 1px,
+                transparent 1px,
+                transparent 4px
+            );
+        }
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+
+        .container {
+            position: relative;
+            z-index: 3;
+
+            width: 100%;
+            height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            text-align: center;
+            color: #00ff66;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .terminal {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #00ff66;
+
+            text-shadow:
+                0 0 5px #00ff66,
+                0 0 15px rgba(0, 255, 100, 0.8);
+        }
+
+        .welcome {
+            font-size: clamp(24px, 4vw, 42px);
+            font-weight: normal;
+            letter-spacing: 4px;
+
+            text-shadow:
+                0 0 5px #00ff66,
+                0 0 15px #00ff66,
+                0 0 35px rgba(0, 255, 100, 0.7);
+        }
+
+        .title {
+            margin-top: 10px;
+
+            font-size: clamp(55px, 10vw, 110px);
+            font-weight: bold;
+            letter-spacing: 8px;
+
+            color: #00ff66;
+
+            text-shadow:
+                0 0 5px #00ff66,
+                0 0 15px #00ff66,
+                0 0 30px #00ff66,
+                0 0 60px rgba(0, 255, 100, 0.8);
+
+            animation: glow 2s infinite alternate;
+        }
+
+        .line {
+            width: 100px;
+            height: 3px;
+
+            margin: 30px auto;
+
+            background: #00ff66;
+
+            box-shadow:
+                0 0 5px #00ff66,
+                0 0 15px #00ff66,
+                0 0 30px #00ff66;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            letter-spacing: 3px;
+            color: #b8ffca;
+
+            text-shadow:
+                0 0 5px #00ff66,
+                0 0 15px rgba(0, 255, 100, 0.7);
+        }
+
+        .cursor {
+            display: inline-block;
+            margin-top: 30px;
+
+            font-size: 30px;
+            color: #00ff66;
+
+            animation: blink 0.8s infinite;
+        }
+
+        /* =========================
+           TOP TERMINAL INFO
+        ========================= */
+
+        .top-left,
+        .top-right {
+            position: fixed;
+            z-index: 4;
+            top: 25px;
+
+            font-size: 14px;
+            color: #00ff66;
+
+            text-shadow:
+                0 0 5px #00ff66,
+                0 0 15px rgba(0, 255, 100, 0.8);
+        }
+
+        .top-left {
+            left: 30px;
+        }
+
+        .top-right {
+            right: 30px;
+        }
+
+        /* =========================
+           ANIMATIONS
+        ========================= */
+
+        @keyframes glow {
+            from {
+                text-shadow:
+                    0 0 5px #00ff66,
+                    0 0 15px #00ff66,
+                    0 0 30px #00ff66;
+            }
+
+            to {
+                text-shadow:
+                    0 0 5px #00ff66,
+                    0 0 20px #00ff66,
+                    0 0 45px #00ff66,
+                    0 0 70px rgba(0, 255, 100, 0.8);
+            }
+        }
+
+        @keyframes blink {
+            0%,
+            45% {
+                opacity: 1;
+            }
+
+            46%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            .top-left {
+                left: 15px;
+                top: 15px;
+                font-size: 11px;
+            }
+
+            .top-right {
+                right: 15px;
+                top: 15px;
+                font-size: 11px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .welcome {
+                letter-spacing: 2px;
+            }
+
+            .title {
+                letter-spacing: 3px;
+            }
+
+            .subtitle {
+                font-size: 13px;
+                letter-spacing: 1px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Matrix Canvas -->
+    <canvas id="matrix"></canvas>
+
+    <!-- Visual Effects -->
+    <div class="overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- Terminal Labels -->
+    <div class="top-left">
+        &gt; ahza@site:~$
+    </div>
+
+    <div class="top-right">
+        // ONLINE //
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <div class="content">
+
+            <div class="terminal">
+                &gt; Initializing connection...
+            </div>
+
+            <div class="welcome">
+                Welcome to
+            </div>
+
+            <div class="title">
+                AHZA SITE
+            </div>
+
+            <div class="line"></div>
+
+            <div class="subtitle">
+                Small steps. Big dreams.
+            </div>
+
+            <div class="cursor">
+                &gt;_
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <script>
+        /* =====================================
+           MATRIX RAIN EFFECT
+        ===================================== */
+
+        const canvas = document.getElementById("matrix");
+        const ctx = canvas.getContext("2d");
+
+        let width;
+        let height;
+
+        let fontSize = 16;
+        let columns;
+        let drops;
+
+        const characters =
+            "アァカサタナハマヤャラワガザダバパ" +
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+            "0123456789" +
+            "!@#$%^&*()_+-=[]{}<>?/";
+
+
+        function resizeCanvas() {
+
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+
+            columns = Math.floor(width / fontSize);
+
+            drops = [];
+
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * -100;
+            }
+        }
+
+
+        function drawMatrix() {
+
+            /*
+             * Semi-transparent black layer.
+             * This creates the fading trail effect.
+             */
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.055)";
+            ctx.fillRect(0, 0, width, height);
+
+
+            ctx.font = fontSize + "px monospace";
+
+
+            for (let i = 0; i < drops.length; i++) {
+
+                const character =
+                    characters[
+                        Math.floor(
+                            Math.random() * characters.length
+                        )
+                    ];
+
+                /*
+                 * Most characters are darker.
+                 * Some become brighter naturally.
+                 */
+
+                if (Math.random() > 0.96) {
+                    ctx.fillStyle = "#ffffff";
+                } else {
+                    ctx.fillStyle = "#00ff66";
+                }
+
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = "#00ff66";
+
+                ctx.fillText(
+                    character,
+                    i * fontSize,
+                    drops[i] * fontSize
+                );
+
+
+                /*
+                 * Reset the column after it reaches
+                 * the bottom of the screen.
+                 */
+
+                if (
+                    drops[i] * fontSize > height &&
+                    Math.random() > 0.975
+                ) {
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+
+        /* Initial setup */
+        resizeCanvas();
+
+
+        /* Resize when browser window changes */
+        window.addEventListener(
+            "resize",
+            resizeCanvas
+        );
+
+
+        /* Start Matrix animation */
+        setInterval(
+            drawMatrix,
+            45
+        );
+    </script>
+
+</body>
+</html>

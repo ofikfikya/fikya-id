@@ -1,68 +1,340 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atelier D Yaya</title>
+<!-- ============================================================
+     ATELIER D'YAYA — Login View Fragment
+     File: LoginView.html
+     Di-include oleh App.html sebagai view, bukan halaman standalone.
+     Tidak ada <html>, <head>, atau <body> di sini.
+     ============================================================ -->
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<style>
+  /* ── LOGIN VIEW — scoped ke #loginView ── */
+  #loginView {
+    min-height: 100vh;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-body);
+    position: relative;
+    overflow: hidden;
+  }
 
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f5f0;
-      color: #2f2a26;
-    }
+  /* Dekoratif background */
+  #loginView::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(184,147,62,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(184,147,62,0.06) 0%, transparent 50%);
+  }
+  #loginView::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 39px,
+      rgba(184,147,62,0.04) 39px, rgba(184,147,62,0.04) 40px
+    );
+  }
 
-    .hero {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
+  .lv-wrapper {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 420px; padding: 20px;
+  }
 
-    .content h1 {
-      font-size: 48px;
-      letter-spacing: 3px;
-      margin-bottom: 15px;
-    }
+  .lv-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 52px 44px;
+    box-shadow: 0 4px 40px rgba(15,14,13,0.08), 0 1px 3px rgba(15,14,13,0.04);
+    animation: lv-fadeUp 0.5s ease both;
+  }
+  @keyframes lv-fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-    .content p {
-      font-size: 18px;
-      color: #756c65;
-      margin-bottom: 30px;
-    }
+  .lv-brand { text-align: center; margin-bottom: 36px; }
 
-    .button {
-      display: inline-block;
-      padding: 12px 28px;
-      background-color: #2f2a26;
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: 0.3s;
-    }
+  .lv-brand-icon {
+    width: 48px; height: 48px;
+    border: 1.5px solid var(--gold); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; color: var(--gold); font-size: 18px;
+  }
 
-    .button:hover {
-      background-color: #756c65;
-    }
-  </style>
-</head>
+  .lv-brand-name {
+    font-family: var(--font-display);
+    font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: 0.5px;
+  }
+  .lv-brand-name em { font-style: italic; color: var(--gold); }
 
-<body>
+  .lv-brand-sub {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase; margin-top: 4px;
+  }
 
-  <section class="hero">
-    <div class="content">
-      <h1>Selamat Datang</h1>
-      <p>di Atelier D Yaya</p>
-      <a href="#" class="button">Jelajahi</a>
+  .lv-divider {
+    display: flex; align-items: center; gap: 12px; margin: 0 0 28px;
+  }
+  .lv-divider::before, .lv-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .lv-divider span {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+
+  .lv-form-group { margin-bottom: 18px; }
+
+  .lv-form-label {
+    display: block; font-size: 11px; font-weight: 500; color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 7px;
+  }
+
+  .lv-input {
+    width: 100%; padding: 11px 14px; min-height: var(--touch-target);
+    border: 1px solid var(--border); border-radius: 2px;
+    font-family: var(--font-body);
+    font-size: 14px; color: var(--ink); background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  .lv-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184,147,62,0.1);
+    background: #fff;
+  }
+
+  .lv-btn-login {
+    width: 100%; padding: 13px; min-height: var(--touch-target);
+    background: var(--ink); color: #fff; border: none; border-radius: 2px;
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 500; letter-spacing: 1.5px;
+    text-transform: uppercase; cursor: pointer; margin-top: 8px;
+    transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .lv-btn-login:hover:not(:disabled) { background: var(--ink-soft); }
+  .lv-btn-login:active:not(:disabled) { transform: scale(0.99); }
+  .lv-btn-login:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .lv-alert {
+    padding: 11px 14px; border-radius: 2px; font-size: 13px;
+    margin-bottom: 16px; display: none; line-height: 1.5;
+  }
+  .lv-alert-error   { background: #fff0f0; border: 1px solid #fecaca; color: #b91c1c; }
+  .lv-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+
+  .lv-spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: lv-spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes lv-spin { to { transform: rotate(360deg); } }
+
+  .lv-footer {
+    text-align: center; font-size: 11px; color: var(--muted);
+    margin-top: 28px; letter-spacing: 0.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lv-card { animation: none; }
+    .lv-spinner { animation: none; border-top-color: rgba(255,255,255,.5); }
+  }
+
+  @media (max-width: 440px) {
+    .lv-card { padding: 36px 24px; }
+  }
+
+  @media (max-width: 380px) {
+    .lv-card { padding: 28px 18px; }
+    .lv-brand-name { font-size: 22px; }
+    .lv-btn-login { font-size: 12px; }
+    .lv-wrapper { padding: 16px; }
+  }
+</style>
+
+<!-- ── LOGIN HTML ── -->
+<div class="lv-wrapper">
+  <main>
+    <div class="lv-card">
+      <div class="lv-brand">
+        <div class="lv-brand-icon" aria-hidden="true">✦</div>
+        <div class="lv-brand-name" role="heading" aria-level="1">
+          Atelier <em>d'Yaya</em>
+        </div>
+        <div class="lv-brand-sub" aria-label="Fragrance Management System">
+          Fragrance Management
+        </div>
+      </div>
+
+      <div class="lv-divider" aria-hidden="true"><span>Masuk</span></div>
+
+      <div id="lv-alertBox"
+           class="lv-alert"
+           role="alert"
+           aria-live="assertive"
+           aria-atomic="true"></div>
+
+      <form id="lv-loginForm"
+            aria-label="Form login Atelier d'Yaya"
+            novalidate
+            onsubmit="lvHandleSubmit(event)">
+
+        <div class="lv-form-group">
+          <label class="lv-form-label" for="lv-email">Email</label>
+          <input type="email"
+                 class="lv-input"
+                 id="lv-email"
+                 placeholder="admin@atelierdyaya.com"
+                 autocomplete="email"
+                 autocapitalize="none"
+                 spellcheck="false"
+                 inputmode="email"
+                 required
+                 aria-required="true"
+                 aria-describedby="lv-alertBox">
+        </div>
+
+        <div class="lv-form-group">
+          <label class="lv-form-label" for="lv-password">Password</label>
+          <input type="password"
+                 class="lv-input"
+                 id="lv-password"
+                 placeholder="••••••••"
+                 autocomplete="current-password"
+                 required
+                 aria-required="true">
+        </div>
+
+        <button type="submit"
+                class="lv-btn-login"
+                id="lv-btnLogin"
+                aria-label="Masuk ke sistem Atelier d'Yaya">
+          Masuk
+        </button>
+      </form>
     </div>
-  </section>
 
-</body>
-</html>
+    <div class="lv-footer">
+      Atelier d'Yaya &copy; 2026 &nbsp;·&nbsp; Internal CMS
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// LOGIN VIEW SCRIPT
+// Semua fungsi diawali "lv" agar tidak bentrok dengan
+// fungsi di view lain yang dimuat bersamaan.
+// APP_URL dan fungsi shared (toast, escHtml) tersedia dari
+// App.html container.
+// ============================================================
+
+// Cek token saat view login ditampilkan
+// [FIX-HMAC-CLIENT] Token sekarang "payloadB64.sigB64" (lihat
+// Auth.gs [FIX-HMAC]) — tidak bisa/perlu diverifikasi di client.
+// Cukup cek token ada dan formatnya wajar (2 bagian dipisah titik),
+// lalu arahkan ke dashboard secara optimis. Kalau ternyata token
+// sudah tidak valid, panggilan API pertama di dashboard akan gagal
+// dan otomatis kembali ke login (lihat api() di App.html).
+function lvCheckExistingSession() {
+  var savedToken = localStorage.getItem('ay_token');
+  if (!savedToken) return;
+
+  var looksValid = typeof savedToken === 'string' && savedToken.split('.').length === 2;
+
+  if (looksValid) {
+    showDashboardView();
+    return;
+  }
+
+  // Format jelas rusak — bersihkan.
+  localStorage.removeItem('ay_token');
+  localStorage.removeItem('ay_user');
+}
+
+function lvHandleSubmit(e) {
+  e.preventDefault();
+  lvDoLogin();
+}
+
+async function lvDoLogin() {
+  var email    = document.getElementById('lv-email').value.trim();
+  var password = document.getElementById('lv-password').value;
+  var btn      = document.getElementById('lv-btnLogin');
+
+  if (!email) {
+    lvShowAlert('Email wajib diisi.', 'error');
+    document.getElementById('lv-email').focus();
+    return;
+  }
+  if (!password) {
+    lvShowAlert('Password wajib diisi.', 'error');
+    document.getElementById('lv-password').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="lv-spinner" aria-hidden="true"></span><span>Masuk...</span>';
+  lvHideAlert();
+
+  try {
+    var res = await fetch(APP_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'login', email: email, password: password }),
+    });
+
+    if (!res.ok) throw new Error('Server error: ' + res.status);
+
+    var data = await res.json();
+
+    if (data.success) {
+      // Simpan sesi
+      localStorage.setItem('ay_token', data.token);
+      localStorage.setItem('ay_user', JSON.stringify(data.user));
+
+      // Update token di AY global state (AY tersedia di App.html)
+      if (typeof AY !== 'undefined') {
+        AY.token = data.token;
+        AY.user  = data.user;
+      }
+
+      // Bersihkan form
+      document.getElementById('lv-email').value    = '';
+      document.getElementById('lv-password').value = '';
+      btn.disabled    = false;
+      btn.textContent = 'Masuk';
+
+      // Pindah ke dashboard — TANPA window.location.href, TANPA blank page
+      showDashboardView();
+
+    } else {
+      lvShowAlert(data.message || 'Login gagal. Periksa email dan password.', 'error');
+      btn.disabled    = false;
+      btn.textContent = 'Masuk';
+      document.getElementById('lv-email').focus();
+    }
+
+  } catch(err) {
+    console.error('[AY Login] error:', err);
+    lvShowAlert('Koneksi bermasalah. Silakan coba lagi.', 'error');
+    btn.disabled    = false;
+    btn.textContent = 'Masuk';
+  }
+}
+
+function lvShowAlert(msg, type) {
+  var el = document.getElementById('lv-alertBox');
+  if (!el) return;
+  el.className   = 'lv-alert lv-alert-' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function lvHideAlert() {
+  var el = document.getElementById('lv-alertBox');
+  if (!el) return;
+  el.style.display = 'none';
+  el.textContent   = '';
+}
+</script>

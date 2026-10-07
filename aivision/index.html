@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local AI Vision</title>
+<style>
+:root{--bg:#0f1318;--panel:#171d25;--panel2:#202832;--line:#273140;--text:#e6ebf2;--mute:#8b97a8;--acc:#4cc2ff;--ok:#3ddc84;--bad:#ff6b6b;--yellow:#ffd166}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{overflow-x:hidden}
+header{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+h1{margin:0;font-size:20px;letter-spacing:.04em}
+.ind{display:flex;gap:14px;font-size:13px;color:var(--mute)}
+.status{display:flex;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#555;margin-right:6px}
+.status.on .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.status.loading .dot{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+.status.error .dot{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;padding:16px;max-width:1300px;margin:auto}
+.stage{position:relative;background:#000;border-radius:12px;overflow:hidden;width:100%;aspect-ratio:16/9;max-height:75vh;margin:auto;border:1px solid var(--line)}
+.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage canvas{pointer-events:none}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--mute);pointer-events:none}
+#err{display:none;margin-top:12px;padding:10px 14px;background:#3a1d22;border:1px solid var(--bad);border-radius:8px;color:#ffc9c9}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+h2{font-size:14px;margin:0 0 8px;color:var(--mute);font-weight:600}
+.section{margin-bottom:18px}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+.row b{font-variant-numeric:tabular-nums}
+.object{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border-radius:7px;padding:7px 10px;margin:5px 0}
+.object span:first-child{text-transform:capitalize}
+.controls{display:flex;gap:8px;flex-wrap:wrap;padding-top:12px}
+button,select,input{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button.primary{background:var(--acc);color:#04202e;border-color:var(--acc);font-weight:700}
+button.danger{background:#341b20;border-color:#642b35;color:#ff9b9b}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.setting{margin-top:12px;min-width:150px}
+.setting label{display:block;color:var(--mute);font-size:12px;margin-bottom:5px}
+.settings{display:flex;gap:12px;flex-wrap:wrap}
+.settings .setting{flex:1}
+.setting select{width:100%}
+input[type=range]{width:100%;padding:0}
+#modelBox{background:var(--panel2);border-radius:8px;padding:10px;margin-bottom:15px;color:var(--yellow);font-size:13px}
+#log{color:var(--mute);font-size:11px;max-height:130px;overflow:auto;white-space:pre-wrap}
+.note{margin-top:12px;font-size:12px;color:var(--mute)}
+@media(max-width:700px){
+  header{padding:12px}h1{font-size:17px}
+  .ind{width:100%;justify-content:flex-start;font-size:12px}
+  main{grid-template-columns:1fr;padding:10px;gap:10px}
+  .stage,aside{border-radius:10px}
+  .controls{display:grid;grid-template-columns:1fr 1fr}
+  .controls button,.controls select{width:100%;min-height:46px}
+}
+@media(max-width:380px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>LOCAL AI VISION</h1>
+  <div class="ind">
+    <span id="cameraStatus" class="status"><span class="dot"></span>CAMERA OFF</span>
+    <span id="aiStatus" class="status"><span class="dot"></span>AI OFF</span>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="stage" id="stage">
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div id="msg">Klik <b>&nbsp;Start Camera&nbsp;</b> untuk mengaktifkan kamera.</div>
+  </div>
+  <div id="err" role="alert"></div>
+
+  <div class="controls">
+    <button id="startCamera" class="primary">📷 Start Camera</button>
+    <button id="stopCamera" disabled>⛔ Stop Camera</button>
+    <button id="switchCamera" disabled>🔄 Switch Camera</button>
+    <button id="startAI" disabled>🤖 Start AI</button>
+    <button id="stopAI" class="danger" disabled>Stop AI</button>
+    <select id="camSel" aria-label="Pilih kamera"><option value="">Kamera otomatis</option></select>
+  </div>
+
+  <div class="settings">
+    <div class="setting">
+      <label>Confidence: <span id="confidenceValue">50%</span></label>
+      <input id="confidence" type="range" min="10" max="95" value="50">
+    </div>
+    <div class="setting">
+      <label>AI interval</label>
+      <select id="interval">
+        <option value="auto" selected>Auto (adaptif)</option>
+        <option value="150">150 ms</option>
+        <option value="250">250 ms</option>
+        <option value="500">500 ms</option>
+        <option value="1000">1000 ms</option>
+      </select>
+    </div>
+    <div class="setting">
+      <label>Model</label>
+      <select id="modelSel">
+        <option value="lite_mobilenet_v2" selected>Lite (cepat)</option>
+        <option value="mobilenet_v2">MobileNet v2 (akurat)</option>
+      </select>
+    </div>
+  </div>
+  <p class="note">Frame kamera Anda diproses secara lokal dan tidak diunggah ke server. Tidak ada video yang direkam.</p>
+</section>
+
+<aside>
+  <div id="modelBox">Memuat model AI...</div>
+  <div class="section"><h2>DETECTED OBJECTS</h2><div id="list">Belum ada deteksi.</div></div>
+  <div class="section"><h2>COUNTER</h2><div id="counter"></div></div>
+  <div class="section">
+    <h2>STATISTICS</h2>
+    <div class="row"><span>Objects</span><b id="objectCount">0</b></div>
+    <div class="row"><span>Camera FPS</span><b id="camFps">0</b></div>
+    <div class="row"><span>AI FPS</span><b id="fps">0</b></div>
+    <div class="row"><span>Inference</span><b id="inference">0 ms</b></div>
+    <div class="row"><span>Resolution</span><b id="resolution">-</b></div>
+    <div class="row"><span>Camera</span><b id="cameraType">-</b></div>
+    <div class="row"><span>Backend</span><b id="backend">-</b></div>
+  </div>
+  <div class="section"><h2>LOG</h2><div id="log"></div></div>
+</aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+<script>
+const $ = id => document.getElementById(id);
+const video = $("video"), canvas = $("canvas"), ctx = canvas.getContext("2d");
+const startCameraBtn = $("startCamera"), stopCameraBtn = $("stopCamera"), switchCameraBtn = $("switchCamera"),
+      startAIBtn = $("startAI"), stopAIBtn = $("stopAI");
+
+let stream = null, model = null, loadingModel = false, facingMode = "environment";
+let aiRunning = false, detecting = false, timer = null;
+let tracks = [], counters = {};
+let aiRuns = 0, camFrames = 0, lastStat = performance.now(), adaptiveDelay = 100;
+
+/* ---------- Util ---------- */
+function log(m) { $("log").textContent = `[${new Date().toLocaleTimeString()}] ${m}\n` + $("log").textContent; }
+function setStatus(el, text, type) { el.className = "status " + (type || ""); el.innerHTML = `<span class="dot"></span>${text}`; }
+function showErr(t) { const e = $("err"); e.textContent = t || ""; e.style.display = t ? "block" : "none"; }
+const color = name => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 85% 60%)`; };
+
+/* ---------- Model ---------- */
+async function loadModel() {
+  if (loadingModel) return;
+  loadingModel = true; model = null; startAIBtn.disabled = true;
+  $("modelBox").textContent = "Memuat model object detection...";
+  $("modelBox").style.color = "var(--yellow)";
+  setStatus($("aiStatus"), "AI LOADING", "loading");
+  try {
+    if (typeof tf === "undefined" || typeof cocoSsd === "undefined")
+      throw new Error("Library TensorFlow.js/COCO-SSD gagal dimuat. Periksa koneksi internet.");
+    await tf.ready();
+    $("backend").textContent = tf.getBackend();
+    model = await cocoSsd.load({ base: $("modelSel").value });
+    $("modelBox").textContent = "✓ Model siap digunakan.";
+    $("modelBox").style.color = "var(--ok)";
+    setStatus($("aiStatus"), "AI READY", "on");
+    log(`Model dimuat (${$("modelSel").value}), backend ${tf.getBackend()}.`);
+    if (stream) startAIBtn.disabled = false;
+  } catch (e) {
+    console.error(e);
+    $("modelBox").textContent = "✕ Gagal memuat model: " + e.message;
+    $("modelBox").style.color = "var(--bad)";
+    setStatus($("aiStatus"), "AI ERROR", "error");
+    log("Model error: " + e.message);
+  } finally { loadingModel = false; }
+}
+
+/* ---------- Kamera ---------- */
+async function listCams() {
+  try {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
+    const cur = $("camSel").value;
+    $("camSel").innerHTML = '<option value="">Kamera otomatis</option>' +
+      cams.map((c, i) => `<option value="${c.deviceId}">${c.label || "Kamera " + (i + 1)}</option>`).join("");
+    $("camSel").value = cur;
+  } catch (e) { console.warn(e); }
+}
+
+function constraints() {
+  const v = { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30, max: 30 } };
+  const id = $("camSel").value;
+  if (id) v.deviceId = { exact: id }; else v.facingMode = { ideal: facingMode };
+  return { audio: false, video: v };
+}
+
+async function startCamera() {
+  if (stream) return;
+  showErr("");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    return showErr("Browser tidak mendukung kamera, atau halaman tidak dibuka lewat localhost/HTTPS.");
+  $("msg").style.display = "flex"; $("msg").textContent = "Meminta izin kamera...";
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints());
+    video.srcObject = stream;
+    await video.play();
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    $("stage").style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;   // mendukung portrait & landscape
+    $("resolution").textContent = `${video.videoWidth}x${video.videoHeight}`;
+    const fm = stream.getVideoTracks()[0].getSettings().facingMode;
+    $("cameraType").textContent = fm === "user" ? "Front" : fm === "environment" ? "Back" : "Webcam";
+    $("msg").style.display = "none";
+    setStatus($("cameraStatus"), "CAMERA ON", "on");
+    startCameraBtn.disabled = true; stopCameraBtn.disabled = false; switchCameraBtn.disabled = false;
+    startAIBtn.disabled = !model;
+    await listCams();
+    log(`Kamera ${$("cameraType").textContent} aktif.`);
+  } catch (e) {
+    console.error(e);
+    stream = null;
+    const m = {
+      NotAllowedError: "Izin kamera ditolak. Izinkan akses kamera di pengaturan browser.",
+      NotFoundError: "Kamera tidak ditemukan. Pastikan kamera terpasang.",
+      NotReadableError: "Kamera sedang dipakai aplikasi lain.",
+      OverconstrainedError: "Kamera yang dipilih tidak tersedia. Pilih 'Kamera otomatis'."
+    };
+    $("msg").textContent = "Kamera tidak aktif.";
+    showErr(m[e.name] || "Gagal membuka kamera: " + e.message);
+    setStatus($("cameraStatus"), "CAMERA ERROR", "error");
+    log("Camera error: " + e.name);
+  }
+}
+
+function releaseStream() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; video.srcObject = null;
+}
+
+function stopCamera() {
+  stopAI(); releaseStream();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  setStatus($("cameraStatus"), "CAMERA OFF", "");
+  startCameraBtn.disabled = false; stopCameraBtn.disabled = true; switchCameraBtn.disabled = true; startAIBtn.disabled = true;
+  $("cameraType").textContent = "-"; $("resolution").textContent = "-"; $("camFps").textContent = "0";
+  $("msg").style.display = "flex"; $("msg").innerHTML = "Klik <b>&nbsp;Start Camera&nbsp;</b> untuk mengaktifkan kamera.";
+  log("Kamera dihentikan.");
+}
+
+async function restartCamera() {
+  const wasAI = aiRunning;
+  stopAI(); releaseStream();
+  await startCamera();
+  if (wasAI && model && stream) startAI();
+}
+
+function switchCamera() {
+  if (!stream) return;
+  facingMode = facingMode === "environment" ? "user" : "environment";
+  $("camSel").value = "";          // kembali ke pemilihan otomatis berdasarkan depan/belakang
+  restartCamera();
+}
+
+/* ---------- AI ---------- */
+function startAI() {
+  if (!model || !stream || aiRunning) return;
+  aiRunning = true; tracks = []; counters = {};
+  setStatus($("aiStatus"), "AI RUNNING LOCALLY", "on");
+  startAIBtn.disabled = true; stopAIBtn.disabled = false;
+  log("Deteksi objek dimulai.");
+  runDetection();
+}
+
+function stopAI() {
+  aiRunning = false; detecting = false;
+  clearTimeout(timer); timer = null;
+  tracks = []; counters = {};
+  setStatus($("aiStatus"), model ? "AI READY" : "AI OFF", model ? "on" : "");
+  startAIBtn.disabled = !stream || !model; stopAIBtn.disabled = true;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  renderPanel();
+  $("fps").textContent = "0"; $("inference").textContent = "0 ms";
+}
+
+async function runDetection() {
+  if (!aiRunning) return;
+  if (!detecting && video.readyState >= 2) {
+    detecting = true;
+    const t0 = performance.now();
+    try {
+      const thr = Number($("confidence").value) / 100;
+      const preds = await model.detect(video, 30, thr);
+      const ms = performance.now() - t0;
+      $("inference").textContent = Math.round(ms) + " ms";
+      updateTracks(preds.filter(p => p.score >= thr));
+      renderPanel();
+      aiRuns++;
+      adaptiveDelay = Math.max(50, ms * 0.25);   // perangkat lambat otomatis mendapat jeda lebih panjang
+    } catch (e) {
+      console.error(e);
+      const mem = /memory|alloc|WebGL/i.test(e.message);
+      showErr(mem ? "Memori tidak cukup untuk inference. Tutup tab lain atau pilih model Lite." : "Inference error: " + e.message);
+      log("Detection error: " + e.message);
+      if (mem) { stopAI(); return; }
+    } finally { detecting = false; }
+  }
+  if (aiRunning) {
+    const sel = $("interval").value;
+    timer = setTimeout(runDetection, sel === "auto" ? adaptiveDelay : Number(sel));
+  }
+}
+
+/* ---------- Tracking (IoU) ---------- */
+function iou(a, b) {
+  const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]);
+  const x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]);
+  const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+  return inter / (a[2] * a[3] + b[2] * b[3] - inter + 1e-9);
+}
+
+const MAX_AGE_MS = 1500;   // track dipertahankan 1,5 detik walau objek hilang sesaat
+
+function updateTracks(dets) {
+  const now = performance.now();
+  // pencocokan global: pasangan dengan IoU tertinggi diproses lebih dulu
+  const pairs = [];
+  tracks.forEach((t, ti) => dets.forEach((d, di) => {
+    if (d.class !== t.cls) return;
+    const v = iou(t.target, d.bbox);
+    if (v > 0.15) pairs.push({ ti, di, v });
+  }));
+  pairs.sort((a, b) => b.v - a.v);
+
+  const usedT = new Set(), usedD = new Set();
+  for (const p of pairs) {
+    if (usedT.has(p.ti) || usedD.has(p.di)) continue;
+    usedT.add(p.ti); usedD.add(p.di);
+    const t = tracks[p.ti], d = dets[p.di];
+    t.target = d.bbox; t.score = d.score; t.miss = 0; t.lastSeen = now; t.hits++;
+  }
+  tracks.forEach((t, i) => { if (!usedT.has(i)) t.miss++; });
+
+  dets.forEach((d, i) => {
+    if (usedD.has(i)) return;
+    tracks.push({ id: 0, cls: d.class, score: d.score, target: d.bbox, box: d.bbox.slice(), miss: 0, hits: 1, lastSeen: now });
+  });
+
+  // ID hanya diberikan setelah objek terlihat 2 kali berturut-turut
+  for (const t of tracks) {
+    if (!t.id && t.hits >= 2) { counters[t.cls] = (counters[t.cls] || 0) + 1; t.id = counters[t.cls]; }
+  }
+  tracks = tracks.filter(t => now - t.lastSeen < MAX_AGE_MS);
+}
+
+const visible = () => tracks.filter(t => t.miss === 0 && t.id);
+
+/* ---------- UI ---------- */
+function renderPanel() {
+  const v = visible();
+  $("objectCount").textContent = v.length;
+  $("list").innerHTML = v.length
+    ? v.map(t => `<div class="object"><span>${t.cls} #${t.id}</span><b style="color:var(--acc)">${Math.round(t.score * 100)}%</b></div>`).join("")
+    : '<div style="color:var(--mute)">Tidak ada objek terdeteksi.</div>';
+  const cnt = {};
+  v.forEach(t => cnt[t.cls] = (cnt[t.cls] || 0) + 1);
+  $("counter").innerHTML = Object.entries(cnt).sort((a, b) => b[1] - a[1])
+    .map(([k, n]) => `<div class="row"><span>${k}</span><b>${n}</b></div>`).join("") || '<div style="color:var(--mute)">-</div>';
+}
+
+function draw(now) {
+  requestAnimationFrame(draw);
+  camFrames++;
+  if (now - lastStat >= 1000) {
+    const s = (now - lastStat) / 1000;
+    $("camFps").textContent = stream ? Math.round(camFrames / s) : 0;
+    $("fps").textContent = aiRunning ? (aiRuns / s).toFixed(1) : "0";
+    camFrames = 0; aiRuns = 0; lastStat = now;
+  }
+  if (!stream || !aiRunning) return;
+  if (canvas.width !== video.videoWidth) { canvas.width = video.videoWidth; canvas.height = video.videoHeight; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const lw = Math.max(2, canvas.width / 300), fs = Math.max(13, canvas.width / 38);
+  ctx.lineWidth = lw; ctx.font = `600 ${fs}px system-ui`;
+  for (const t of visible()) {
+    for (let i = 0; i < 4; i++) t.box[i] += (t.target[i] - t.box[i]) * 0.35;
+    const [x, y, w, h] = t.box, c = color(t.cls);
+    const label = `${t.cls} #${t.id} ${Math.round(t.score * 100)}%`;
+    ctx.strokeStyle = c; ctx.strokeRect(x, y, w, h);
+    const tw = ctx.measureText(label).width + 10, ty = Math.max(0, y - fs - 6);
+    ctx.fillStyle = c; ctx.fillRect(x, ty, tw, fs + 6);
+    ctx.fillStyle = "#000"; ctx.fillText(label, x + 5, ty + fs);
+  }
+}
+
+/* ---------- Events ---------- */
+$("confidence").addEventListener("input", () => $("confidenceValue").textContent = $("confidence").value + "%");
+$("camSel").addEventListener("change", () => { if (stream) restartCamera(); });
+$("modelSel").addEventListener("change", () => { stopAI(); loadModel(); });
+startCameraBtn.addEventListener("click", startCamera);
+stopCameraBtn.addEventListener("click", stopCamera);
+switchCameraBtn.addEventListener("click", switchCamera);
+startAIBtn.addEventListener("click", startAI);
+stopAIBtn.addEventListener("click", stopAI);
+window.addEventListener("beforeunload", releaseStream);
+
+loadModel();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

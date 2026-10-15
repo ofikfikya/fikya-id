@@ -90,7 +90,7 @@ ul{margin:6px 0;padding-left:20px}
     <input type="text" id="pname" placeholder="Nama profil kustom" maxlength="30" aria-label="Nama profil kustom">
     <button id="bSave">Simpan profil</button>
   </div>
-  <div class="mu">Karakter memakai target pitch dan formant yang dihitung dari suara sumber Anda (pria atau wanita), lalu efek DSP. Ini aproksimasi, bukan penggantian identitas suara. Konversi suara AI belum diimplementasikan, jadi tidak ditampilkan sebagai pilihan aktif.</div>
+  <div class="mu">Karakter memakai target pitch dan formant yang dihitung dari suara sumber Anda (pria atau wanita), lalu efek DSP. Ini mempertahankan ucapan dan intonasi secara perkiraan, tetapi bukan konversi identitas suara. Untuk hasil paling natural, gunakan perubahan moderat dan pilih sumber secara manual jika deteksi F0 keliru. Konversi suara AI belum diimplementasikan, jadi tidak ditampilkan sebagai pilihan aktif.</div>
 </section>
 
 <section>
@@ -124,11 +124,11 @@ ul{margin:6px 0;padding-left:20px}
   <ul class="mu">
     <li>Tidak ada server, akun, analitik, atau telemetri. Koneksi jaringan diblokir lewat Content-Security-Policy.</li>
     <li>Audio hanya ada di memori selama tab terbuka. Yang disimpan di perangkat hanya profil kustom (localStorage).</li>
-    <li>Belum diimplementasikan: konversi suara AI, mode live, noise reduction, ekspor MP3.</li>
+    <li>Tidak menggunakan model AI. DSP lokal tidak dapat sepenuhnya mengubah karakter vokal pria menjadi wanita atau sebaliknya; hasil terbaik berasal dari sumber bersih dan perubahan pitch/formant moderat.</li><li>Belum diimplementasikan: mode live, noise reduction khusus, ekspor MP3.</li>
   </ul>
   <button id="bClear">Hapus semua data lokal</button>
   <details><summary>Cara kerja pitch shift</summary>
-  <div class="mu">Pitch diubah dengan time-stretch WSOLA lalu resampling (durasi tetap). Formant digeser terpisah dengan menggeser envelope spektrum (cepstrum) per frame. Target pitch dihitung dari F0 yang terdeteksi. Geser besar (lebih dari sekitar 8 semiton) tetap bisa terdengar artifisial.</div></details>
+  <div class="mu">Pitch diubah dengan WSOLA lalu resampling, sedangkan formant diperkirakan melalui envelope spektrum berbasis cepstrum. Algoritma ini berjalan lokal tanpa model AI, tetapi bukan pemodelan saluran vokal. Perubahan besar dapat terdengar artifisial dan DSP tidak dapat menjamin perubahan gender suara yang meyakinkan pada semua rekaman.</div></details>
 </section>
 </main>
 
@@ -137,13 +137,13 @@ ul{margin:6px 0;padding-left:20px}
 const $=id=>document.getElementById(id);
 const PRESETS=[
  {id:"orig",n:"Suara asli",d:"Tanpa perubahan.",p:{}},
- {id:"deep",n:"Narator pria berat",d:"Target sekitar 95 Hz, formant rendah.",p:{tf:95,fx:-.5,bass:4,treble:-2,reverb:.15}},
- {id:"warm",n:"Pria dewasa hangat",d:"Target sekitar 115 Hz, lembut.",p:{tf:115,bass:2,treble:-1,reverb:.1}},
+ {id:"deep",n:"Narator pria berat",d:"Target sekitar 100 Hz, formant sedikit turun.",p:{tf:100,fx:-.35,bass:2,treble:-1,reverb:.04}},
+ {id:"warm",n:"Pria dewasa hangat",d:"Target sekitar 120 Hz, hangat dan natural.",p:{tf:120,fx:-.1,bass:1,treble:-.5,reverb:.03}},
  {id:"bright",n:"Pria cerah energik",d:"Target sekitar 140 Hz, terang.",p:{tf:140,fx:.5,treble:3}},
- {id:"female",n:"Gaya wanita",d:"Target sekitar 215 Hz, formant naik.",p:{tf:215,fx:.5,bass:-3,treble:2}},
+ {id:"female",n:"Gaya wanita",d:"Pitch dan formant naik secara moderat.",p:{tf:190,fx:.45,bass:-1.5,treble:1}},
  {id:"elder",n:"Karakter lansia",d:"Tipis, redup, sedikit serak.",p:{pitch:1,bass:-3,treble:-5,distortion:.04}},
- {id:"cartoon",n:"Kartun",d:"Sangat tinggi dan cempreng.",p:{tf:330,fx:1.5,treble:4}},
- {id:"anime_f",n:"Anime cewek",d:"Tinggi, cerah, formant naik.",p:{tf:300,fx:2,treble:4,bass:-4,reverb:.12}},
+ {id:"cartoon",n:"Kartun",d:"Tinggi dan cempreng (formant naik).",p:{tf:240,fx:2.5,treble:4}},
+ {id:"anime_f",n:"Anime cewek",d:"Efek karakter yang sengaja tidak realistis.",p:{tf:260,fx:1.2,treble:2,bass:-2,reverb:.05}},
  {id:"anime_m",n:"Anime cowok",d:"Muda, jernih, agak tinggi.",p:{tf:170,fx:1,treble:3,bass:-2,reverb:.08}},
  {id:"robot",n:"Robot",d:"Modulasi cincin plus echo.",p:{robot:1,treble:2,echo:.15}},
  {id:"alien",n:"Alien / fantasi",d:"Nada naik, getar, ruang luas.",p:{pitch:5,fx:1,robot:.5,reverb:.5,echo:.3}},
@@ -152,11 +152,11 @@ const PRESETS=[
  {id:"custom",n:"Kustom",d:"Atur sendiri dari nol.",p:{}}
 ];
 const DEF={tf:0,fx:0,pitch:0,formant:0,bass:0,treble:0,reverb:0,echo:0,distortion:0,robot:0,radio:0,gain:0};
-const SL=[["pitch","Pitch +/-",-12,12,.5,"st"],["formant","Formant +/-",-12,12,.5,"st"],["bass","Bass",-12,12,1,"dB"],["treble","Treble",-12,12,1,"dB"],["reverb","Reverb",0,1,.05,""],["echo","Echo",0,1,.05,""],["distortion","Distorsi",0,1,.05,""],["robot","Robot",0,1,.05,""],["radio","Radio",0,1,.05,""],["gain","Gain",-12,12,1,"dB"]];
+const SL=[["pitch","Pitch +/-",-10,8,.5,"st"],["formant","Formant +/-",-5,5,.5,"st"],["bass","Bass",-12,12,1,"dB"],["treble","Treble",-12,12,1,"dB"],["reverb","Reverb",0,1,.05,""],["echo","Echo",0,1,.05,""],["distortion","Distorsi",0,1,.05,""],["robot","Robot",0,1,.05,""],["radio","Radio",0,1,.05,""],["gain","Gain",-12,12,1,"dB"]];
 const S={f0:null,data:null,sr:44100,name:"",trim:[0,1],preset:"orig",params:{...DEF},saved:[],token:0,urls:{o:null,p:null},cur:"B",rec:null,stream:null,tick:null,timer:null,deb:null};
 let AC=null;
 const ac=()=>AC||(AC=new(window.AudioContext||window.webkitAudioContext)());
-const MAXMB=100,MAXSEC=600;
+const MAXMB=100,MAXSEC=600,PMIN=-10,PMAX=8,FMAX=5;
 
 function err(m){$("err").textContent=m||""}
 function fmtT(s){s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
@@ -231,27 +231,32 @@ function wavBlob(x,sr){
 // ---------- pitch shift (WSOLA + resample) ----------
 const tick=()=>new Promise(r=>setTimeout(r,0));
 async function stretch(x,f,tok,onp){
- const W=1024,HO=512,HI=HO/f,TOL=256,hann=new Float32Array(W);
- for(let i=0;i<W;i++)hann[i]=.5-.5*Math.cos(2*Math.PI*i/W);
- const L=Math.ceil(x.length*f)+W,out=new Float32Array(L),nr=new Float32Array(L);
+ // WSOLA: pick the input segment that best continues the previous one (at prev+HO).
+ const W=1024,HO=512,HI=HO/f,TOL=256;
+ const hann=new Float32Array(W);
+ for(let i=0;i<W;i++)hann[i]=.5-.5*Math.cos(2*Math.PI*i/(W-1));
+ const L=Math.ceil(x.length*f)+W,out=new Float32Array(L),weight=new Float32Array(L);
  let prev=0;
  for(let i=0;;i++){
   const o=i*HO;if(o+W>=L)break;
-  let best=Math.round(i*HI);
+  const expected=Math.round(i*HI);let best=expected;
   if(i>0){
-   const tg=prev+HO;let bs=-Infinity;
+   const refStart=prev+HO;let bestScore=-Infinity;
    for(let d=-TOL;d<=TOL;d+=2){
-    const p=Math.round(i*HI)+d;if(p<0||p+W>x.length||tg+W>x.length)continue;
-    let c=0;for(let k=0;k<W;k+=4)c+=x[p+k]*x[tg+k];
-    if(c>bs){bs=c;best=p}
+    const p=expected+d;
+    if(p<0||p+W>=x.length||refStart+W>=x.length)continue;
+    let dot=0,aa=1e-12,bb=1e-12;
+    for(let k=0;k<W;k+=4){const a=x[p+k],b=x[refStart+k];dot+=a*b;aa+=a*a;bb+=b*b}
+    const score=dot/Math.sqrt(aa*bb);
+    if(score>bestScore){bestScore=score;best=p}
    }
   }
-  if(best+W>x.length)best=Math.max(0,x.length-W);
-  for(let k=0;k<W;k++){out[o+k]+=x[best+k]*hann[k];nr[o+k]+=hann[k]}
+  best=Math.max(0,Math.min(best,Math.max(0,x.length-W)));
+  for(let k=0;k<W;k++){const w=hann[k];out[o+k]+=x[best+k]*w;weight[o+k]+=w}
   prev=best;
-  if(i%150===0){if(tok!==S.token)return null;onp(Math.min(1,o/L));await tick()}
+  if(i%120===0){if(tok!==S.token)return null;onp(Math.min(1,o/L));await tick()}
  }
- for(let i=0;i<L;i++)if(nr[i]>1e-3)out[i]/=nr[i];
+ for(let i=0;i<L;i++)if(weight[i]>1e-4)out[i]/=weight[i];
  return out;
 }
 async function pitchShift(x,r,tok,onp){
@@ -291,29 +296,32 @@ function detectF0(x,sr){
  f.sort((a,b)=>a-b);return f[f.length>>1];
 }
 async function formantWarp(x,w,sr,tok,onp){
- const N=2048,H=512,nl=Math.round(sr/700),win=new Float64Array(N);
- for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/N);
- const out=new Float32Array(x.length+N),re=new Float64Array(N),im=new Float64Array(N),cr=new Float64Array(N),ci=new Float64Array(N);
+ // Cepstral spectral-envelope shift: approximate formant adjustment, not a vocal-tract model.
+ const N=2048,H=512,nl=Math.max(8,Math.min(Math.round(sr/700),N>>3));
+ const win=new Float64Array(N);
+ for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/(N-1));
+ const out=new Float32Array(x.length),weight=new Float32Array(x.length);
+ const re=new Float64Array(N),im=new Float64Array(N),envR=new Float64Array(N),envI=new Float64Array(N),half=N>>1,gain=new Float64Array(half+1);
  let fr=0;
  for(let pos=-N+H;pos<x.length;pos+=H,fr++){
   for(let i=0;i<N;i++){const k=pos+i;re[i]=(k>=0&&k<x.length?x[k]:0)*win[i];im[i]=0}
   fft(re,im,false);
-  for(let k=0;k<N;k++){cr[k]=Math.log(Math.hypot(re[k],im[k])+1e-5);ci[k]=0}
-  fft(cr,ci,true);
-  for(let q=nl+1;q<N-nl;q++){cr[q]=0;ci[q]=0}
-  fft(cr,ci,false);
-  const hN=N>>1;
-  for(let k=0;k<=hN;k++){
-   const sp=k/w,i0=Math.floor(sp);
-   const e=i0>=hN?cr[hN]:cr[i0]*(1-(sp-i0))+cr[i0+1]*(sp-i0);
-   const g=Math.min(30,Math.max(.03,Math.exp(e-cr[k])));
-   re[k]*=g;im[k]*=g;if(k>0&&k<hN){re[N-k]*=g;im[N-k]*=g}
+  for(let k=0;k<N;k++){envR[k]=Math.log(Math.hypot(re[k],im[k])+1e-7);envI[k]=0}
+  fft(envR,envI,true);
+  for(let q=nl+1;q<N-nl;q++){envR[q]=0;envI[q]=0}
+  fft(envR,envI,false);
+  for(let k=0;k<=half;k++){
+   const source=k/w,idx=Math.floor(source),frac=source-idx;
+   const e=(idx>=half)?envR[half]:envR[idx]*(1-frac)+envR[Math.min(half,idx+1)]*frac;
+   gain[k]=Math.max(.25,Math.min(4,Math.exp(Math.max(-1.4,Math.min(1.4,e-envR[k])))));
   }
+  for(let k=0;k<=half;k++){re[k]*=gain[k];im[k]*=gain[k];if(k>0&&k<half){re[N-k]*=gain[k];im[N-k]*=gain[k]}}
   fft(re,im,true);
-  for(let i=0;i<N;i++){const k=pos+i;if(k>=0&&k<out.length)out[k]+=re[i]*win[i]/1.5}
-  if(fr%40===0){if(tok!==S.token)return null;onp(Math.min(1,pos/x.length));await tick()}
+  for(let i=0;i<N;i++){const k=pos+i;if(k>=0&&k<x.length){const w=win[i];out[k]+=re[i]*w;weight[k]+=w*w}}
+  if(fr%32===0){if(tok!==S.token)return null;onp(Math.min(1,Math.max(0,pos/x.length)));await tick()}
  }
- return out.subarray(0,x.length);
+ for(let i=0;i<out.length;i++)if(weight[i]>1e-6)out[i]/=weight[i];
+ return out;
 }
 
 // ---------- effects graph (offline render) ----------
@@ -374,10 +382,11 @@ async function run(){
  setStatus("Memproses…",0);err("");
  try{
   const sel=$("srcv").value,src=sel==="auto"?(S.f0||140):+sel;
-  const ap=p.tf?Math.max(-12,Math.min(12,12*Math.log2(p.tf/src))):0;
-  const pitchSt=Math.max(-14,Math.min(14,ap+p.pitch));
-  const fmSt=.3*pitchSt+p.fx+p.formant;
-  const info="Sumber ≈ "+Math.round(src)+" Hz"+(p.tf?" → target "+p.tf+" Hz":"")+" · pitch "+pitchSt.toFixed(1)+" st · formant "+fmSt.toFixed(1)+" st · ";
+  let ap=p.tf?12*Math.log2(p.tf/src):0;
+  if(Math.abs(ap)<1)ap=0;
+  const raw=ap+p.pitch,pitchSt=Math.max(PMIN,Math.min(PMAX,raw)),lim=Math.abs(raw-pitchSt)>.05;
+  const fmSt=Math.max(-FMAX,Math.min(FMAX,.25*pitchSt+p.fx+p.formant));
+  const info=(lim?"⚠ Target pitch melewati batas ("+PMIN+" sampai +"+PMAX+" st), hasil dibatasi. ":"")+"Sumber ≈ "+Math.round(src)+" Hz"+(p.tf?" → target "+p.tf+" Hz":"")+" · hasil ≈ "+Math.round(src*Math.pow(2,pitchSt/12))+" Hz · pitch "+pitchSt.toFixed(1)+" st · formant "+fmSt.toFixed(1)+" st · ";
   let x=seg;
   if(Math.abs(pitchSt)>.01){
    x=await pitchShift(seg,Math.pow(2,pitchSt/12),tok,v=>setStatus("Mengubah pitch…",v*.5));

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; media-src blob:; img-src data:; connect-src 'none'">
+<title>Voice Studio AI</title>
+<style>
+:root{--bg:#14110f;--panel:#1e1a17;--panel2:#272220;--line:#3a332e;--tx:#f1ebe4;--mu:#a89e94;--ac:#f2b544;--ac2:#5fd0b4;--bad:#ff7a6b;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Trebuchet MS",Verdana,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+h1{margin:0;font:700 22px Georgia,serif;letter-spacing:.3px}
+h2{margin:0 0 10px;font:700 17px Georgia,serif}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.b{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);color:var(--mu)}
+.b.ok{color:var(--ac2);border-color:#2f6b5c}.b.dsp{color:var(--ac);border-color:#7a5a1c}.b.ai{color:var(--mu)}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:900px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+button,label.btn{font:inherit;cursor:pointer;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:9px 14px;display:inline-block}
+button:hover:not(:disabled),label.btn:hover{border-color:var(--ac)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.pri{background:var(--ac);color:#201808;border-color:var(--ac);font-weight:700}
+button.rec{background:var(--bad);color:#2a0b07;border-color:var(--bad);font-weight:700}
+:focus-visible{outline:2px solid var(--ac2);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+canvas{width:100%;height:90px;background:#0f0d0b;border-radius:10px;display:block;border:1px solid var(--line)}
+.mu{color:var(--mu);font-size:13px}
+.err{color:var(--bad);font-size:14px;margin:6px 0;min-height:1em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{text-align:left;padding:10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);position:relative}
+.card.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
+.card b{display:block;margin-bottom:2px}.card span.mu{display:block;margin:4px 0 6px;font-size:12px;line-height:1.3}
+.card.off{opacity:.55;cursor:not-allowed}
+.x{position:absolute;right:6px;top:6px;padding:0 7px;border-radius:6px;font-size:12px}
+.sl{display:grid;grid-template-columns:100px 1fr 64px;gap:8px;align-items:center;margin:6px 0}
+.sl output{text-align:right;color:var(--ac);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ac)}
+input[type=text]{font:inherit;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;flex:1}
+progress{width:100%;height:8px;accent-color:var(--ac2)}
+audio{width:100%;margin-top:8px}
+.consent{background:#2a2216;border:1px solid #6b5420;border-radius:var(--r);padding:12px 14px;grid-column:1/-1}
+.tm{font:700 26px Georgia,serif;color:var(--ac);font-variant-numeric:tabular-nums}
+details{margin-top:8px}summary{cursor:pointer;color:var(--ac2)}
+ul{margin:6px 0;padding-left:20px}
+@media(prefers-reduced-motion:no-preference){.rec.on{animation:p 1.2s infinite}@keyframes p{50%{opacity:.6}}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Voice Studio AI</h1>
+  <div class="badges">
+    <span class="b ok">Diproses lokal, tanpa unggah</span>
+    <span class="b dsp">Mesin aktif: DSP</span>
+    <span class="b ai">Konversi AI: belum tersedia</span>
+  </div>
+</header>
+
+<main>
+<div class="consent">
+  <label><input type="checkbox" id="consent"> Saya hanya memproses suara saya sendiri atau suara yang saya punya izinnya, dan tidak akan memakainya untuk menipu atau menyamar sebagai orang lain.</label>
+  <div class="mu">Centang untuk mengaktifkan perekaman dan unggah. Audio tidak pernah keluar dari browser ini (halaman ini memblokir semua koneksi jaringan).</div>
+</div>
+
+<section>
+  <h2>1. Rekam atau unggah suara</h2>
+  <div class="tm" id="timer">00:00</div>
+  <div class="row">
+    <button id="bRec" class="rec" disabled>Rekam</button>
+    <button id="bPause" disabled>Jeda</button>
+    <button id="bStop" disabled>Berhenti</button>
+    <label class="btn" id="upLbl">Unggah file<input id="file" type="file" accept="audio/*" hidden disabled></label>
+  </div>
+  <div class="err" id="err" role="alert"></div>
+  <canvas id="cvO" aria-label="Gelombang audio asli"></canvas>
+  <div class="mu" id="info">Belum ada audio.</div>
+  <div class="row">
+    <span class="mu">Potong awal</span><input type="range" id="t0" min="0" max="1000" value="0">
+  </div>
+  <div class="row">
+    <span class="mu">Potong akhir</span><input type="range" id="t1" min="0" max="1000" value="1000">
+  </div>
+</section>
+
+<section>
+  <h2>2. Pilih karakter</h2>
+  <div class="grid" id="cards"></div>
+  <div class="row">
+    <input type="text" id="pname" placeholder="Nama profil kustom" maxlength="30" aria-label="Nama profil kustom">
+    <button id="bSave">Simpan profil</button>
+  </div>
+  <div class="mu">Semua karakter di atas memakai efek DSP tradisional (aproksimasi, bukan penggantian identitas suara). Konversi suara AI belum diimplementasikan, jadi tidak ditampilkan sebagai pilihan aktif.</div>
+</section>
+
+<section>
+  <h2>3. Atur efek</h2>
+  <div id="sliders"></div>
+  <div class="sl"><span>Formant</span><span class="mu">Belum didukung</span><span></span></div>
+  <label class="mu"><input type="checkbox" id="norm" checked> Normalisasi puncak ke -1 dB</label>
+  <div class="row"><button id="bReset">Reset ke preset</button></div>
+</section>
+
+<section>
+  <h2>4. Hasil</h2>
+  <progress id="prog" value="0" max="1" hidden></progress>
+  <div class="row"><span class="mu" id="status">Menunggu audio.</span><button id="bCancel" hidden>Batalkan</button></div>
+  <canvas id="cvP" aria-label="Gelombang hasil"></canvas>
+  <div class="row">
+    <button id="bA" disabled>Dengar asli (A)</button>
+    <button id="bB" class="pri" disabled>Dengar hasil (B)</button>
+    <a id="dl" download="voice.wav"><button id="bDl" disabled>Unduh WAV</button></a>
+  </div>
+  <audio id="player" controls></audio>
+  <div class="mu" id="fmt"></div>
+</section>
+
+<section class="wide">
+  <h2>Pengaturan dan privasi</h2>
+  <div class="mu" id="caps"></div>
+  <ul class="mu">
+    <li>Tidak ada server, akun, analitik, atau telemetri. Koneksi jaringan diblokir lewat Content-Security-Policy.</li>
+    <li>Audio hanya ada di memori selama tab terbuka. Yang disimpan di perangkat hanya profil kustom (localStorage).</li>
+    <li>Belum diimplementasikan: konversi suara AI, mode live, formant, noise reduction, ekspor MP3.</li>
+  </ul>
+  <button id="bClear">Hapus semua data lokal</button>
+  <details><summary>Cara kerja pitch shift</summary>
+  <div class="mu">Pitch diubah dengan time-stretch WSOLA lalu resampling, sehingga durasi tetap. Kualitasnya wajar untuk geser kecil sampai sedang (sekitar ±7 semiton); geser besar akan terdengar artifisial.</div></details>
+</section>
+</main>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const PRESETS=[
+ {id:"orig",n:"Suara asli",d:"Tanpa perubahan.",p:{}},
+ {id:"deep",n:"Narator pria berat",d:"Nada rendah, bass tebal.",p:{pitch:-4,bass:6,treble:-2,reverb:.15}},
+ {id:"warm",n:"Pria dewasa hangat",d:"Sedikit lebih rendah, lembut.",p:{pitch:-2,bass:3,treble:-1,reverb:.1}},
+ {id:"bright",n:"Pria cerah energik",d:"Nada naik, treble terang.",p:{pitch:2,bass:-2,treble:4}},
+ {id:"female",n:"Gaya wanita",d:"Nada naik, bass dikurangi.",p:{pitch:4,bass:-4,treble:3}},
+ {id:"elder",n:"Karakter lansia",d:"Tipis, redup, agak naik.",p:{pitch:1.5,bass:-3,treble:-5,distortion:.04}},
+ {id:"cartoon",n:"Kartun",d:"Nada tinggi dan cempreng.",p:{pitch:7,treble:4}},
+ {id:"robot",n:"Robot",d:"Modulasi cincin plus echo.",p:{robot:1,treble:2,echo:.15}},
+ {id:"alien",n:"Alien / fantasi",d:"Nada naik, getar, ruang luas.",p:{pitch:5,robot:.5,reverb:.5,echo:.3}},
+ {id:"radio",n:"Radio jadul",d:"Band sempit dan sedikit distorsi.",p:{radio:1,distortion:.15,bass:-6}},
+ {id:"horror",n:"Narator horor",d:"Sangat rendah, gema panjang.",p:{pitch:-6,reverb:.6,echo:.25,bass:5,treble:-4}},
+ {id:"custom",n:"Kustom",d:"Atur sendiri dari nol.",p:{}}
+];
+const DEF={pitch:0,bass:0,treble:0,reverb:0,echo:0,distortion:0,robot:0,radio:0,gain:0};
+const SL=[["pitch","Pitch",-12,12,.5,"st"],["bass","Bass",-12,12,1,"dB"],["treble","Treble",-12,12,1,"dB"],["reverb","Reverb",0,1,.05,""],["echo","Echo",0,1,.05,""],["distortion","Distorsi",0,1,.05,""],["robot","Robot",0,1,.05,""],["radio","Radio",0,1,.05,""],["gain","Gain",-12,12,1,"dB"]];
+const S={data:null,sr:44100,name:"",trim:[0,1],preset:"orig",params:{...DEF},saved:[],token:0,urls:{o:null,p:null},cur:"B",rec:null,stream:null,tick:null,timer:null,deb:null};
+let AC=null;
+const ac=()=>AC||(AC=new(window.AudioContext||window.webkitAudioContext)());
+const MAXMB=100,MAXSEC=600;
+
+function err(m){$("err").textContent=m||""}
+function fmtT(s){s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+
+// ---------- capabilities ----------
+(function(){
+ const c=[["Konteks aman",window.isSecureContext],["Mikrofon (getUserMedia)",!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)],["MediaRecorder",!!window.MediaRecorder],["OfflineAudioContext",!!(window.OfflineAudioContext||window.webkitOfflineAudioContext)]];
+ $("caps").textContent="Deteksi browser: "+c.map(x=>x[0]+": "+(x[1]?"ya":"tidak")).join(", ")+". WebGPU: "+(navigator.gpu?"terdeteksi (belum dipakai)":"tidak tersedia")+".";
+ if(!window.MediaRecorder||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))err("Perekaman tidak didukung di sini (butuh HTTPS atau localhost). Anda tetap bisa mengunggah file.");
+})();
+
+// ---------- consent ----------
+$("consent").onchange=e=>{const on=e.target.checked;$("bRec").disabled=!on||!window.MediaRecorder;$("file").disabled=!on;$("upLbl").style.opacity=on?1:.4};
+$("upLbl").style.opacity=.4;
+
+// ---------- recording ----------
+$("bRec").onclick=async()=>{
+ err("");
+ try{
+  S.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+ }catch(e){
+  err(e.name==="NotAllowedError"?"Izin mikrofon ditolak. Aktifkan izin mikrofon di pengaturan situs browser, lalu coba lagi.":e.name==="NotFoundError"?"Mikrofon tidak ditemukan. Sambungkan mikrofon, lalu coba lagi.":"Mikrofon gagal dibuka: "+e.message);return;
+ }
+ const chunks=[];const r=new MediaRecorder(S.stream);S.rec=r;
+ r.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+ r.onstop=async()=>{
+  clearInterval(S.tick);S.stream.getTracks().forEach(t=>t.stop());
+  $("bRec").classList.remove("on");setRecUI(false);
+  await load(new Blob(chunks,{type:r.mimeType||"audio/webm"}),"rekaman");
+ };
+ const t0=Date.now();let paused=0,ps=0;
+ S.tick=setInterval(()=>{if(r.state==="recording")$("timer").textContent=fmtT((Date.now()-t0-paused)/1e3)},250);
+ r.onpause=()=>{ps=Date.now()};r.onresume=()=>{paused+=Date.now()-ps};
+ r.start();setRecUI(true);$("bRec").classList.add("on");
+};
+function setRecUI(on){$("bRec").disabled=on||!$("consent").checked;$("bStop").disabled=!on;$("bPause").disabled=!on||!(window.MediaRecorder&&MediaRecorder.prototype.pause)}
+$("bPause").onclick=()=>{const r=S.rec;if(!r)return;if(r.state==="recording"){r.pause();$("bPause").textContent="Lanjut"}else{r.resume();$("bPause").textContent="Jeda"}};
+$("bStop").onclick=()=>{if(S.rec&&S.rec.state!=="inactive"){$("bPause").textContent="Jeda";S.rec.stop()}};
+
+// ---------- upload / decode ----------
+$("file").onchange=async e=>{
+ const f=e.target.files[0];e.target.value="";if(!f)return;err("");
+ if(f.size>MAXMB*1048576){err("File terlalu besar (maksimum "+MAXMB+" MB).");return}
+ if(f.type&&!f.type.startsWith("audio/")&&!/\.(wav|mp3|m4a|webm|ogg|aac|flac)$/i.test(f.name)){err("Format tidak didukung. Gunakan WAV, MP3, M4A, WebM, atau OGG.");return}
+ await load(f,f.name);
+};
+async function load(blob,name){
+ try{
+  const buf=await ac().decodeAudioData(await blob.arrayBuffer());
+  if(buf.duration>MAXSEC){err("Audio terlalu panjang (maksimum "+MAXSEC/60+" menit).");return}
+  const n=buf.length,m=new Float32Array(n);
+  for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)m[i]+=d[i]/buf.numberOfChannels}
+  S.data=m;S.sr=buf.sampleRate;S.name=name;S.trim=[0,1];$("t0").value=0;$("t1").value=1000;
+  $("info").textContent=name+" · "+buf.duration.toFixed(1)+" detik · "+buf.sampleRate+" Hz · "+buf.numberOfChannels+" kanal (diproses sebagai mono)";
+  $("timer").textContent=fmtT(buf.duration);
+  schedule(0);
+ }catch(e){err("File tidak bisa dibaca atau rusak. Coba file lain atau format WAV/MP3.")}
+}
+
+// ---------- WAV ----------
+function wavBlob(x,sr){
+ const n=x.length,b=new ArrayBuffer(44+n*2),v=new DataView(b);
+ const s=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+ s(0,"RIFF");v.setUint32(4,36+n*2,true);s(8,"WAVEfmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+ v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);s(36,"data");v.setUint32(40,n*2,true);
+ for(let i=0;i<n;i++){const q=Math.max(-1,Math.min(1,x[i]));v.setInt16(44+i*2,q<0?q*32768:q*32767,true)}
+ return new Blob([b],{type:"audio/wav"});
+}
+
+// ---------- pitch shift (WSOLA + resample) ----------
+const tick=()=>new Promise(r=>setTimeout(r,0));
+async function stretch(x,f,tok,onp){
+ const W=1024,HO=512,HI=HO/f,TOL=256,hann=new Float32Array(W);
+ for(let i=0;i<W;i++)hann[i]=.5-.5*Math.cos(2*Math.PI*i/W);
+ const L=Math.ceil(x.length*f)+W,out=new Float32Array(L),nr=new Float32Array(L);
+ let prev=0;
+ for(let i=0;;i++){
+  const o=i*HO;if(o+W>=L)break;
+  let best=Math.round(i*HI);
+  if(i>0){
+   const tg=prev+HO;let bs=-Infinity;
+   for(let d=-TOL;d<=TOL;d+=2){
+    const p=Math.round(i*HI)+d;if(p<0||p+W>x.length||tg+W>x.length)continue;
+    let c=0;for(let k=0;k<W;k+=4)c+=x[p+k]*x[tg+k];
+    if(c>bs){bs=c;best=p}
+   }
+  }
+  if(best+W>x.length)best=Math.max(0,x.length-W);
+  for(let k=0;k<W;k++){out[o+k]+=x[best+k]*hann[k];nr[o+k]+=hann[k]}
+  prev=best;
+  if(i%150===0){if(tok!==S.token)return null;onp(Math.min(1,o/L));await tick()}
+ }
+ for(let i=0;i<L;i++)if(nr[i]>1e-3)out[i]/=nr[i];
+ return out;
+}
+async function pitchShift(x,r,tok,onp){
+ const st=await stretch(x,r,tok,onp);if(!st)return null;
+ const n=Math.floor(x.length),y=new Float32Array(n);
+ for(let j=0;j<n;j++){const p=j*r,i=Math.floor(p),fr=p-i;y[j]=(st[i]||0)*(1-fr)+(st[i+1]||0)*fr}
+ return y;
+}
+
+// ---------- effects graph (offline render) ----------
+function impulse(ctx,sec){
+ const n=Math.floor(ctx.sampleRate*sec),b=ctx.createBuffer(1,n,ctx.sampleRate),d=b.getChannelData(0);
+ for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.5);
+ return b;
+}
+async function render(x,sr,p){
+ const SR=48000,tail=(p.reverb>0||p.echo>0)?2.5:.1;
+ const off=new OfflineAudioContext(1,Math.ceil((x.length/sr+tail)*SR),SR);
+ const b=off.createBuffer(1,x.length,sr);b.copyToChannel(x,0);
+ const src=off.createBufferSource();src.buffer=b;
+ const G=v=>{const g=off.createGain();g.gain.value=v;return g};
+ let node=src;
+ if(p.robot>0){
+  const dry=G(1-p.robot),ring=G(0),wet=G(p.robot),sum=G(1),osc=off.createOscillator();
+  osc.frequency.value=70;osc.connect(ring.gain);osc.start();
+  src.connect(dry);src.connect(ring);ring.connect(wet);dry.connect(sum);wet.connect(sum);node=sum;
+ }
+ const lo=off.createBiquadFilter();lo.type="lowshelf";lo.frequency.value=200;lo.gain.value=p.bass;
+ const hi=off.createBiquadFilter();hi.type="highshelf";hi.frequency.value=3500;hi.gain.value=p.treble;
+ node.connect(lo);lo.connect(hi);node=hi;
+ if(p.radio>0){
+  const hp=off.createBiquadFilter();hp.type="highpass";hp.frequency.value=300+p.radio*200;
+  const lp=off.createBiquadFilter();lp.type="lowpass";lp.frequency.value=4000-p.radio*1200;
+  const pk=off.createBiquadFilter();pk.type="peaking";pk.frequency.value=1500;pk.gain.value=5*p.radio;
+  node.connect(hp);hp.connect(pk);pk.connect(lp);node=lp;
+ }
+ if(p.distortion>0){
+  const ws=off.createWaveShaper(),k=1+p.distortion*20,c=new Float32Array(2048);
+  for(let i=0;i<2048;i++){const v=i/1024-1;c[i]=Math.tanh(v*k)/Math.tanh(k)}
+  ws.curve=c;node.connect(ws);node=ws;
+ }
+ const out=G(1);node.connect(out);
+ if(p.echo>0){
+  const d=off.createDelay(1);d.delayTime.value=.28;const fb=G(.4),wet=G(p.echo);
+  node.connect(d);d.connect(fb);fb.connect(d);d.connect(wet);wet.connect(out);
+ }
+ if(p.reverb>0){
+  const cv=off.createConvolver();cv.buffer=impulse(off,2);const wet=G(p.reverb*1.2);
+  node.connect(cv);cv.connect(wet);wet.connect(out);
+ }
+ out.connect(off.destination);src.start();
+ return (await off.startRendering()).getChannelData(0);
+}
+
+// ---------- pipeline ----------
+function schedule(ms){clearTimeout(S.deb);S.deb=setTimeout(run,ms)}
+function setStatus(t,prog){$("status").textContent=t;$("prog").hidden=prog==null;if(prog!=null)$("prog").value=prog;$("bCancel").hidden=prog==null}
+$("bCancel").onclick=()=>{S.token++;setStatus("Dibatalkan.",null)};
+async function run(){
+ if(!S.data)return;
+ const tok=++S.token,p=S.params,t0=performance.now();
+ const a=Math.floor(S.trim[0]*S.data.length),b=Math.floor(S.trim[1]*S.data.length);
+ const seg=S.data.subarray(a,b);
+ if(seg.length<2048){setStatus("Rentang potong terlalu pendek.",null);return}
+ setStatus("Memproses…",0);err("");
+ try{
+  let x=seg;
+  if(p.pitch!==0){
+   x=await pitchShift(seg,Math.pow(2,p.pitch/12),tok,v=>setStatus("Mengubah pitch…",v*.8));
+   if(!x||tok!==S.token)return;
+  }
+  setStatus("Menerapkan efek…",.85);await tick();
+  let y=await render(x,S.sr,p);
+  if(tok!==S.token)return;
+  if($("norm").checked){let pk=0;for(let i=0;i<y.length;i++)pk=Math.max(pk,Math.abs(y[i]));if(pk>0){const g=.89/pk;for(let i=0;i<y.length;i++)y[i]*=g}}
+  const gg=Math.pow(10,p.gain/20);if(gg!==1)for(let i=0;i<y.length;i++)y[i]=Math.max(-1,Math.min(1,y[i]*gg));
+  freeUrls();
+  S.urls.o=URL.createObjectURL(wavBlob(seg,S.sr));
+  S.urls.p=URL.createObjectURL(wavBlob(y,48000));
+  $("dl").href=S.urls.p;$("dl").download="voice-studio-"+S.preset+".wav";
+  draw($("cvP"),y);draw($("cvO"),S.data,true);
+  $("fmt").textContent="Keluaran: WAV 16-bit · 48000 Hz · mono · "+(y.length/48000).toFixed(2)+" detik · selesai dalam "+((performance.now()-t0)/1e3).toFixed(1)+" dtk";
+  ["bA","bB","bDl"].forEach(i=>$(i).disabled=false);
+  setStatus("Selesai. Hasil di bawah memakai graph yang sama dengan file unduhan.",null);
+  play(S.cur,false);
+ }catch(e){setStatus("Gagal.",null);err("Pemrosesan gagal: "+e.message+". Coba audio lebih pendek atau kurangi efek.")}
+}
+function freeUrls(){["o","p"].forEach(k=>{if(S.urls[k]){URL.revokeObjectURL(S.urls[k]);S.urls[k]=null}})}
+
+// ---------- player ----------
+function play(w,keep=true){
+ const a=$("player"),t=keep?a.currentTime:0,was=!a.paused;
+ S.cur=w;a.src=w==="A"?S.urls.o:S.urls.p;a.currentTime=t;if(was)a.play();
+ $("bA").classList.toggle("pri",w==="A");$("bB").classList.toggle("pri",w==="B");
+}
+$("bA").onclick=()=>play("A");$("bB").onclick=()=>play("B");
+
+// ---------- waveform ----------
+function draw(cv,d,trimmed){
+ const dpr=devicePixelRatio||1,w=cv.clientWidth*dpr,h=cv.clientHeight*dpr;cv.width=w;cv.height=h;
+ const g=cv.getContext("2d");g.clearRect(0,0,w,h);g.fillStyle="#5fd0b4";
+ const step=d.length/w;
+ for(let x=0;x<w;x++){
+  let mn=1,mx=-1;const s=Math.floor(x*step),e=Math.min(d.length,Math.floor((x+1)*step)+1);
+  for(let i=s;i<e;i+=Math.max(1,Math.floor((e-s)/16))){const v=d[i];if(v<mn)mn=v;if(v>mx)mx=v}
+  g.fillRect(x,h/2+mn*h/2*.9,1,Math.max(1,(mx-mn)*h/2*.9));
+ }
+ if(trimmed){g.fillStyle="rgba(20,17,15,.7)";g.fillRect(0,0,S.trim[0]*w,h);g.fillRect(S.trim[1]*w,0,w,h)}
+}
+function trimChange(){
+ let a=$("t0").value/1000,b=$("t1").value/1000;
+ if(b-a<.01){if(this===$("t0"))a=b-.01;else b=a+.01;$("t0").value=a*1000;$("t1").value=b*1000}
+ S.trim=[a,b];if(S.data)draw($("cvO"),S.data,true);schedule(400);
+}
+$("t0").oninput=trimChange;$("t1").oninput=trimChange;
+
+// ---------- presets & sliders ----------
+function loadSaved(){try{S.saved=JSON.parse(localStorage.getItem("vsai.presets")||"[]")}catch(e){S.saved=[]}}
+function persist(){try{localStorage.setItem("vsai.presets",JSON.stringify(S.saved))}catch(e){err("Penyimpanan lokal tidak tersedia di browser ini.")}}
+function renderCards(){
+ const el=$("cards");el.innerHTML="";
+ const add=(id,n,d,badge,onSel,onDel)=>{
+  const c=document.createElement("div");c.className="card"+(S.preset===id?" sel":"");
+  c.innerHTML="<b></b><span class='mu'></span><span class='b "+(badge==="Kustom"?"":"dsp")+"'>"+badge+"</span>";
+  c.children[0].textContent=n;c.children[1].textContent=d;
+  const btn=document.createElement("button");btn.textContent=S.preset===id?"Dipilih":"Pilih";btn.style.cssText="margin-top:6px;width:100%;padding:5px";btn.onclick=onSel;c.appendChild(btn);
+  if(onDel){const x=document.createElement("button");x.className="x";x.textContent="Hapus";x.setAttribute("aria-label","Hapus profil "+n);x.onclick=onDel;c.appendChild(x)}
+  el.appendChild(c);
+ };
+ PRESETS.forEach(p=>add(p.id,p.n,p.d,"DSP",()=>choose(p.id,{...DEF,...p.p})));
+ S.saved.forEach((s,i)=>add("u"+i,s.name,"Profil kustom tersimpan.","Kustom",()=>choose("u"+i,{...DEF,...s.params}),()=>{S.saved.splice(i,1);persist();renderCards()}));
+ const ai=document.createElement("div");ai.className="card off";ai.innerHTML="<b>Konversi suara AI</b><span class='mu'>Mengubah identitas suara dengan model nyata. Belum diimplementasikan.</span><span class='b ai'>AI · tidak tersedia</span>";el.appendChild(ai);
+}
+function choose(id,p){S.preset=id;S.params=p;renderCards();syncSliders();schedule(0)}
+function buildSliders(){
+ const el=$("sliders");
+ SL.forEach(([k,l,mn,mx,st,u])=>{
+  const r=document.createElement("div");r.className="sl";
+  r.innerHTML="<label for='s_"+k+"'>"+l+"</label><input type='range' id='s_"+k+"' min='"+mn+"' max='"+mx+"' step='"+st+"'><output></output>";
+  const i=r.children[1],o=r.children[2];
+  i.oninput=()=>{S.params[k]=+i.value;o.textContent=(+i.value).toFixed(st<1?2:0).replace(/\.?0+$/,"")+" "+u;schedule(500)};
+  el.appendChild(r);
+ });
+}
+function syncSliders(){SL.forEach(([k,,, ,st,u])=>{const i=$("s_"+k);i.value=S.params[k];i.nextElementSibling.textContent=(+S.params[k]).toFixed(2).replace(/\.?0+$/,"")+" "+u})}
+$("bReset").onclick=()=>{const p=PRESETS.find(x=>x.id===S.preset);const u=S.preset[0]==="u"?S.saved[+S.preset.slice(1)].params:(p?p.p:{});S.params={...DEF,...u};syncSliders();schedule(0)};
+$("bSave").onclick=()=>{
+ const n=$("pname").value.trim();if(!n){err("Isi nama profil dulu.");return}
+ if(!$("consent").checked){err("Centang pernyataan izin suara dulu.");return}
+ S.saved.push({name:n,params:{...S.params}});persist();$("pname").value="";err("");renderCards();
+};
+$("norm").onchange=()=>schedule(0);
+
+// ---------- clear ----------
+$("bClear").onclick=()=>{
+ if(!confirm("Hapus audio di memori dan semua profil kustom tersimpan?"))return;
+ S.token++;freeUrls();try{localStorage.removeItem("vsai.presets")}catch(e){}
+ S.saved=[];S.data=null;S.preset="orig";S.params={...DEF};
+ $("player").removeAttribute("src");$("player").load();
+ ["cvO","cvP"].forEach(i=>{const c=$(i);c.getContext("2d").clearRect(0,0,c.width,c.height)});
+ ["bA","bB","bDl"].forEach(i=>$(i).disabled=true);
+ $("info").textContent="Belum ada audio.";$("fmt").textContent="";$("timer").textContent="00:00";
+ setStatus("Data dihapus.",null);renderCards();syncSliders();
+};
+
+addEventListener("beforeunload",()=>{freeUrls();if(S.stream)S.stream.getTracks().forEach(t=>t.stop())});
+loadSaved();buildSliders();renderCards();syncSliders();
+</script>
+</body>
+</html>

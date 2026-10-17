@@ -1,0 +1,2162 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kota Kotak</title>
+<style>
+:root{--pn:#262c3bee;--tx:#eef1ff;--ac:#ffb02e;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#1b1f2a;color:var(--tx);font:14px system-ui,sans-serif;overflow:hidden}
+canvas{display:block;touch-action:none}
+.p{position:fixed;background:var(--pn);border-radius:12px;padding:8px;z-index:5}
+#top{left:8px;top:calc(8px + env(safe-area-inset-top,0px));display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 180px)}
+#side{right:8px;top:calc(8px + env(safe-area-inset-top,0px));width:150px;display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center}
+#side h4{grid-column:1/3;margin:4px 0 0;color:var(--ac)}
+#bar{left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:96vw}
+button{background:#38405a;color:var(--tx);border:2px solid transparent;border-radius:8px;padding:7px 10px;font:inherit;cursor:pointer}
+button.on{border-color:var(--ac);background:#4a3f22}
+input[type=color]{width:36px;height:26px;border:0;padding:0;background:none}
+#msg{left:50%;top:70px;transform:translateX(-50%);display:none}
+#help{font-size:12px;opacity:.8;width:100%}
+#seed{width:92px;background:#38405a;color:var(--tx);border:0;border-radius:8px;padding:7px;font:inherit}
+select{background:#38405a;color:var(--tx);border:0;border-radius:8px;padding:7px}
+#cat{left:8px;bottom:calc(70px + env(safe-area-inset-bottom,0px));width:250px;max-height:44vh;overflow:auto}
+#cat input{width:100%;box-sizing:border-box;margin:6px 0;background:#38405a;color:var(--tx);border:0;border-radius:6px;padding:6px}
+#ct{display:flex;gap:4px;flex-wrap:wrap}#ct button{padding:4px 7px;font-size:12px}
+#cg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sw{height:46px;border-radius:6px;border:2px solid transparent;image-rendering:pixelated;cursor:pointer;position:relative}
+.sw.on{border-color:var(--ac)}
+#side select,#side input:not([type]){width:78px;box-sizing:border-box;background:#38405a;color:var(--tx);border:0;border-radius:6px;padding:4px}
+.sw span{position:absolute;bottom:0;left:0;right:0;font-size:9px;background:#000a;text-align:center;overflow:hidden;white-space:nowrap}
+#hpbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));width:220px;z-index:6;display:none}
+#hpbar .lbl{font-size:11px;opacity:.85;margin-bottom:2px;text-align:center}
+#hpbar .bar{height:14px;background:#2a2f3f;border:2px solid #000;border-radius:7px;overflow:hidden}
+#hpbar .fill{height:100%;background:linear-gradient(90deg,#ff4d4d,#ffb02e);width:100%;transition:width .15s}
+#combo{position:fixed;left:50%;top:20%;transform:translateX(-50%);font-size:32px;font-weight:bold;color:#ffd23f;text-shadow:0 0 8px #000,0 0 16px #ff6b00;display:none;z-index:7;pointer-events:none}
+#dmg{position:fixed;left:8px;bottom:calc(70px + env(safe-area-inset-bottom,0px));font-size:12px;opacity:.7;display:none}
+#calw{position:relative;display:inline-block}
+#cal{background:#38405a;border-color:transparent;font-size:12px;padding:6px 9px;white-space:nowrap}
+#calp{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:8;background:var(--pn);border-radius:12px;padding:10px;min-width:260px;line-height:1.7;box-shadow:0 4px 18px #0008}
+#calp.open{display:block}
+#calp b{color:var(--ac)}
+#calp .cdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:4px 0;font-size:12px}
+#calp .ch{text-align:center;opacity:.6;font-size:10px}
+#calp .cd{text-align:center;border-radius:6px;background:#38405a;padding:2px 0}
+#calp .cd.past{opacity:.45}#calp .cd.now{background:var(--ac);color:#1b1f2a;font-weight:bold}
+#calp .crow{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}#calp .crow button{padding:4px 8px;font-size:12px}
+#wx{background:#38405a;border-color:transparent;font-size:12px;padding:6px 9px;white-space:nowrap}
+#heato{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .6s;background:radial-gradient(circle at 50% 100%,rgba(255,120,20,.24),transparent 65%)}
+#fogo{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;transition:opacity 1s;background:linear-gradient(to bottom,rgba(220,225,235,.28),rgba(180,190,200,.15))}
+#frosto{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity 1s;box-shadow:inset 0 0 140px 36px rgba(190,225,255,.5),inset 0 0 40px 6px rgba(235,248,255,.45);background:radial-gradient(ellipse at center,transparent 62%,rgba(205,232,255,.18) 100%)}
+#compass{position:fixed;right:8px;top:calc(52px + env(safe-area-inset-top,0px));width:76px;height:76px;border-radius:50%;background:rgba(38,44,59,.92);border:2px solid #eef1ff;z-index:6;display:none;pointer-events:none;box-shadow:0 2px 8px #0006}
+#cmp-needle{position:absolute;left:50%;top:50%;width:4px;height:34px;transform:translate(-50%,-50%) rotate(0deg);transform-origin:center center;border-radius:2px;transition:transform .08s linear;background:linear-gradient(to bottom,#ff5555 0%,#ff5555 48%,#eef1ff 52%,#eef1ff 100%)}
+#cmp-needle::after{content:'';position:absolute;left:50%;top:50%;width:8px;height:8px;background:#eef1ff;border:2px solid #262c3b;border-radius:50%;transform:translate(-50%,-50%)}
+#compass .cmp-lbl{position:absolute;font-size:11px;font-weight:bold;color:#eef1ff}
+#compass .cmp-lbl.n{top:3px;left:50%;transform:translateX(-50%);color:#ff7777}
+#compass .cmp-lbl.s{bottom:3px;left:50%;transform:translateX(-50%)}
+#compass .cmp-lbl.e{right:5px;top:50%;transform:translateY(-50%)}
+#compass .cmp-lbl.w{left:5px;top:50%;transform:translateY(-50%)}
+</style></head><body>
+<div class="p" id="top"><b>🧱 Kota Kotak</b><button id="mode">▶ Main</button><button id="sv">Simpan</button><button id="ld">Muat</button><select id="slot"><option>1<option>2<option>3</select><button id="ex">⬇ Ekspor</button><button id="im">⬆ Impor</button><button id="un">↶</button><button id="re">↷</button><span>🌗</span><input type="range" id="tm" min="0" max="100" value="35" style="width:90px"><button id="bauto" class="on">Auto</button><button id="wx" title="Klik untuk ganti cuaca">☀️ Cerah · 🌱 Semi</button><span id="calw"><button id="cal" title="Kalender">📅</button><div id="calp"></div></span><select id="sz"><option value="40">40×40<option value="64">64×64<option value="96">96×96<option value="128">128×128<option value="192" selected>192×192<option value="256">256×256<option value="400">400×400</select><select id="gf"><option value="0">Hemat<option value="1" selected>Normal<option value="2">Tajam</select><button id="bmus">🎵</button><button id="bgen">🏙 Kota acak</button><input id="seed" inputmode="numeric" placeholder="seed" title="Seed kota (angka). Seed sama = kota sama"><button id="bseed">🎲 Dari seed</button><button id="brb">🔄 Bundaran buntu</button><button id="bh2">?</button><span id="st" style="font-size:12px;opacity:.7"></span><input type="file" id="fi" accept=".json" hidden><div id="help"></div></div>
+<div class="p" id="side"><h4>Warna polos</h4><span>Warna</span><input type="color" id="cb" value="#c97b4a"><h4>Isi area</h4><span>Tinggi</span><input type="number" id="th" min="1" max="10" value="1" style="width:44px"><span>Dinding saja</span><input type="checkbox" id="hl">
+<h4>Karakter</h4><span>Kulit</span><input type="color" id="skin" value="#f1c27d"><span>Rambut</span><input type="color" id="hair" value="#3b2a1a"><span>Baju</span><input type="color" id="shirt" value="#2f80ed"><span>Celana</span><input type="color" id="pants" value="#333b55"><span>Gaya</span><select id="hs"><option value="pendek">Pendek<option value="panjang">Panjang<option value="topi">Topi<option value="jambul">Jambul<option value="botak">Botak</select><span>Aksesori</span><select id="ac"><option value="tidak">Tidak<option value="kacamata">Kacamata<option value="tas">Tas</select><span>Nama</span><input id="nm" maxlength="14"><span>Ucapan</span><input id="sy" maxlength="60"><span>Perilaku</span><select id="bh"><option value="jalan">Jalan<option value="diam">Diam<option value="ikut">Ikuti<option value="duduk">Duduk</select><span>Peran</span><select id="rl"></select>
+<button id="rnd" style="grid-column:1/3">🎲 Acak</button></div>
+<div class="p" id="cat"><div id="ch"></div><input id="q" placeholder="Cari material…"><div id="ct"></div><div id="cg" style="margin-top:6px"></div></div>
+<div class="p" id="bar"></div><div class="p" id="msg"></div><div class="p" id="joy" style="display:none;left:20px;bottom:30px;width:110px;height:110px;border-radius:50%;touch-action:none"><div id="kn" style="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:#ffb02e"></div></div>
+<div class="p" id="tb" style="display:none;right:14px;bottom:30px;gap:8px;flex-direction:column"><button id="bj">⬆ Lompat</button><button id="be">E</button><button id="bf">F</button><button id="bq">Q</button><button id="bv">👁 V</button></div>
+<div class="p" id="tut" style="display:none;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,88vw);max-height:80vh;overflow:auto;line-height:1.5;z-index:9"><b style="font-size:17px">Selamat datang, Master! 🧱</b><p><b>Bangun:</b> pilih material di 📦 Katalog, lalu klik untuk menaruh. Seret untuk memutar kamera, scroll atau cubit untuk zoom, WASD untuk menggeser.</p><p><b>Cepat:</b> tahan Shift lalu seret (atau tombol 📐) untuk mengisi area. Atur Tinggi untuk dinding. Ctrl+Z untuk undo.</p><p><b>Isi kota:</b> tab Dekorasi (pohon, lampu jalan, koin, rambu, halte), 🧍 Karakter, dan 🚗 Mobil di atas jalan. Toko serba ada muncul acak di blok. Ukuran kota dan kualitas grafik ada di panel atas.</p><p><b>Main:</b> tekan ▶ Main. WASD jalan, Spasi lompat, E pintu/bicara, V kamera orang pertama. Kumpulkan semua koin!</p><button id="tgo">Mulai</button></div>
+<div class="p" id="hud" style="display:none;right:8px;top:calc(8px + env(safe-area-inset-top,0px));font-size:18px"></div><div class="p" id="say" style="display:none;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));max-width:80vw"></div>
+<div id="hpbar"><div class="lbl">❤️ Pemain</div><div class="bar"><div class="fill" id="hpf"></div></div></div>
+<div id="compass"><span class="cmp-lbl n">N</span><span class="cmp-lbl e">E</span><span class="cmp-lbl s">S</span><span class="cmp-lbl w">W</span><div id="cmp-needle"></div></div>
+<div id="combo"></div>
+<div id="dmg"></div>
+<div id="heato"></div>
+<div id="fogo"></div>
+<div id="frosto"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Kota Kotak - Combat, Cuaca/Musim, Kota Detail. v34 (perbaikan: NPC & mobil dipulihkan saat keluar Main; mobil kemudi dilepas saat kota dihapus; kebocoran geometri pemain). v33: + hujan es, embun beku, aurora; perbaikan cuaca (pemudaran, pencahayaan, warna tanah, pelangi, peristiwa malam) */
+const $=id=>document.getElementById(id),H=new Map(),npcs=[],cars=[],K={};
+
+const CONFIG={
+  Y_MAX:15,
+  GRAVITY:22,
+  JUMP_1:8.5,
+  JUMP_2:7.5,
+  MOVE_SPEED:5,
+  GUARD_SPEED:1.5,
+  CAM_LERP:13,
+  DASH_DIST:6,
+  SAVE_VER:8, // 8: blok berurutan di sumbu z dipadatkan (entri ke-6 = panjang run). 7: tipe zebra baru (zebraxa/xb/za/zb). Build lama menolak file yang lebih baru dengan pesan jelas
+  DAY_SEC:60,         // detik nyata untuk satu siklus siang+malam = 1 hari kalender (kalender asli: 1 tahun = 365 hari = 6,1 jam)
+  WX_MIN:40,
+  WX_MAX:110,
+};
+const Y_MAX=CONFIG.Y_MAX;
+
+let msgT=0;
+const msg=t=>{$('msg').textContent=t;$('msg').style.display='block';clearTimeout(msgT);msgT=setTimeout(()=>$('msg').style.display='none',1800)};
+
+const GEO_DASH=new THREE.BoxGeometry(.5,.5,.5);
+const MAT_DASH=new THREE.MeshBasicMaterial({color:0x88ddff,transparent:true,opacity:.6,blending:THREE.AdditiveBlending});
+const GEO_HADO=new THREE.SphereGeometry(.4,12,12);
+const MAT_HADO=new THREE.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.9,blending:THREE.AdditiveBlending});
+
+const Combat={hp:100,hpMax:100,atk:null,invuln:0,guard:false,dashCd:0,dead:false,jumpCount:0,jumpPressed:false};
+const HITBOX={
+  pH:{dur:.55,start:.18,act:.18,range:2.3,arc:1.5,dmg:18,kb:4.5,bp:2,cd:10,name:'Pukulan Kuat'},
+  kH:{dur:.60,start:.20,act:.20,range:2.6,arc:1.5,dmg:18,kb:4.5,bp:2,cd:12,name:'Tendangan Kuat'},
+  hadouken:{dur:.5,start:.15,act:.12,range:14,arc:3,dmg:25,kb:6,bp:4,cd:30,name:'Hadouken',proj:1},
+  tatsumaki:{dur:.9,start:.15,act:.60,range:2.4,arc:6.3,dmg:5,kb:2,bp:1.5,cd:6,name:'Tatsumaki',spin:1,multi:1},
+};
+
+let S=40;
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x8fd3ff);sc.fog=new THREE.Fog(0x8fd3ff,50,120);
+const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,300),ren=new THREE.WebGLRenderer({antialias:true});
+ren.setSize(innerWidth,innerHeight);document.body.appendChild(ren.domElement);
+const hemi=new THREE.HemisphereLight(0xffffff,0x667755,.85);sc.add(hemi);
+const sun=new THREE.DirectionalLight(0xffffff,.6);sun.position.set(20,40,12);sc.add(sun);
+let ground=new THREE.Mesh(new THREE.PlaneGeometry(S,S).rotateX(-Math.PI/2),new THREE.MeshLambertMaterial({color:0x6bbf59}));sc.add(ground);
+let grid=new THREE.GridHelper(S,S,0x4c8f3f,0x58a049);grid.position.y=.01;sc.add(grid);
+const BG=new THREE.BoxGeometry(1,1,1),mats={};
+const mat=c=>mats[c]||(mats[c]=new THREE.MeshLambertMaterial({color:c}));
+const ghost=new THREE.Mesh(new THREE.BoxGeometry(1.03,1.03,1.03),new THREE.MeshBasicMaterial({color:0x33ff66,wireframe:true}));sc.add(ghost);
+const V3=new THREE.Vector3();
+const follow=(p,dt)=>tgt.lerp(V3.set(p.x,p.y+1,p.z),1-Math.exp(-CONFIG.CAM_LERP*dt));
+const solidAt=(x,y,z)=>{const b=H.get(x+','+y+','+z);return !!b&&!b.ns};
+/* --- RNG: bawaan Math.random; genCity memasang generator ber-seed selama membangun kota supaya seed yang sama = kota yang sama. --- */
+let RNG=Math.random,citySeed=0,cityGen=0,SNAP=null;
+const mulberry32=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const newSeed=()=>(Math.random()*4294967296)>>>0;
+const SEED_OK=v=>/^\d{1,10}$/.test(v)&&+v<=4294967295;
+/* --- Batas peta: S = lebar peta (petak), koordinat -S/2 .. S/2. Semua cek batas lewat sini; S dibaca saat dipanggil (berubah di setCity). --- */
+const cellIn=(x,z,m=0)=>x>=-S/2+m&&x<S/2-m&&z>=-S/2+m&&z<S/2-m;  // petak bulat di dalam peta, sisakan m petak di tiap tepi (simetris)
+const posOut=(x,z,m=.5)=>Math.abs(x)>S/2-m||Math.abs(z)>S/2-m;   // posisi desimal (pemain/NPC/mobil) di luar peta dgn margin m
+const lim=(v,m=.3)=>Math.max(-S/2+m,Math.min(S/2-m,v));          // jepit satu sumbu ke dalam peta dgn margin m
+const boxIn=(cx,cz,e)=>cx-e>=-S/2&&cx+e<=S/2&&cz-e>=-S/2&&cz+e<=S/2; // kotak berpusat (cx,cz) setengah-lebar e muat penuh
+const floorAt=(x,z)=>H.get(x+',0,'+z);                       // blok lantai (y=0) di petak (x,z)
+const floorT=(x,z)=>{const b=floorAt(x,z);return b&&b.t};     // tipenya, atau undefined bila kosong
+const ASPH=new Set(['jalan','marka','markaz']);               // aspal saja (zebra TIDAK termasuk: NPC boleh menyeberang di zebra)
+const isAsph=(x,z)=>ASPH.has(floorT(Math.floor(x),Math.floor(z)));
+const disp=o=>o.traverse(x=>{if(x.isSprite){const m=x.material;if(m){if(m.map)m.map.dispose();m.dispose()}return}if(x.geometry&&x.geometry!==BG&&x.geometry!==CG&&x.geometry!==BEAM_G)x.geometry.dispose()});
+
+let yaw=.8,pitch=.7,dist=26,tgt=new THREE.Vector3(0,0,0),play=false,P=null,vy=0,onG=false;
+function updCam(){const c=Math.cos(pitch);if(play&&fp){const p=P.g.position;P.g.visible=false;cam.position.set(p.x,p.y+1.65,p.z);cam.lookAt(p.x-Math.sin(yaw)*c,p.y+1.65-Math.sin(pitch),p.z-Math.cos(yaw)*c);return}if(P)P.g.visible=!drv;cam.position.set(tgt.x+Math.sin(yaw)*c*dist,tgt.y+Math.sin(pitch)*dist,tgt.z+Math.cos(yaw)*c*dist);cam.lookAt(tgt)}
+
+let U=[],R=[],F=null,RB=[];
+const CAT=['Dinding','Lantai','Atap','Khusus','Dekorasi'],MD={},D={ns:1,dec:1};
+[['blok','Warna polos',0,'#c97b4a','',1],['bata','Bata merah',0,'#b5533c','brick',1],['bataputih','Bata putih',0,'#e6e0d4','brick',1],['beton','Beton',0,'#9a9a9a','',1],['kayu','Kayu',0,'#a8774a','wood',1],['papan','Papan',0,'#c49a62','planks',1],['batu','Batu',0,'#7d7d82','cobble',1],['plester','Plester',0,'#f0e6cf','',1],
+['jalan','Aspal',1,'#3a3d45','',.1],['marka','Aspal marka (X)',1,'#3a3d45','',.1],['trotoar','Trotoar',1,'#bdbdbd','tile',.3],['paving','Paving',1,'#a08c78','cobble',.15],['ubin','Ubin',1,'#e8e4dc','tile',.1],['rumput','Rumput',1,'#5fae4b','',.3],['pulau','Pulau bundaran',1,'#4f9e47','',.3],['pasir','Pasir',1,'#e3cf8f','',.1],['tanah','Tanah',1,'#7a5230','',.1],
+['gentengmerah','Genteng merah',2,'#b5472f','roof',1],['gentenggelap','Genteng gelap',2,'#4a4f5c','roof',1],['seng','Seng',2,'#a9b4bf','planks',1],['atapdatar','Atap datar',2,'#6b6b6b','',1],
+['kaca','Kaca',3,'#bfe6ff','',1,{tr:.35}],['air','Air',3,'#3b8fd9','',.85,{tr:.6,ns:1}],['pintu','Pintu',3,'#7a4f2a','planks',1],['lampu','Lampu',3,'#ffe27a','',1,{emit:1}],['daun','Daun',3,'#3f9a3f','',1],['batang','Batang kayu',3,'#6b4a2b','wood',1],
+['pohon','Pohon',4,'#3f9a3f','',.5,D],['semak','Semak',4,'#58b550','',.5,D],['bunga','Bunga',4,'#e84393','',.5,D],['lampjalan','Lampu jalan',4,'#ffe27a','',.5,D],['bangku','Bangku',4,'#a8774a','',.5,D],['pagar','Pagar',4,'#c49a62','',.5,D],['koin','Koin',4,'#ffd23f','',.5,D],['lalin','Lampu lalin',4,'#dd3333','',.5,D],['markaz','Aspal marka (Z)',1,'#3a3d45','',.1],['sepeda','Jalur sepeda',1,'#2f8f4e','',.3],['sepedam','Jalur sepeda (simbol)',1,'#2f8f4e','',.3],['zebrax','Zebra cross (jalan X)',1,'#3a3d45','zx',.1],['zebraz','Zebra cross (jalan Z)',1,'#3a3d45','zz',.1],['zebrad','Aspal zebra',9,'#3a3d45','',.1],['zebraxa','Zebra X (genap)',9,'#3a3d45','zxa',.1],['zebraxb','Zebra X (ganjil)',9,'#3a3d45','zxb',.1],['zebraza','Zebra Z (genap)',9,'#3a3d45','zza',.1],['zebrazb','Zebra Z (ganjil)',9,'#3a3d45','zzb',.1],['lalinbarat','Lampu lalin hadap barat',4,'#dd3333','',.5,D],['lalintimur','Lampu lalin hadap timur',4,'#dd3333','',.5,D],['lalinutara','Lampu lalin hadap utara',4,'#dd3333','',.5,D],['lalinselatan','Lampu lalin hadap selatan',4,'#dd3333','',.5,D],
+['pohoncemara','Pohon cemara',4,'#2e7d32','',.5,D],['pohonpalm','Pohon palm',4,'#3f9a3f','',.5,D],['pohonkering','Pohon kering',4,'#6a5a4a','',.5,D],['pos','Pos kotak',4,'#c0392b','',.5,D],['sampah','Tempat sampah',4,'#4a4a4a','',.5,D],['hydrant','Hydrant',4,'#dd2222','',.5,D],['taman','Taman bunga',4,'#e84393','',.5,D],['airmancur','Air mancur',4,'#3b8fd9','',.5,D],['rambu','Rambu jalan',4,'#2b5ad9','',.5,D],['halte','Halte bus',4,'#4a5568','',.5,D]]
+.forEach(a=>MD[a[0]]={id:a[0],name:a[1],cat:a[2],base:a[3],pat:a[4],h:a[5],o:a[6]||{}});
+function mkTex(base,pat){const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,32,32);
+ for(let i=0;i<90;i++){x.fillStyle=Math.random()<.5?'rgba(0,0,0,.08)':'rgba(255,255,255,.08)';x.fillRect(Math.random()*32|0,Math.random()*32|0,2,2)}
+ x.fillStyle='rgba(0,0,0,.28)';
+ if(pat=='brick')for(let r=0;r<4;r++){x.fillRect(0,r*8,32,1);for(let o=(r%2)*8;o<32;o+=16)x.fillRect(o,r*8,1,8)}
+ if(pat=='tile'||pat=='cobble'){const s=pat=='tile'?16:8;for(let i=0;i<32;i+=s){x.fillRect(i,0,1,32);x.fillRect(0,i,32,1)}}
+ if(pat=='wood')for(let i=0;i<32;i+=4)x.fillRect(0,i+(Math.random()*2|0),32,1);
+ if(pat=='planks')for(let i=0;i<32;i+=8)x.fillRect(i,0,1,32);
+ if(pat=='roof')for(let r=0;r<4;r++){x.fillRect(0,r*8+7,32,1);for(let o=(r%2)*4;o<32;o+=8)x.fillRect(o,r*8,1,7)}
+ if(pat=='zx'||pat=='zz'){x.fillStyle='#f4f4f4';pat=='zx'?x.fillRect(0,3,32,26):x.fillRect(3,0,26,32)}
+ /* Zebra simetris: strip 1 petak digeser setengah petak. a = strip di separuh akhir (+z / +x), b = strip di separuh awal (-z / -x) */
+ if(pat=='zxa'||pat=='zxb'||pat=='zza'||pat=='zzb'){x.fillStyle='#f4f4f4';const hi=pat[2]=='a'?16:0;pat[1]=='x'?x.fillRect(0,hi,32,16):x.fillRect(hi,0,16,32)}
+ const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;return t}
+const MM={};function mfor(id){if(MM[id])return MM[id];const d=MD[id],o=d.o;
+ return MM[id]=o.emit?new THREE.MeshBasicMaterial({color:d.base}):o.tr?new THREE.MeshLambertMaterial({color:d.base,transparent:true,opacity:o.tr,depthWrite:false}):new THREE.MeshLambertMaterial({map:d.tx||(d.tx=mkTex(d.base,d.pat))})}
+
+let fp=false,coins=0,coinTot=0,AC=null,mute=false,st=0,sit=false,drv=null,lh=0,mus=0;const IND={marka:1,markaz:1,sepedam:1,pintu:1},LTS=new Set();
+const LM={};['XR','XY','XG','ZR','ZY','ZG'].forEach(k=>LM[k]=new THREE.MeshBasicMaterial({color:0x222222}));
+let xs='G',zs='R';
+function lightTick(){const p=(performance.now()/1000)%19;xs=p<5?'G':p<6?'Y':'R';zs=p<9.5?'R':p<14.5?'G':p<15.5?'Y':'R';const C={R:0xff3b30,Y:0xffcc00,G:0x30d158};for(const a of['X','Z'])for(const s of'RYG'){const m=LM[a+s].color.setHex(C[s]);if((a=='X'?xs:zs)!=s)m.multiplyScalar(.15)}}
+function sitPose(g,on){const u=g.userData;u.lL.rotation.x=u.lR.rotation.x=on?-1.45:0;u.aL.rotation.x=u.aR.rotation.x=on?-.5:0}
+function toggleSit(){if(drv||!P||(!sit&&!onG))return;sit=!sit;sitPose(P.g,sit);P.g.position.y+=sit?-.15:.15;vy=0}
+function drive(dt){const c=drv,g=c.g,a=(K.w||0)-(K.s||0)-JV.y,s=(K.a||0)-(K.d||0)-JV.x;
+ c.v=Math.max(-5,Math.min(14,(c.v+a*14*dt)*(1-Math.min(1,(a?.3:1.5)*dt))));c.h+=s*2*dt*Math.max(-1,Math.min(1,c.v/4));
+ const p=g.position,sn=Math.sin(c.h),cs=Math.cos(c.h),nx=p.x+sn*c.v*dt,nz=p.z+cs*c.v*dt,sg=Math.sign(c.v),px=nx+sn*1.9*sg,pz=nz+cs*1.9*sg;
+ const hit=cars.some(o=>{if(o===c)return 0;const d1=Math.hypot(o.px-nx,o.pz-nz);return d1<CAR_MIN&&d1<Math.hypot(o.px-p.x,o.pz-p.z)});
+ if(hit||hTop(Math.floor(px),Math.floor(pz),p.y)>p.y+.15||posOut(px,pz)){if(Math.abs(c.v)>3)beep(110,.12,'square');c.v*=-.3}else{p.x=nx;p.z=nz}
+ p.y=Math.min(.15,hTop(Math.floor(p.x),Math.floor(p.z),p.y));g.rotation.y=c.h;c.px=p.x;c.pz=p.z;P.g.position.copy(p);
+ const t=c.h+Math.PI;yaw+=Math.atan2(Math.sin(t-yaw),Math.cos(t-yaw))*Math.min(1,dt*2);coinCheck(p);follow(p,dt)}
+const PN=[261.6,293.7,329.6,392,440,523.3,587.3];
+function musTick(){if(!mus||mute||Math.random()<.25)return;try{AC=AC||new AudioContext();if(AC.state=='suspended')AC.resume();const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=PN[Math.random()*7|0]*(Math.random()<.3?.5:1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+.05);g.gain.exponentialRampToValueAtTime(.001,t+1.6);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+1.7)}catch(e){}}
+setInterval(musTick,520);
+$('bmus').onclick=()=>{mus=!mus;$('bmus').classList.toggle('on',mus);if(mus)musTick()};
+$('bf').onclick=()=>P&&useF();$('bq').onclick=toggleSit;
+const confirmBtn=(id,label,fn)=>{let q=0;$(id).onclick=()=>{if(!q){q=1;$(id).textContent='Yakin? klik lagi';setTimeout(()=>{q=0;$(id).textContent=label},3000);return}q=0;$(id).textContent=label;fn()}};
+const regen=seed=>{genCity(seed);$('seed').value=citySeed;msg('Kota dibuat · seed '+citySeed)};
+confirmBtn('bgen','🏙 Kota acak',()=>regen());
+confirmBtn('bseed','🎲 Dari seed',()=>{const v=$('seed').value.trim();if(!SEED_OK(v)){msg('Seed harus angka 0–4294967295');return}regen(+v)});
+const CO=new Set(),NI=new Set(),IM={},CAP=30000,MX=new THREE.Matrix4(),MP=new THREE.Vector3(),MS=new THREE.Vector3(),MQ=new THREE.Quaternion();
+function imFor(t,c){const id=t=='blok'?'blok|'+(c||'#c97b4a'):t;let m=IM[id];if(!m){m=new THREE.InstancedMesh(BG,t=='blok'?mat(c||'#c97b4a'):mfor(t),CAP);m.count=0;m.frustumCulled=false;m.userData.keys=[];m.userData.id=id;sc.add(m);IM[id]=m}return m}
+// Peringatan kapasitas: tiap jenis blok dibatasi CAP instance; setelah penuh, tiap blok baru jadi satu Mesh sendiri (berat).
+const capWarn={};
+function capCheck(im,t){const id=im.userData.id,n=im.count,st=capWarn[id]||0,nm=MD[t]?MD[t].name:t;
+ if(n>=CAP&&st<2){capWarn[id]=2;msg('Batas '+CAP+' blok "'+nm+'" tercapai: blok berikutnya lebih berat & bisa membuat game lambat')}
+ else if(n>=CAP*.9&&st<1){capWarn[id]=1;msg('Blok "'+nm+'" hampir penuh ('+n+'/'+CAP+')')}
+ else if(n<CAP*.8&&st)capWarn[id]=0}
+function iSet(m,i,x,y,z,h){MX.compose(MP.set(x+.5,y+h/2,z+.5),MQ,MS.set(1,h,1));m.setMatrixAt(i,MX);m.instanceMatrix.needsUpdate=true}
+function setCity(n){S=n;ground.geometry.dispose();grid.geometry.dispose();sc.remove(ground,grid);ground=new THREE.Mesh(new THREE.PlaneGeometry(S,S).rotateX(-Math.PI/2),ground.material);sc.add(ground);grid=new THREE.GridHelper(S,S,0x4c8f3f,0x58a049);grid.position.y=.01;sc.add(grid);sc.fog.far=Math.max(120,S*1.6);cam.far=Math.max(300,S*2.5);cam.updateProjectionMatrix();
+ const out=(x,z)=>!cellIn(x,z);[...H.values()].filter(b=>out(b.x,b.z)).forEach(del);
+ for(const a of[npcs,cars])for(let i=a.length-1;i>=0;i--){const p=a[i].g.position;if(out(Math.floor(p.x),Math.floor(p.z))){if(a[i]===drv)dropDrive();sc.remove(a[i].g);disp(a[i].g);a.splice(i,1)}}}
+function gfx(){ren.setPixelRatio([.75,Math.min(devicePixelRatio,1.5),Math.min(devicePixelRatio,2)][+$('gf').value]);ren.setSize(innerWidth,innerHeight)}
+$('gf').onchange=gfx;gfx();$('sz').onchange=e=>setCity(+e.target.value);
+const PT=new Map();let pd=0,fr=0,ft=0;
+function pinch(e){PT.set(e.pointerId,{x:e.clientX,y:e.clientY});const[a,b]=[...PT.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pd&&d)dist=Math.max(3,Math.min(Math.max(140,S),dist*pd/d));pd=d;mv=99}
+const TOUCH='ontouchstart' in window||navigator.maxTouchPoints>0,JV={x:0,y:0,j:0},jy=$('joy'),kb=$('kn');
+function jm(e){const r=jy.getBoundingClientRect(),dx=e.clientX-r.left-55,dy=e.clientY-r.top-55,l=Math.hypot(dx,dy),m=Math.min(l,45)/(l||1);JV.x=dx*m/45;JV.y=dy*m/45;kb.style.left=35+dx*m+'px';kb.style.top=35+dy*m+'px'}
+jy.onpointerdown=e=>{jy.setPointerCapture(e.pointerId);jm(e)};jy.onpointermove=e=>{if(e.buttons)jm(e)};
+jy.onpointerup=jy.onpointercancel=()=>{JV.x=JV.y=0;kb.style.left=kb.style.top='35px'};
+$('bj').onpointerdown=()=>{JV.j=1;Combat.jumpPressed=true};
+$('bj').onpointerup=$('bj').onpointercancel=()=>JV.j=0;
+$('be').onclick=()=>P&&useE();$('bv').onclick=togFP;
+$('bh2').onclick=()=>$('tut').style.display='block';
+$('tgo').onclick=()=>{$('tut').style.display='none';try{localStorage.setItem('kkt','1')}catch(e){}};
+try{if(!localStorage.getItem('kkt'))$('tut').style.display='block'}catch(e){$('tut').style.display='block'}
+function beep(f,d,ty,f2){if(mute)return;try{AC=AC||new AudioContext();const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.linearRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(t+d)}catch(e){}}
+function say(t){const s=$('say');s.textContent=t;s.style.display='';clearTimeout(st);st=setTimeout(()=>s.style.display='none',3500)}
+function hudU(){$('hud').innerHTML='🪙 '+coins+' / '+coinTot+' · 💰 '+WAL.money+(Q.cur?'<div style="font-size:12px">📜 '+qText(Q.cur)+' '+Q.cur.p+'/'+Q.cur.n+'</div>':'');if(coinTot&&coins>=coinTot)say('Semua koin terkumpul! 🎉')}
+function nameTag(t){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');x.font='bold 30px system-ui';x.textAlign='center';x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,8,256,48);x.fillStyle='#fff';x.fillText(t,128,44);
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:true,depthWrite:false}));
+ s.scale.set(1.6,.4,1);s.position.y=2.25;s.raycast=()=>{};return s}
+function coinCheck(p){for(const b of CO)if(!b.got&&Math.hypot(b.x+.5-p.x,b.z+.5-p.z)<.7&&Math.abs(b.m.position.y+.7-(p.y+.9))<1.3){b.got=true;b.m.visible=false;coins++;WAL.money++;questAdd('koin');beep(880,.12,'sine',1320);hudU()}}
+function useE(){const p=P.g.position;let hit=0;
+ for(const b of H.values())if(b.t=='pintu'&&Math.hypot(b.x+.5-p.x,b.z+.5-p.z)<2.2&&Math.abs(b.y-p.y)<2.5){b.open=!b.open;b.ns=b.open;b.m.scale.set(b.open?.12:1,1,1);b.m.position.set(b.open?b.x+.06:b.x+.5,b.y+.5,b.open?b.z-.5:b.z+.5);hit=1}
+ if(hit){beep(260,.1,'square');return}
+ let best=null,bd=2.6;[...npcs,...WRK.map(w=>w.n||(w.n={g:w.g,c:{role:'pekerja',name:'Pekerja'},wait:0}))].forEach(n=>{const d=Math.hypot(n.g.position.x-p.x,n.g.position.z-p.z);if(d<bd){bd=d;best=n}});
+ if(best){const c=best.c,L=['Halo!','Kotanya bagus, ya!','Mau ke mana?','Hati-hati di jalan!','Cari koin? Lihat ke sekeliling.'];const R=ROLES[c.role];if(R&&R.talk)R.talk(best);else say((c.name?c.name+': ':'')+(c.say||L[Math.random()*L.length|0]));best.wait=2.5;best.g.rotation.y=Math.atan2(p.x-best.g.position.x,p.z-best.g.position.z);beep(520,.08,'triangle')}}
+const GL=new THREE.MeshBasicMaterial({color:0xffe9a0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}),CG=new THREE.CircleGeometry(1.8,18).rotateX(-Math.PI/2);
+/* --- Lampu malam: lampu mobil + jendela rumah. Semua diatur dari updSky lewat nilai "night" (0 siang .. 1 malam). --- */
+const CAR_HL=new THREE.MeshBasicMaterial({color:0xd8cc88}),CAR_TL=new THREE.MeshBasicMaterial({color:0x9b2d22}),cTL_D=new THREE.Color(0x9b2d22),cTL_N=new THREE.Color(0xff2a1a);
+// Sorot lampu depan: trapesium aditif di aspal; ujung jauh memudar (warna -> hitam = tak terlihat pada blending aditif).
+const BEAM_G=new THREE.BufferGeometry();
+BEAM_G.setAttribute('position',new THREE.Float32BufferAttribute([-.6,0,1.8, .6,0,1.8, -1.9,0,7.5, 1.9,0,7.5],3));
+BEAM_G.setAttribute('color',new THREE.Float32BufferAttribute([1,.95,.7, 1,.95,.7, 0,0,0, 0,0,0],3));
+BEAM_G.setIndex([0,1,2,1,3,2]);
+const BEAM_M=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
+// Jendela: kaca menyala hangat saat malam. ~60% jendela menyala (acak tetap per petak, dari posisi dunianya), sisanya gelap.
+const WINU={uGlow:{value:0}};
+{const km=mfor('kaca');km.emissive.set(0xffc766);
+ km.onBeforeCompile=sh=>{sh.uniforms.uGlow=WINU.uGlow;
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vLit;')
+   .replace('#include <begin_vertex>','#include <begin_vertex>\nvec4 wp=vec4(0.,0.,0.,1.);\n#ifdef USE_INSTANCING\nwp=instanceMatrix*wp;\n#endif\nwp=modelMatrix*wp;\nvLit=fract(sin(dot(floor(wp.xyz),vec3(12.9898,78.233,37.719)))*43758.5453);');
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vLit;\nuniform float uGlow;')
+   .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nfloat lit=uGlow*step(vLit,.6);\ntotalEmissiveRadiance*=lit;\ndiffuseColor.a=mix(diffuseColor.a,.95,lit);')}}
+
+/* ============================================================
+   DEKORASI
+   ============================================================ */
+const DEC={
+ lalin:()=>{const g=new THREE.Group();g.add(box(.12,2.4,.12,'#2b2b2b',0,1.2,0),box(.3,.9,.3,'#1a1a1a',0,2.45,0));[['Z',0],['X',1]].forEach(([a,f])=>['R','Y','G'].forEach((s,i)=>{const m=new THREE.Mesh(BG,LM[a+s]);m.scale.set(f?.04:.16,.2,f?.16:.04);m.position.set(f?.16:0,2.7-i*.25,f?0:.16);g.add(m)}));return g},
+ koin:()=>{const g=new THREE.Group();g.add(box(.45,.45,.08,'#ffd23f',0,.7,0));return g},
+ pohon:()=>{const g=new THREE.Group();
+  g.add(box(.28,2.0,.28,'#5a3e24',0,.8,0));
+  g.add(box(.2,.7,.2,'#5a3e24',-.15,1.3,.1));
+  g.add(box(.2,.6,.2,'#5a3e24',.18,1.35,-.1));
+  g.add(box(1.6,1.0,1.6,'#3f9a3f',0,2.3,0));
+  g.add(box(1.2,.8,1.2,'#4aa848',0,2.95,0));
+  g.add(box(.8,.7,.8,'#58b550',.1,3.55,.1));
+  return g},
+ pohoncemara:()=>{const g=new THREE.Group();
+  g.add(box(.22,1,.22,'#5a3e24',0,.5,0));
+  const L=[[1.7,1.1,1.2],[1.35,1.0,2.0],[1.0,.9,2.75],[.65,.8,3.4],[.35,.7,4.0]];
+  for(const[w,h,y]of L)g.add(box(w,h,w,'#2e7d32',0,y,0));
+  return g},
+ pohonpalm:()=>{const g=new THREE.Group();
+  g.add(box(.24,3.4,.24,'#8a6a3a',0,1.7,0));
+  g.add(box(.16,1.2,.16,'#7a5a2a',0,3.9,0));
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3;
+    const f=box(1.3,.14,.34,'#3f9a3f',Math.cos(a)*.75,4.3,Math.sin(a)*.75);
+    f.rotation.y=a; g.add(f);
+  }
+  g.add(box(.5,.25,.5,'#58b550',0,4.45,0));
+  return g},
+ pohonkering:()=>{const g=new THREE.Group();
+  g.add(box(.26,2.2,.26,'#6a5a4a',0,1.1,0));
+  g.add(box(.18,.9,.18,'#6a5a4a',.28,2.1,.18));
+  g.add(box(.18,.9,.18,'#6a5a4a',-.32,2.2,.14));
+  g.add(box(.14,.7,.14,'#6a5a4a',.55,2.85,.3));
+  g.add(box(.14,.7,.14,'#6a5a4a',-.55,2.9,-.3));
+  return g},
+ semak:()=>{const g=new THREE.Group();g.add(box(.85,.5,.85,'#3f9a3f',0,.25,0),box(.5,.3,.5,'#58b550',.1,.6,.05));return g},
+ bunga:()=>{const g=new THREE.Group();for(let i=0;i<3;i++){const x=(i-1)*.3,z=(i%2)*.3-.15;g.add(box(.05,.3,.05,'#2e7d32',x,.15,z),box(.16,.12,.16,['#e84393','#f1c40f','#ffffff'][i],x,.35,z))}return g},
+ lampjalan:()=>{const g=new THREE.Group(),h=new THREE.Mesh(BG,mfor('lampu')),o=new THREE.Mesh(CG,GL);
+  h.scale.set(.34,.18,.34);h.position.y=2.7;o.position.y=.03;o.raycast=()=>{};
+  g.add(box(.14,.3,.14,'#1a1a1a',0,.15,0));
+  g.add(box(.1,2.6,.1,'#2b2b2b',0,1.3,0));
+  g.add(box(.25,.08,.25,'#2b2b2b',0,2.65,0));
+  g.add(h,o);return g},
+ bangku:()=>{const g=new THREE.Group();g.add(box(.9,.08,.38,'#a8774a',0,.42,0),box(.9,.4,.07,'#a8774a',0,.66,-.17),box(.08,.4,.3,'#555555',-.38,.2,0),box(.08,.4,.3,'#555555',.38,.2,0));return g},
+ pagar:()=>{const g=new THREE.Group();g.add(box(.1,.85,.1,'#c49a62',-.45,.42,0),box(.1,.85,.1,'#c49a62',.45,.42,0),box(1,.1,.05,'#c49a62',0,.65,0),box(1,.1,.05,'#c49a62',0,.35,0));return g},
+ pos:()=>{const g=new THREE.Group();
+  g.add(box(.22,1.2,.22,'#2b2b2b',0,.6,0));
+  g.add(box(.55,.35,.4,'#c0392b',0,1.35,0));
+  g.add(box(.06,.35,.42,'#8b2818',0,1.35,.01));
+  return g},
+ sampah:()=>{const g=new THREE.Group();
+  g.add(box(.55,.85,.55,'#4a4a4a',0,.42,0));
+  g.add(box(.6,.12,.6,'#2b2b2b',0,.88,0));
+  g.add(box(.55,.05,.55,'#6a6a6a',0,.65,0));
+  return g},
+ hydrant:()=>{const g=new THREE.Group();
+  g.add(box(.32,.75,.32,'#dd2222',0,.37,0));
+  g.add(box(.5,.16,.5,'#dd2222',0,.55,0));
+  g.add(box(.15,.15,.15,'#cc1111',0,.8,0));
+  return g},
+ taman:()=>{const g=new THREE.Group();
+  g.add(box(1.0,.15,1.0,'#8b6f47',0,.075,0));
+  for(let i=0;i<4;i++){
+    const x=(i%2-.5)*.5,z=(Math.floor(i/2)-.5)*.5;
+    g.add(box(.35,.2,.35,['#e84393','#f1c40f','#ffffff','#9b59b6'][i],x,.2,z));
+  }
+  return g},
+ airmancur:()=>{const g=new THREE.Group();
+  g.add(box(2,.3,2,'#bdbdbd',0,.15,0));
+  g.add(box(1.6,.4,1.6,'#3b8fd9',0,.45,0));
+  g.add(box(.6,1.2,.6,'#bdbdbd',0,1.1,0));
+  g.add(box(.7,.3,.7,'#bdbdbd',0,1.75,0));
+  g.add(box(.35,.4,.35,'#5fa8e0',0,2.0,0));
+  return g},
+ rambu:()=>{const g=new THREE.Group();
+  const color=['#2b5ad9','#dd2222','#f1c40f','#27ae60'][Math.floor(RNG()*4)];
+  g.add(box(.1,2.2,.1,'#2b2b2b',0,1.1,0));
+  g.add(box(.7,.5,.06,color,0,2.1,0));
+  g.add(box(.6,.35,.02,'#ffffff',0,2.1,.05));
+  g.add(box(.4,.08,.01,'#222222',0,2.15,.07));
+  g.add(box(.3,.08,.01,'#222222',0,2.02,.07));
+  g.add(box(.5,.15,.04,'#2b5ad9',.25,1.5,0));
+  return g},
+ halte:()=>{const g=new THREE.Group();
+  g.add(box(.12,2.6,.12,'#4a5568',-.5,1.3,0));
+  g.add(box(.12,2.6,.12,'#4a5568',.5,1.3,0));
+  g.add(box(1.6,.1,1.1,'#c0392b',0,2.65,0));
+  g.add(box(1.5,.06,.8,'#8b2818',0,2.72,.15));
+  g.add(box(1.5,1.4,.05,'#5a6478',0,1.5,-.4));
+  g.add(box(.05,1.4,.8,'#bfe6ff',-.75,1.5,0));
+  g.add(box(1.0,.08,.4,'#a8774a',0,.5,-.15));
+  g.add(box(.08,.4,.3,'#555555',-.4,.25,-.15));
+  g.add(box(.08,.4,.3,'#555555',.4,.25,-.15));
+  g.add(box(.5,.3,.05,'#f1c40f',0,2.1,.5));
+  return g}
+};
+const ZEBRA=new Set(['zebrax','zebraz','zebrad','zebraxa','zebraxb','zebraza','zebrazb']);
+const ROAD=new Set([...ASPH,...ZEBRA]), DRIV=new Set([...ROAD,'trotoar']);
+const isRoad=(x,z)=>ROAD.has(floorT(x,z));
+const isDriv=(x,z)=>DRIV.has(floorT(x,z));
+const sw=(x,z)=>floorT(x,z)=='trotoar';
+const isGrass=(x,z)=>floorT(x,z)=='rumput';
+const isZ=(x,z)=>ZEBRA.has(floorT(x,z));
+
+/* ============================================================
+   CUACA, LANGIT & MUSIM
+   ============================================================ */
+let tv=.35,au=true;
+const cN=new THREE.Color(0x0a0f26),cD=new THREE.Color(0x8fd3ff),cO=new THREE.Color(0xff9a5c),cS=new THREE.Color();
+const lD=new THREE.Color(0xd8cc88),lN=new THREE.Color(0xfff0a0);
+
+const WX={cur:'cerah',timer:60,intensity:0,target:0,wind:0,windT:0,season:0};
+const SEASONS=['Semi','Panas','Gugur','Dingin'];
+const WX_LABEL={cerah:'Cerah',hujan:'Hujan',salju:'Salju',panas:'Panas',angin:'Angin',kabut:'Kabut',badai:'Badai petir',puting:'Puting beliung',gerimis:'Gerimis',deras:'Hujan deras',bsalju:'Badai salju',pasir:'Badai pasir',es:'Hujan es',embun:'Embun beku'};
+const WX_ICON={cerah:'☀️',hujan:'🌧️',salju:'❄️',panas:'🔥',angin:'💨',kabut:'🌫️',badai:'⛈️',puting:'🌪️',gerimis:'🌦️',deras:'☔',bsalju:'🌨️',pasir:'🏜️',es:'🧊',embun:'🥶'};
+const SEASON_ICON=['🌱','🌞','🍂','❄️'];
+/* ---------- KALENDER ----------
+   CAL.day = jumlah hari sejak Senin, 1 Januari tahun 1 (Masehi, proleptik Gregorian). Hari berganti tiap tengah malam (tv melewati 1->0).
+   MASEHI (Gregorian) menentukan MUSIM: bulan 28/29/30/31 hari, tahun 365 hari (366 bila kabisat: habis dibagi 4, kecuali 100 yang bukan kelipatan 400).
+   HIJRIAH (tabular 30 tahunan) menentukan FASE BULAN: bulan bergantian 30/29 hari, tahun 354 hari (355 bila kabisat: Zulhijah 30 hari; 11 kabisat tiap 30 tahun).
+   Musim tidak punya timer sendiri: musim = fungsi bulan Masehi. Fase bulan = (hari ke-N dalam bulan Hijriah + jam hari ini) / panjang bulan Hijriah. */
+const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const WEEKDAYS=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+const HMONTHS=['Muharam','Safar','Rabiulawal','Rabiulakhir','Jumadilawal','Jumadilakhir','Rajab','Syaban','Ramadan','Syawal','Zulkaidah','Zulhijah'];
+const MDAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const SEASON_OF_MONTH=[3,3,0,0,0,1,1,1,2,2,2,3];   // Des-Feb Dingin, Mar-Mei Semi, Jun-Agu Panas, Sep-Nov Gugur
+const SEASON_START_MONTH=[2,5,8,11];
+const MOON_ICON=['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+const MOON_NAMES=['Bulan Baru','Sabit Awal','Separuh Awal','Cembung Awal','Purnama','Cembung Akhir','Separuh Akhir','Sabit Akhir'];
+const isLeap=y=>y%4==0&&(y%100!=0||y%400==0);
+const gDim=(y,m)=>m==1&&isLeap(y)?29:MDAYS[m];
+const gYearStart=y=>{const p=y-1;return p*365+Math.floor(p/4)-Math.floor(p/100)+Math.floor(p/400)};   // hari dari 1 Jan thn 1 ke 1 Jan thn y
+function gregDay(y,m,d){let n=gYearStart(y);for(let i=0;i<m;i++)n+=gDim(y,i);return n+d-1}
+function gregDate(n){let y=Math.floor(n/365.2425)+1;while(gYearStart(y)>n)y--;while(gYearStart(y+1)<=n)y++;
+  let r=n-gYearStart(y),m=0;while(r>=gDim(y,m)){r-=gDim(y,m);m++}return{y,m,d:r+1,wd:((n%7)+7)%7}}
+const H_EPOCH=227014;   // 1 Muharam 1 H (Jumat sipil, JDN 1948440) = hari ke-227014 sejak 1 Jan thn 1 M
+const hLeap=y=>(((14+11*y)%30)+30)%30<11;
+const hYearStart=y=>(y-1)*354+Math.floor((3+11*y)/30);   // hari dari 1 Muharam 1 H ke 1 Muharam tahun y
+function hDate(n){let y=Math.floor(n/354.3667)+1;while(hYearStart(y)>n)y--;while(hYearStart(y+1)<=n)y++;
+  const r=n-hYearStart(y),m=Math.min(11,Math.floor(r/29.5));   // bulan genap-indeks 30 hari, ganjil 29 hari
+  return{y,m,d:r-Math.ceil(29.5*m)+1,len:m%2==0||(m==11&&hLeap(y))?30:29}}
+const hYearLbl=y=>y>0?y+' H':(1-y)+' SH';   // tahun sebelum Hijrah: "SH" (tanpa tahun 0)
+const gYearLbl=y=>y+' M';
+const START_DATE=[1,2,1];   // [tahun, indeks bulan (0=Jan), tanggal] = 1 Maret tahun 1 (awal musim Semi)
+const CAL={day:gregDay(...START_DATE)};
+let _ck=-1,_cv=null;
+function calInfo(d=CAL.day){if(d===_ck)return _cv;const g=gregDate(d),h=hDate(d-H_EPOCH);_ck=d;
+  return _cv={g,h,mi:g.m,dom:g.d,year:g.y,season:SEASON_OF_MONTH[g.m]}}
+function moonPhase(){const h=calInfo().h;return Math.min(.9999,Math.max(0,(h.d-1+tv)/h.len))}   // 0=baru (tgl 1 Hijriah), ~.5=purnama (tgl 14-15)
+const moonIdx=ph=>Math.round(ph*8)%8;
+WX.season=calInfo().season;
+function setDay(d,announce){
+  const prev=calInfo();CAL.day=Math.max(0,Math.floor(d));const c=calInfo();
+  if(c.season!==WX.season){WX.season=c.season;WX.timer=Math.min(WX.timer,3);   // cuaca diundi ulang sesuai musim baru
+    if(announce)msg(SEASON_ICON[c.season]+' Musim '+SEASONS[c.season]+' · '+MONTHS[c.mi])}
+  else if(announce&&c.mi!==prev.mi)msg('📅 '+MONTHS[c.mi]+' · Tahun '+gYearLbl(c.year));
+}
+function addMonths(k){const g=calInfo().g;let m=g.m+k,y=g.y+Math.floor(m/12);m=((m%12)+12)%12;setDay(gregDay(Math.max(1,y),m,Math.min(g.d,gDim(Math.max(1,y),m))),true)}
+function jumpToSeason(s){
+  if(s===WX.season){msg('Sudah musim '+SEASONS[s]);return}
+  const g=calInfo().g;let y=g.y,m=g.m;do{m++;if(m>11){m=0;y++}}while(m!==SEASON_START_MONTH[s]);
+  setDay(gregDay(y,m,1),true);
+}
+const WXVIS={
+  cerah:{fogN:50, fogF:1.00, sky:0x8fd3ff, sun:1.00, cloud:.85},
+  hujan:{fogN:28, fogF:0.55, sky:0x6a7a8a, sun:0.35, cloud:1.00},
+  salju:{fogN:35, fogF:0.65, sky:0xa8b8c8, sun:0.55, cloud:1.00},
+  panas:{fogN:70, fogF:1.15, sky:0xffddaa, sun:1.20, cloud:0.55},
+  angin:{fogN:45, fogF:0.90, sky:0x9fc0d8, sun:0.85, cloud:1.00},
+  kabut:{fogN:12, fogF:0.28, sky:0xb8c0c8, sun:0.55, cloud:0.80},
+  badai:{fogN:22, fogF:0.50, sky:0x3f4a5a, sun:0.25, cloud:1.00},
+  puting:{fogN:30, fogF:0.60, sky:0x6b7a5a, sun:0.40, cloud:1.00},
+  gerimis:{fogN:40, fogF:0.80, sky:0x8a9aa8, sun:0.60, cloud:1.00},
+  deras:{fogN:20, fogF:0.45, sky:0x56626e, sun:0.28, cloud:1.00},
+  bsalju:{fogN:10, fogF:0.25, sky:0xc4ced8, sun:0.45, cloud:1.00},
+  pasir:{fogN:8, fogF:0.22, sky:0xc9a064, sun:0.50, cloud:0.60},
+  es:{fogN:24, fogF:0.50, sky:0x4b5764, sun:0.30, cloud:1.00},
+  embun:{fogN:18, fogF:0.40, sky:0xcfe3f2, sun:0.80, cloud:0.30, clear:0.75}   // dingin & berkabut tipis, langit tetap bening (bintang/aurora terlihat)
+};
+// Tampilan cuaca yang SEDANG dipakai: bergeser halus menuju WXVIS[cuaca] (dulu langsung lompat saat jenis cuaca berganti).
+const WXS={fogN:50,fogF:1,sun:1,cloud:.85,clear:0,sky:new THREE.Color(0x8fd3ff)},cT2=new THREE.Color();
+const seasonSkyC=[new THREE.Color(0x8fd3ff),new THREE.Color(0xffe6c0),new THREE.Color(0xe6bf88),new THREE.Color(0xc8d8e0)];
+const seasonGroundC=[new THREE.Color(0x6bbf59),new THREE.Color(0x8fbf4a),new THREE.Color(0xa89448),new THREE.Color(0xd8e0e0)];
+const seasonLeaf1C=[new THREE.Color(0x3f9a3f),new THREE.Color(0x4caf3f),new THREE.Color(0xc76a2e),new THREE.Color(0x9aa89a)];
+const seasonLeaf2C=[new THREE.Color(0x58b550),new THREE.Color(0x6bbf5a),new THREE.Color(0xd8863e),new THREE.Color(0xb8c4b8)];
+const baseGround=new THREE.Color(0x6bbf59),baseLeaf1=new THREE.Color(0x3f9a3f),baseLeaf2=new THREE.Color(0x58b550);
+const cLeaf1=mat('#3f9a3f'),cLeaf2=mat('#58b550');
+const cT1=new THREE.Color(),cWhite=new THREE.Color(0xffffff);
+
+const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(3,16,16),new THREE.MeshBasicMaterial({color:0xffe27a,fog:false}));
+sunMesh.raycast=()=>{};sc.add(sunMesh);
+const sunGlow=new THREE.Mesh(new THREE.SphereGeometry(6,16,16),new THREE.MeshBasicMaterial({color:0xffb02e,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,fog:false}));
+sunMesh.add(sunGlow);
+
+// Bulan: bola yang disinari dari arah uSun (diatur tiap frame dari fase), sehingga sabit/separuh/purnama muncul dari bentuk bola itu sendiri.
+// Sisi gelap nyaris transparan (uDark mengikuti gelapnya malam) agar tidak tampak lubang hitam di langit siang.
+const moonU={uSun:{value:new THREE.Vector3(1,0,0)},uDark:{value:.2}};
+const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(3,32,32),new THREE.ShaderMaterial({uniforms:moonU,transparent:true,depthWrite:false,fog:false,
+ vertexShader:'varying vec3 vN;void main(){vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'varying vec3 vN;uniform vec3 uSun;uniform float uDark;void main(){float l=smoothstep(-.03,.03,dot(normalize(vN),uSun));gl_FragColor=vec4(mix(vec3(.10,.12,.20),vec3(.94,.94,1.),l),mix(uDark,1.,l));}'}));
+moonMesh.raycast=()=>{};sc.add(moonMesh);
+const _mv=new THREE.Vector3(),_sd=new THREE.Vector3(),_pp=new THREE.Vector3();
+// Bulan tertinggal dari matahari sejauh fase*360° (baru = bersama matahari, purnama = berseberangan -> sama seperti perilaku lama saat purnama).
+function updMoon(cx,cy,cz,a,night){
+  const ph=moonPhase(),am=a-ph*Math.PI*2,elM=-Math.cos(am);
+  moonMesh.position.set(cx+Math.sin(am)*170,cy+elM*170,cz+30);
+  moonMesh.visible=elM>-.15;
+  _mv.set(cx-moonMesh.position.x,cy-moonMesh.position.y,cz-moonMesh.position.z).normalize();   // bulan -> kamera
+  _sd.set(sunMesh.position.x-cx,sunMesh.position.y-cy,sunMesh.position.z-cz).normalize();       // arah cahaya matahari
+  _pp.copy(_sd).addScaledVector(_mv,-_sd.dot(_mv));                                               // komponen tegak lurus pandangan = sisi terang
+  if(_pp.lengthSq()<1e-6)_pp.set(0,1,0).cross(_mv);
+  _pp.normalize();
+  const cosI=-Math.cos(ph*Math.PI*2),sinI=Math.sqrt(Math.max(0,1-cosI*cosI));
+  moonU.uSun.value.copy(_mv).multiplyScalar(cosI).addScaledVector(_pp,sinI);
+  moonU.uDark.value=.22*night;
+}
+
+const STAR_N=700,starGeo=new THREE.BufferGeometry(),starPos=new Float32Array(STAR_N*3);
+for(let i=0;i<STAR_N;i++){
+  const th=Math.random()*Math.PI*2, ph=Math.random()*Math.PI*0.48, r=170;
+  starPos[i*3]=Math.cos(th)*Math.sin(ph)*r;
+  starPos[i*3+1]=Math.cos(ph)*r;
+  starPos[i*3+2]=Math.sin(th)*Math.sin(ph)*r;
+}
+starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
+const starMat=new THREE.PointsMaterial({color:0xffffff,size:1.3,transparent:true,opacity:0,fog:false,depthWrite:false});
+const stars=new THREE.Points(starGeo,starMat);stars.raycast=()=>{};sc.add(stars);
+
+const cloudMat=new THREE.MeshLambertMaterial({color:0xffffff,transparent:true,opacity:.85});
+const clouds=[];
+for(let i=0;i<16;i++){
+  const g=new THREE.Group();
+  const parts=3+(Math.random()*4|0);
+  for(let j=0;j<parts;j++){
+    const m=new THREE.Mesh(BG,cloudMat);
+    m.scale.set(8+Math.random()*14,2.5+Math.random()*2.5,6+Math.random()*9);
+    m.position.set((Math.random()-.5)*18,(Math.random()-.5)*2,(Math.random()-.5)*12);
+    m.raycast=()=>{};g.add(m);
+  }
+  const ang=Math.random()*Math.PI*2, r=40+Math.random()*80;
+  g.position.set(Math.cos(ang)*r, 55+Math.random()*22, Math.sin(ang)*r);
+  g.userData={spd:.5+Math.random()*1.5, baseY:g.position.y, ph:Math.random()*6.28};
+  sc.add(g); clouds.push(g);
+}
+
+const RAIN_N=1800,rainGeo=new THREE.BufferGeometry(),rainPos=new Float32Array(RAIN_N*3);
+for(let i=0;i<RAIN_N;i++){rainPos[i*3]=(Math.random()-.5)*70;rainPos[i*3+1]=Math.random()*50;rainPos[i*3+2]=(Math.random()-.5)*70}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPos,3));
+const rainMat=new THREE.PointsMaterial({color:0xaaccff,size:.22,transparent:true,opacity:.75,fog:false,depthWrite:false});
+const rain=new THREE.Points(rainGeo,rainMat);rain.visible=false;rain.raycast=()=>{};sc.add(rain);
+
+const SNOW_N=1200,snowGeo=new THREE.BufferGeometry(),snowPos=new Float32Array(SNOW_N*3);
+for(let i=0;i<SNOW_N;i++){snowPos[i*3]=(Math.random()-.5)*70;snowPos[i*3+1]=Math.random()*50;snowPos[i*3+2]=(Math.random()-.5)*70}
+snowGeo.setAttribute('position',new THREE.BufferAttribute(snowPos,3));
+const snowMat=new THREE.PointsMaterial({color:0xffffff,size:.35,transparent:true,opacity:.9,fog:false,depthWrite:false});
+const snow=new THREE.Points(snowGeo,snowMat);snow.visible=false;snow.raycast=()=>{};sc.add(snow);
+
+const WIND_N=400,windGeo=new THREE.BufferGeometry(),windPos=new Float32Array(WIND_N*3);
+for(let i=0;i<WIND_N;i++){windPos[i*3]=(Math.random()-.5)*70;windPos[i*3+1]=2+Math.random()*35;windPos[i*3+2]=(Math.random()-.5)*70}
+windGeo.setAttribute('position',new THREE.BufferAttribute(windPos,3));
+const windMat=new THREE.PointsMaterial({color:0xddeeff,size:.2,transparent:true,opacity:.5,fog:false,depthWrite:false});
+const windP=new THREE.Points(windGeo,windMat);windP.visible=false;windP.raycast=()=>{};sc.add(windP);
+
+function updSky(dt){
+  const a=tv*6.2832, el=-Math.cos(a), d=Math.max(0,Math.min(1,el*1.6+.45)), night=1-d;
+  const wv=WXVIS[WX.cur]||WXVIS.cerah, I=WX.intensity;
+  const far0=Math.max(120,S*1.6);
+  const kw=Math.min(1,dt*1.2);
+  WXS.fogN+=(wv.fogN-WXS.fogN)*kw;WXS.fogF+=(wv.fogF-WXS.fogF)*kw;WXS.sun+=(wv.sun-WXS.sun)*kw;WXS.cloud+=(wv.cloud-WXS.cloud)*kw;
+  WXS.clear+=((wv.clear||0)-WXS.clear)*kw;WXS.sky.lerp(cT2.setHex(wv.sky),kw);
+
+  cS.copy(cN).lerp(cD,d).lerp(cO,Math.max(0,1-Math.abs(el)*5)*.45);
+  cS.lerp(seasonSkyC[WX.season], d*0.35);
+  cS.lerp(WXS.sky, I*0.55); cS.lerp(cWhite, LT.flash*0.6);
+  sc.background.copy(cS); sc.fog.color.copy(cS);
+
+  sc.fog.near = 50*(1-I) + WXS.fogN*I;
+  sc.fog.far  = far0*(1-I) + far0*WXS.fogF*I;
+
+  // Faktor terang cuaca: hanya meredupkan/menerangkan siang hari (malam nyaris tak berubah). Rumus lama bukan interpolasi
+  // (hujan hanya ~9% lebih gelap, panas malah 1,7x), sehingga cuaca mendung nyaris tak mengubah pencahayaan.
+  const sf=1+((.45+.55*WXS.sun)-1)*I*(.4+.6*d);
+  hemi.intensity = (0.22+0.65*d)*sf + LT.flash*1.4;
+  sun.intensity  = 0.75*d*sf;
+  sun.position.set(Math.sin(a)*40,el*40+3,15);
+
+  GL.opacity=.5*(1-d);
+  mfor('lampu').color.copy(lD).lerp(lN,1-d);
+  CAR_HL.color.copy(lD).lerp(lN,night);CAR_TL.color.copy(cTL_D).lerp(cTL_N,night);
+  BEAM_M.opacity=.5*night;BEAM_M.visible=night>.02;
+  WINU.uGlow.value=Math.min(1,night*1.4);
+
+  ground.material.color.copy(baseGround).lerp(seasonGroundC[WX.season],0.6);
+  updGround(dt,d);   // warna rumput/pulau sebenarnya (bidang 'ground' tertutup blok rumput, jadi warna musim tadinya tak pernah terlihat)
+  cLeaf1.color.copy(baseLeaf1).lerp(seasonLeaf1C[WX.season],0.8).lerp(cWhite,GT.w*.4);
+  cLeaf2.color.copy(baseLeaf2).lerp(seasonLeaf2C[WX.season],0.8).lerp(cWhite,GT.w*.4);
+
+  const cx=cam.position.x, cy=cam.position.y, cz=cam.position.z;
+  sunMesh.position.set(cx+Math.sin(a)*170, cy+el*170, cz+30);
+  sunMesh.visible = el>-0.15;
+  sunGlow.material.opacity = .30*(1-I*.5);
+  updMoon(cx,cy,cz,a,night);
+
+  starMat.opacity = Math.max(0, night*0.95 - I*0.75*(1-WXS.clear));
+  stars.position.set(cx, 0, cz);
+
+  cloudMat.opacity = 0.55*(1-I) + (.35+.6*WXS.cloud)*I;   // dulu awan mendung justru lebih tipis dari awan cerah
+  cloudMat.color.copy(cS).lerp(cWhite,0.5);
+
+  const ho=$('heato'),fo=$('fogo');
+  if(ho)ho.style.opacity = (WX.cur=='panas') ? WX.intensity*0.85 : 0;
+  if(fo){const fb={kabut:'',bsalju:'rgba(235,240,248,.4)',pasir:'rgba(205,150,80,.42)',embun:'rgba(215,236,252,.3)'}[WX.cur];
+    if(fb!==undefined){if(fo.dataset.w!==WX.cur){fo.dataset.w=WX.cur;fo.style.background=fb}fo.style.opacity=WX.intensity*({kabut:.55,embun:.5}[WX.cur]||.9)}else fo.style.opacity=0}
+}
+
+/* ---------- PETIR (badai petir) ----------
+   Hanya visual & suara. Cuaca "badai" = hujan + angin sedang + kilat. Kilat: layar berkedip (LT.flash dipakai updSky), kadang ganda.
+   Sambaran dekat (60%) menggambar petir zig-zag; sambaran jauh hanya kilat redup. Guntur tertunda sesuai jarak (jarak/60 detik). */
+const LT={next:6,flash:0,fv:1,q:[],qt:0,bolts:[],th:[]};
+const BOLT_M=new THREE.MeshBasicMaterial({color:0xe8f0ff,fog:false});
+function strikeAt(x,z){
+  const g=new THREE.Group(),N=12;let ax=x+(Math.random()-.5)*8,ay=55,az=z+(Math.random()-.5)*8;
+  for(let i=1;i<=N;i++){const t=i/N,bx=i==N?x:x+(Math.random()-.5)*5*(1-t),bz=i==N?z:z+(Math.random()-.5)*5*(1-t),by=55*(1-t),
+    len=Math.hypot(bx-ax,by-ay,bz-az),m=new THREE.Mesh(BG,BOLT_M);
+    m.scale.set(.3,.3,len+.2);m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);m.lookAt(bx,by,bz);m.raycast=()=>{};g.add(m);ax=bx;ay=by;az=bz}
+  sc.add(g);LT.bolts.push({g,life:.28});
+}
+function thunder(v){beep(60,1.4,'sawtooth',30);if(v>.7)beep(110,.6,'square',45)}
+function updLightning(dt){
+  LT.flash=Math.max(0,LT.flash-dt*4.5);
+  if(LT.q.length){LT.qt+=dt;while(LT.q.length&&LT.qt>=LT.q[0]){LT.q.shift();LT.flash=LT.fv}}else LT.qt=0;
+  for(let i=LT.bolts.length-1;i>=0;i--){const b=LT.bolts[i];b.life-=dt;b.g.visible=b.life>0&&(b.life>.18||Math.floor(b.life*40)%2==0);if(b.life<=0){sc.remove(b.g);LT.bolts.splice(i,1)}}
+  for(let i=LT.th.length-1;i>=0;i--){const t=LT.th[i];if((t.d-=dt)<=0){thunder(t.v);LT.th.splice(i,1)}}
+  if(WX.cur!=='badai'||WX.intensity<.5||(LT.next-=dt)>0)return;
+  LT.next=3+Math.random()*9;
+  const near=Math.random()<.6,a=Math.random()*6.283,r=near?8+Math.random()*30:60+Math.random()*60,cx=cam.position.x,cz=cam.position.z,
+    x=lim(cx+Math.cos(a)*r),z=lim(cz+Math.sin(a)*r);
+  LT.q=Math.random()<.45?[0,.13]:[0];LT.qt=0;LT.fv=near?1:.5;
+  if(near){strikeAt(x,z);hitSpark(x,.4,z)}
+  LT.th.push({d:Math.hypot(x-cx,z-cz)/60,v:near?1:.5});
+}
+/* ---------- PUTING BELIUNG (tingkat 1-5) ----------
+   Muncul saat cuaca "puting"; tingkat diundi saat muncul. cap = kekuatan blok (DESTR) tertinggi yang bisa dirusak (beton tak pernah), pw = daya rusak blok per .25 dtk,
+   pd/nd/cd = kerusakan ke pemain / NPC warga / mobil per .25 dtk di dekat inti. Kerusakan hanya saat mode Main; blok rusak masuk REP (diperbaiki pekerja / pulih saat keluar Main)
+   dan TIDAK menaikkan tingkat "dicari". Tingkat 4+ juga menyeret, mengangkat & merusak mobil. */
+const TLV=[
+ {nm:'Pusaran debu',R:1.3,H:7,Rf:0,F:0,sp:2,sway:.04,cap:0,pw:0,pd:0,nd:0,cd:0},
+ {nm:'Angin ringan',R:2,H:12,Rf:10,F:3.5,sp:3,sway:.12,cap:0,pw:0,pd:0,nd:0,cd:0},
+ {nm:'Sedang',R:3,H:18,Rf:17,F:8,sp:4,sway:.25,cap:4,pw:1.5,pd:1,nd:0,cd:0},
+ {nm:'Berat',R:4,H:24,Rf:22,F:11,sp:4.5,sway:.4,cap:10,pw:3,pd:3,nd:8,cd:12},
+ {nm:'Dahsyat',R:5.5,H:32,Rf:28,F:15,sp:5,sway:.5,cap:14,pw:5,pd:6,nd:15,cd:25}];
+const TCOL=[0x9aa0a6,0x8a8f94,0x7a7f84,0x5f6368,0x45494d];
+const TOR={g:null,deb:null,debA:null,lv:0,x:0,z:0,hd:0,k:0,t:0,sway:[],swT:0,dT:0,rT:0,fly:[]};
+const TOR_M=new THREE.MeshLambertMaterial({color:0x8a8f94,transparent:true,opacity:.55,depthWrite:false});
+const TOR_P=new THREE.PointsMaterial({color:0xb9a47a,size:.35,transparent:true,opacity:.9,fog:false,depthWrite:false});
+const TN=8,SWAY=new Set(['pohon','pohoncemara','pohonpalm','pohonkering','semak','bunga','rambu','lampjalan','taman']);
+function spawnTornado(){
+  const r=Math.random()*9.5,lv=r<4?1:r<7?2:r<8.5?3:r<9.2?4:5,L=TLV[lv-1],a=Math.random()*6.283,d=30+Math.random()*20,nD=60+lv*25;
+  Object.assign(TOR,{lv,x:lim(cam.position.x+Math.cos(a)*d,3),z:lim(cam.position.z+Math.sin(a)*d,3),hd:Math.random()*6.283,k:0,t:0,swT:0,dT:0,rT:0});
+  TOR_M.color.setHex(TCOL[lv-1]);TOR_M.opacity=.5+.03*lv;
+  const g=new THREE.Group();
+  for(let i=0;i<TN;i++){const w=L.R*2*(.35+.65*i/(TN-1)),m=new THREE.Mesh(BG,TOR_M);m.scale.set(w,L.H/TN+.1,w);m.position.y=(i+.5)*L.H/TN;m.raycast=()=>{};g.add(m)}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(nD*3),3));
+  const deb=new THREE.Points(geo,TOR_P);deb.frustumCulled=false;deb.raycast=()=>{};
+  TOR.debA=Array.from({length:nD},()=>({a:Math.random()*6.283,r:.4+Math.random(),h:Math.random(),s:2+Math.random()*3}));
+  TOR.g=g;TOR.deb=deb;sc.add(g,deb);
+  msg(lv>=4?'⚠️ PUTING BELIUNG '+L.nm.toUpperCase()+' (T'+lv+')! Cari perlindungan':'🌪️ Puting beliung tingkat '+lv+' · '+L.nm);
+  const si=()=>beep(600,.5,'sine',900);si();setTimeout(si,600);if(lv>=4){setTimeout(si,1200);setTimeout(si,1800)}
+}
+function killTornado(){
+  TOR.sway.forEach(b=>{if(b.m)b.m.rotation.x=b.m.rotation.z=0});TOR.sway=[];
+  TOR.fly.forEach(f=>sc.remove(f.m));TOR.fly=[];
+  for(const c of cars)if(c._tl){c.g.rotation.z=0;c._tl=0}
+  if(TOR.g){sc.remove(TOR.g,TOR.deb);TOR.deb.geometry.dispose();TOR.g=TOR.deb=null;TOR.lv=0}
+}
+// dorong dengan aturan tabrakan seperti berjalan (per sumbu, tinggi maks +.3)
+function pushEnt(p,fx,fz,dt,y){
+  const nx=lim(p.x+fx*dt),nz=lim(p.z+fz*dt);
+  if(hTop(Math.floor(nx+Math.sign(fx)*.25),Math.floor(p.z),y)<=y+.3)p.x=nx;
+  if(hTop(Math.floor(p.x),Math.floor(nz+Math.sign(fz)*.25),y)<=y+.3)p.z=nz;
+}
+// serpihan blok yang tersedot: berputar naik di sekitar pusaran lalu hilang (maks 80)
+function torFly(b,d){
+  if(TOR.fly.length>=80)return;
+  const m=new THREE.Mesh(BG,b.t=='blok'?mat(b.c||'#c97b4a'):mfor(b.t));m.scale.setScalar(.3+Math.random()*.3);m.raycast=()=>{};sc.add(m);
+  TOR.fly.push({m,a:Math.atan2(b.z+.5-TOR.z,b.x+.5-TOR.x),r:d,y:b.y+.5,vy:3+Math.random()*4,s:2+Math.random()*2,life:2.2+Math.random()});
+}
+function torDamage(L,k){
+  const Rd=L.R*2*k,x0=Math.floor(TOR.x),z0=Math.floor(TOR.z),m=Math.ceil(Rd),now=performance.now()/1000;
+  for(let dx=-m;dx<=m;dx++)for(let dz=-m;dz<=m;dz++){
+    const d=Math.hypot(x0+dx+.5-TOR.x,z0+dz+.5-TOR.z);if(d>=Rd)continue;const pw=L.pw*(1-d/Rd);
+    for(let y=0;y<Y_MAX;y++){const b=H.get((x0+dx)+','+y+','+(z0+dz));if(!b)continue;
+      const hd=DESTR[b.t];if(!hd||hd>L.cap)continue;
+      b.hp=(b.hp==null?hd:b.hp)-pw;
+      if(b.hp<=0){REP.push({x:b.x,y:b.y,z:b.z,t:b.t,c:b.c,at:now,w:0});torFly(b,d);del(b)}}}
+}
+function torHitCar(c,dmg){
+  if(c.dead||c.drv)return;
+  c.hp=(c.hp==null?CAR_HP:c.hp)-dmg;c.s0=c.s0||c.s;c.s=c.s0*(.35+.65*Math.max(0,c.hp)/CAR_HP);
+  if(c.hp<=0){c.dead=1;hitSpark(c.px,.9,c.pz);const gen=cityGen;
+    setTimeout(()=>{if(gen!==cityGen)return;for(let i=0;i<40;i++){const x=Math.floor((Math.random()-.5)*(S-2)),z=Math.floor((Math.random()-.5)*(S-2));
+      if(isRoad(x,z)&&!isI(x,z)&&(!P||Math.hypot(x+.5-P.g.position.x,z+.5-P.g.position.z)>25)){const n0=cars.length;tryCar(x,z);if(cars.length>n0)break}}},20000)}
+}
+function updTornado(dt){
+  const on=WX.cur==='puting';
+  if(on&&WX.intensity>.3&&!TOR.g)spawnTornado();
+  if(!TOR.g)return;
+  const L=TLV[TOR.lv-1];
+  TOR.k+=((on?1:0)-TOR.k)*Math.min(1,dt*(on?.5:1.2));
+  if(!on&&TOR.k<.03){killTornado();return}
+  TOR.t+=dt;TOR.hd+=(Math.random()-.5)*dt*1.2;
+  const nx=TOR.x+Math.sin(TOR.hd)*L.sp*dt,nz=TOR.z+Math.cos(TOR.hd)*L.sp*dt;
+  if(posOut(nx,nz,6))TOR.hd=Math.atan2(-TOR.x,-TOR.z);else{TOR.x=nx;TOR.z=nz}
+  const g=TOR.g,k=TOR.k,hy=hTop(Math.floor(TOR.x),Math.floor(TOR.z),0);
+  g.position.set(TOR.x,hy,TOR.z);g.scale.setScalar(Math.max(.001,k));
+  g.children.forEach((m,i)=>{const o=.5*L.R*i/TN;m.rotation.y=TOR.t*(3+i*.4);m.position.x=Math.sin(TOR.t*1.7+i*.7)*o;m.position.z=Math.cos(TOR.t*1.3+i*.9)*o});
+  const pa=TOR.deb.geometry.attributes.position.array;
+  TOR.debA.forEach((d,i)=>{const a=d.a+TOR.t*d.s,r=(d.r+d.h*.9)*L.R*k;pa[i*3]=TOR.x+Math.cos(a)*r;pa[i*3+1]=hy+d.h*L.H*k;pa[i*3+2]=TOR.z+Math.sin(a)*r});
+  TOR.deb.geometry.attributes.position.needsUpdate=true;
+  const tk=(TOR.dT-=dt)<=0;if(tk)TOR.dT=.25;
+  if(L.F){
+    const Rf=L.Rf*k,F=L.F*k,Rc=L.R*1.8*k;
+    const force=p=>{const ex=TOR.x-p.x,ez=TOR.z-p.z,d=Math.hypot(ex,ez);if(d>=Rf||d<.01)return null;
+      const s=1-d/Rf,ux=ex/d,uz=ez/d,iw=d<L.R*1.2?-.8:.55;return[F*s*(iw*ux-.85*uz),F*s*(iw*uz+.85*ux),d]};
+    if(play&&P&&!Combat.dead){const car=drv,p=car?car.g.position:P.g.position,f=force(p);
+      if(f){pushEnt(p,f[0],f[1],dt,p.y);if(!car&&TOR.lv>=3&&f[2]<L.R*2.2)vy=Math.max(vy,TOR.lv>=4?7:5);
+        if(tk&&L.pd&&f[2]<Rc)damagePlayer(Math.max(1,Math.round(L.pd*(1-f[2]/Rc))))}}
+    for(const n of npcs){if(n.dead)continue;const p=n.g.position,f=force(p);if(!f)continue;
+      pushEnt(p,f[0],f[1],dt,p.y);p.y=hTop(Math.floor(p.x),Math.floor(p.z),p.y);
+      if(TOR.lv>=3){n.g.rotation.y+=dt*9;n.wait=.5}
+      if(tk&&L.nd&&f[2]<Rc&&(!n.c.role||n.c.role=='warga')){n.hp=(n.hp||40)-L.nd*(1-f[2]/Rc);n.hpDirty=true;
+        if(n.hp<=0){n.dead=true;sc.remove(n.g);disp(n.g);setTimeout(()=>{const i=npcs.indexOf(n);if(i>=0)npcs.splice(i,1)},50)}}}
+    if(TOR.lv>=4)for(const c of cars){if(c.dead||c.drv)continue;const pr={x:c.px,z:c.pz},f=force(pr);
+      if(!f){if(c._tl){c.g.rotation.z=0;c._tl=0}continue}
+      pushEnt(pr,f[0],f[1],dt,.1);c.px=pr.x;c.pz=pr.z;
+      if(f[2]<Rc){const q=1-f[2]/Rc;c.g.position.set(c.px,.1+q*5*k,c.pz);c.g.rotation.z=Math.sin(TOR.t*4+c.id)*q*1.2;c._tl=1;if(tk)torHitCar(c,L.cd*q)}
+      else if(c._tl){c.g.rotation.z=0;c._tl=0}}
+  }
+  if(tk&&play&&L.pw)torDamage(L,k);
+  const R2=Math.max(L.Rf,8)+2;
+  if((TOR.swT-=dt)<=0){TOR.swT=.4;const nw=[],x0=Math.floor(TOR.x),z0=Math.floor(TOR.z);
+    for(let dx=-R2;dx<=R2;dx++)for(let dz=-R2;dz<=R2;dz++){if(dx*dx+dz*dz>R2*R2)continue;const b=H.get((x0+dx)+',1,'+(z0+dz));if(b&&b.m&&SWAY.has(b.t))nw.push(b)}
+    TOR.sway.forEach(b=>{if(b.m&&!nw.includes(b))b.m.rotation.x=b.m.rotation.z=0});TOR.sway=nw}
+  for(const b of TOR.sway){if(!b.m||H.get(b.x+',1,'+b.z)!==b)continue;
+    const s=Math.max(0,1-Math.hypot(b.x+.5-TOR.x,b.z+.5-TOR.z)/R2)*k*2*L.sway;
+    b.m.rotation.z=Math.sin(TOR.t*7+b.x)*s;b.m.rotation.x=Math.cos(TOR.t*6+b.z)*s}
+  for(let i=TOR.fly.length-1;i>=0;i--){const f=TOR.fly[i];f.life-=dt;f.a+=f.s*dt;f.r+=dt*1.5;f.y+=f.vy*dt;f.vy-=2*dt;
+    f.m.position.set(TOR.x+Math.cos(f.a)*f.r,f.y,TOR.z+Math.sin(f.a)*f.r);f.m.rotation.x+=dt*5;f.m.rotation.y+=dt*4;
+    if(f.life<=0){sc.remove(f.m);TOR.fly.splice(i,1)}}
+  if(TOR.lv>=3&&(TOR.rT-=dt)<=0&&Math.hypot(TOR.x-cam.position.x,TOR.z-cam.position.z)<45){TOR.rT=.9;beep(65,1,'sawtooth',45)}
+}
+/* ---------- PAKET CUACA 1: gerimis/deras, badai salju, badai pasir, daun gugur, pelangi, hujan meteor ----------
+   Gerimis/hujan/deras/badai memakai partikel hujan yang sama dengan jumlah, kecepatan, ukuran & kepekatan berbeda (RAINP). Badai salju = salju cepat & miring + kabut putih.
+   Badai pasir = partikel angin berwarna pasir + kabut oranye. Daun gugur: musim Gugur, saat tak hujan/salju. Pelangi: setelah hujan reda menjadi cerah/panas di siang hari,
+   di arah berlawanan matahari. Hujan meteor: ~25% malam (acak tetap per hari), langit cerah; goresan cahaya muncul ke arah yang dilihat kamera (turunkan sudut kamera untuk melihat langit). */
+const RAINP={gerimis:{n:.25,f:20,o:.5,sz:.15},hujan:{n:.65,f:38,o:.75,sz:.22},deras:{n:1,f:52,o:.9,sz:.28},badai:{n:1,f:52,o:.9,sz:.28}};
+const RAINY=new Set(['gerimis','hujan','deras','badai','es']);
+const LEAF_N=140,leafGeo=new THREE.BufferGeometry(),leafPos=new Float32Array(LEAF_N*3),leafCol=new Float32Array(LEAF_N*3),
+  LEAFC=[0xc76a2e,0xd8863e,0xb5472f,0xa89448].map(h=>new THREE.Color(h));
+for(let i=0;i<LEAF_N;i++){leafPos[i*3]=(Math.random()-.5)*60;leafPos[i*3+1]=Math.random()*25;leafPos[i*3+2]=(Math.random()-.5)*60;const c=LEAFC[i%4];leafCol.set([c.r,c.g,c.b],i*3)}
+leafGeo.setAttribute('position',new THREE.BufferAttribute(leafPos,3));leafGeo.setAttribute('color',new THREE.BufferAttribute(leafCol,3));
+const leafMat=new THREE.PointsMaterial({size:.5,vertexColors:true,transparent:true,opacity:0,depthWrite:false});
+const leaves=new THREE.Points(leafGeo,leafMat);leaves.visible=false;leaves.raycast=()=>{};leaves.frustumCulled=false;sc.add(leaves);
+let leafO=0;
+function updLeaves(dt){
+  const on=WX.season==2&&!rain.visible&&!snow.visible&&!hail.visible&&WX.cur!=='pasir'&&WX.cur!=='kabut'&&WX.cur!=='puting';
+  leafO+=((on?.95:0)-leafO)*Math.min(1,dt*.8);leafMat.opacity=leafO;leaves.visible=leafO>.02;if(!leaves.visible)return;
+  const p=leafGeo.attributes.position.array,t=performance.now()*.001,dr=.8+WX.wind*8;
+  for(let i=0;i<LEAF_N;i++){p[i*3+1]-=(.9+(i%7)*.12)*dt+Math.max(0,Math.sin(t*.9+i*2.1))*.5*dt;p[i*3]+=dr*dt+Math.sin(t*1.3+i)*1.3*dt;p[i*3+2]+=Math.cos(t*1.1+i*1.7)*1.3*dt;   // melayang: jatuh pelan, berayun ke samping
+    if(p[i*3]>30)p[i*3]-=60;else if(p[i*3]<-30)p[i*3]+=60;if(p[i*3+2]>30)p[i*3+2]-=60;else if(p[i*3+2]<-30)p[i*3+2]+=60;
+    if(p[i*3+1]<0){p[i*3+1]=25;p[i*3]=(Math.random()-.5)*60;p[i*3+2]=(Math.random()-.5)*60}}
+  leafGeo.attributes.position.needsUpdate=true;leaves.position.set(cam.position.x,0,cam.position.z);
+}
+const RBOW=new THREE.Group(),RBM=[],RBS={last:'cerah',life:0,fade:0};
+[0x9b59b6,0x3a6ee8,0x64d2ff,0x30d158,0xffd60a,0xff9500,0xff3b30].forEach((c,i)=>{   // ungu di dalam, merah di luar (dulu terbalik)
+  const m=new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,fog:false}),
+    r=new THREE.Mesh(new THREE.RingGeometry(40+i*2.4,42.4+i*2.4,48,1,0,Math.PI),m);r.raycast=()=>{};RBOW.add(r);RBM.push(m)});
+RBOW.visible=false;sc.add(RBOW);
+function updRainbow(dt){
+  if(WX.cur!==RBS.last){
+    if(RAINY.has(RBS.last)&&(WX.cur==='cerah'||WX.cur==='panas')&&Math.random()<.7){RBS.life=50;msg('🌈 Pelangi muncul')}
+    RBS.last=WX.cur}
+  const a=tv*6.2832,day=Math.max(0,Math.min(1,-Math.cos(a)*1.6+.25));
+  RBS.life=Math.max(0,RBS.life-dt);
+  const want=RBS.life>0&&(WX.cur==='cerah'||WX.cur==='panas')?Math.min(1,RBS.life/8)*day:0;
+  RBS.fade+=(want-RBS.fade)*Math.min(1,dt*.6);RBOW.visible=RBS.fade>.01;if(!RBOW.visible)return;
+  RBM.forEach(m=>m.opacity=.5*RBS.fade);
+  const az=Math.atan2(-30,-Math.sin(a)*170),cx=cam.position.x,cz=cam.position.z;   // berlawanan arah matahari
+  RBOW.position.set(cx+Math.cos(az)*90,0,cz+Math.sin(az)*90);RBOW.lookAt(cx,0,cz);
+}
+const MET={pool:[],day:-999,next:0,on:false},MET_M=new THREE.MeshBasicMaterial({color:0xcfe8ff,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
+for(let i=0;i<10;i++){const m=new THREE.Mesh(BG,MET_M);m.visible=false;m.raycast=()=>{};sc.add(m);MET.pool.push({m,t:0,life:0,p:new THREE.Vector3(),v:new THREE.Vector3()})}
+function updMeteors(dt){
+  const a=tv*6.2832,night=1-Math.max(0,Math.min(1,-Math.cos(a)*1.6+.45)),
+    ok=night>.6&&clearSky()&&(SKYEV.force==='meteor'||nightHash(0)<25);
+  MET.on=ok;
+  if(ok&&MET.day!==nightKey()){MET.day=nightKey();msg('🌠 Hujan meteor malam ini · turunkan sudut kamera')}
+  for(const o of MET.pool)if(o.life>0){o.t+=dt;if(o.t>=o.life){o.life=0;o.m.visible=false;continue}
+    o.p.addScaledVector(o.v,dt);o.m.position.copy(o.p);o.m.scale.set(.18,.18,Math.max(.1,16*Math.sin(Math.PI*o.t/o.life)))}
+  if(!ok||(MET.next-=dt)>0)return;
+  MET.next=.25+Math.random()*1.1;const o=MET.pool.find(q=>q.life<=0);if(!o)return;
+  const az=Math.atan2(-Math.cos(yaw),-Math.sin(yaw))+(Math.random()-.5)*1.8,e=.25+Math.random()*.9,cx=cam.position.x,cz=cam.position.z;
+  o.p.set(cx+Math.cos(az)*Math.cos(e)*140,Math.sin(e)*140,cz+Math.sin(az)*Math.cos(e)*140);
+  o.v.set((Math.random()-.5)*60,-(40+Math.random()*50),(Math.random()-.5)*60);
+  o.life=.5+Math.random()*.5;o.t=0;o.m.visible=true;o.m.position.copy(o.p);o.m.lookAt(o.p.clone().add(o.v));
+}
+/* ---------- PAKET CUACA 2: hujan es, embun beku, aurora + warna tanah ----------
+   Hujan es: butir putih cepat & besar, memantul di tanah, bunyi tik; tanah memutih perlahan. Embun beku: dingin berkabut tipis, langit bening,
+   tepi layar berembun, kilau kristal di dekat tanah, tanah & daun memutih. Aurora: tirai hijau-biru-ungu di langit utara, malam hari saat langit cerah/embun.
+   Peristiwa langit (aurora & hujan meteor) dihitung per MALAM (sore hari N sampai subuh hari N+1), bukan per tanggal: dulu berhenti mendadak saat lewat tengah malam.
+   Alt+klik tombol cuaca = paksa aurora / hujan meteor (untuk mencoba). */
+const RP={n:.25,f:20,o:0,sz:.15},SN={o:0,bs:0},HL={o:0},SKYEV={force:null};
+const nightKey=()=>CAL.day-(tv<.5?1:0);
+const nightHash=salt=>(Math.imul((nightKey()^salt)|0,2654435761)>>>0)%100;
+const clearSky=()=>WX.cur==='embun'||(WX.cur==='cerah'&&WX.intensity<.2);
+
+// --- Tanah: rumput & pulau diwarnai musim + pemutihan (salju/es/embun). Bidang 'ground' tertutup blok rumput, jadi harus lewat material blok. ---
+const ICE=new THREE.Color(0xe8f2f8);
+const GT={w:0,tmp:new THREE.Color(),mats:[[mfor('rumput'),new THREE.Color(0x5fae4b),new THREE.Color(0x5fae4b)],[mfor('pulau'),new THREE.Color(0x4f9e47),new THREE.Color(0x4f9e47)]]};
+function updGround(dt,d){
+  const tw={salju:.75,bsalju:.9,es:.6,embun:.65}[WX.cur]||0;
+  GT.w+=(tw-GT.w)*Math.min(1,dt*(tw>GT.w?.05:WX.cur==='panas'?.06:.02));   // menumpuk pelan, mencair pelan
+  const sk=seasonGroundC[WX.season],kc=Math.min(1,dt*.6);
+  for(const g of GT.mats){const m=g[0],b=g[1],cur=g[2];
+    GT.tmp.copy(b);if(WX.season)GT.tmp.lerp(sk,.6);GT.tmp.lerp(ICE,GT.w);
+    cur.lerp(GT.tmp,kc);
+    // warna material dikalikan tekstur (alas b): c = min(1, target/alas) menggelapkan; bagian yang lebih terang dari alas ditambah lewat emissive (hanya siang, ~ x pencahayaan).
+    // Keadaan netral (target = alas) menghasilkan c = 1 dan emissive 0, jadi tampilan awal tidak berubah.
+    const L=1.2,e=.2+.8*d;
+    m.color.setRGB(Math.min(1,cur.r/b.r),Math.min(1,cur.g/b.g),Math.min(1,cur.b/b.b));
+    m.emissive.setRGB(Math.max(0,cur.r-b.r)*L*e,Math.max(0,cur.g-b.g)*L*e,Math.max(0,cur.b-b.b)*L*e)}
+}
+
+// --- Hujan es ---
+const HAIL_N=700,hailGeo=new THREE.BufferGeometry(),hailPos=new Float32Array(HAIL_N*3),hailV=new Float32Array(HAIL_N),hailB=new Uint8Array(HAIL_N);
+for(let i=0;i<HAIL_N;i++){hailPos[i*3]=(Math.random()-.5)*60;hailPos[i*3+1]=Math.random()*50;hailPos[i*3+2]=(Math.random()-.5)*60}
+hailGeo.setAttribute('position',new THREE.BufferAttribute(hailPos,3));
+const hailMat=new THREE.PointsMaterial({color:0xeaf6ff,size:.42,transparent:true,opacity:0,fog:false,depthWrite:false});
+const hail=new THREE.Points(hailGeo,hailMat);hail.visible=false;hail.raycast=()=>{};hail.frustumCulled=false;sc.add(hail);
+function updHail(dt){
+  if(!hail.visible)return;
+  const p=hailGeo.attributes.position.array,w=WX.wind*14*dt;
+  for(let i=0;i<HAIL_N;i++){const j=i*3;let y=p[j+1];
+    if(hailB[i]){hailV[i]-=34*dt;y+=hailV[i]*dt;p[j]+=w*.3;
+      if(y<=.3){hailB[i]=0;y=45+Math.random()*10;p[j]=(Math.random()-.5)*60;p[j+2]=(Math.random()-.5)*60}}
+    else{y-=62*dt;p[j]+=w;if(p[j]>30)p[j]-=60;
+      if(y<=.3){y=.3;hailB[i]=1;hailV[i]=3+Math.random()*5}}
+    p[j+1]=y}
+  hailGeo.attributes.position.needsUpdate=true;hail.position.set(cam.position.x,0,cam.position.z);
+  if(Math.random()<dt*8*HL.o)beep(1500+Math.random()*1800,.025,'square');   // tik-tik butiran es
+}
+
+// --- Embun beku ---
+const FR_N=520,frGeo=new THREE.BufferGeometry(),frPos=new Float32Array(FR_N*3),frCol=new Float32Array(FR_N*3),frB=[];
+for(let i=0;i<FR_N;i++)frB.push({x:Math.random()*60,z:Math.random()*60,y:.4+Math.random()*.9,ph:Math.random()*6.28,sp:1.5+Math.random()*3});
+frGeo.setAttribute('position',new THREE.BufferAttribute(frPos,3));frGeo.setAttribute('color',new THREE.BufferAttribute(frCol,3));
+const frMat=new THREE.PointsMaterial({size:.24,vertexColors:true,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
+const frost=new THREE.Points(frGeo,frMat);frost.visible=false;frost.raycast=()=>{};frost.frustumCulled=false;sc.add(frost);
+let frO=0;
+function updFrost(dt){
+  frO+=((WX.cur==='embun'?1:0)-frO)*Math.min(1,dt*.7);
+  const fo=$('frosto');if(fo)fo.style.opacity=frO>.02?frO*.9:0;
+  frMat.opacity=frO;frost.visible=frO>.03;if(!frost.visible)return;
+  const t=performance.now()*.001,cx=cam.position.x,cz=cam.position.z,wr=v=>(((v%60)+60)%60)-30;
+  for(let i=0;i<FR_N;i++){const b=frB[i],k=Math.pow(Math.max(0,Math.sin(t*b.sp+b.ph)),8),v=.1+.9*k;
+    frPos[i*3]=cx+wr(b.x-cx);frPos[i*3+1]=b.y;frPos[i*3+2]=cz+wr(b.z-cz);   // posisi tetap di dunia (tidak ikut kamera), hanya dibungkus di sekitar kamera
+    frCol[i*3]=v*.85;frCol[i*3+1]=v*.95;frCol[i*3+2]=v}
+  frGeo.attributes.position.needsUpdate=true;frGeo.attributes.color.needsUpdate=true;
+}
+
+// --- Aurora ---
+const AUR={o:0,day:-999},AUR_P=[12,3,25,40],AUR_L=[];   // peluang per malam (%) menurut musim: Semi, Panas, Gugur, Dingin
+function auroraMat(ph,hue){return new THREE.ShaderMaterial({uniforms:{uT:{value:0},uA:{value:0},uPh:{value:ph},uHue:{value:hue}},transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+ vertexShader:'varying vec2 vUv;uniform float uT;uniform float uPh;void main(){vUv=uv;vec3 p=position;float s=sin(uv.x*11.+uT*.25+uPh)*7.+sin(uv.x*27.-uT*.4+uPh*2.)*3.5;p.y+=s*(1.-uv.y);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
+ fragmentShader:'varying vec2 vUv;uniform float uT;uniform float uA;uniform float uPh;uniform float uHue;void main(){float x=vUv.x,h=vUv.y;float r=.5+.5*sin(x*220.+sin(x*17.+uT*.6+uPh)*5.+uT*.7);r=pow(r,1.6);float dr=.55+.45*sin(x*7.+uT*.22+uPh*3.);float ed=smoothstep(0.,.07,h)*pow(1.-h,1.7);float sd=smoothstep(0.,.12,x)*(1.-smoothstep(.88,1.,x));vec3 g=vec3(.15,1.,.45),c=vec3(.2,.75,.95),pr=vec3(.75,.3,.95);vec3 col=mix(g,c,smoothstep(.1,.55,h+uHue*.1));col=mix(col,pr,smoothstep(.5,.95,h));gl_FragColor=vec4(col,ed*(.35+.65*r)*dr*sd*uA);}'})}
+{const SEG=96;
+ [[0,0,1],[2.1,.8,1.1]].forEach(([ph,hue,sc2],n)=>{
+  const geo=new THREE.PlaneGeometry(1,1,SEG,1),pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){const u=pos.getX(i)+.5,v=pos.getY(i)+.5,th=(u-.5)*2.7;pos.setXYZ(i,Math.sin(th)*150,10+v*90,-Math.cos(th)*150)}   // busur lebar di langit utara (-z)
+  const m=new THREE.Mesh(geo,auroraMat(ph,hue));m.scale.set(sc2,1,sc2);m.visible=false;m.frustumCulled=false;m.raycast=()=>{};sc.add(m);AUR_L.push(m)})}
+function updAurora(dt){
+  const a=tv*6.2832,night=1-Math.max(0,Math.min(1,-Math.cos(a)*1.6+.45)),
+    ok=night>.6&&clearSky()&&(SKYEV.force==='aurora'||nightHash(0x5bd1e995)<AUR_P[WX.season]);
+  if(ok&&AUR.day!==nightKey()){AUR.day=nightKey();msg('🌌 Aurora malam ini · turunkan sudut kamera (menghadap utara)')}
+  AUR.o+=((ok?Math.min(1,(night-.5)*2):0)-AUR.o)*Math.min(1,dt*.35);
+  const vis=AUR.o>.01,t=performance.now()*.001;
+  for(const m of AUR_L){m.visible=vis;if(!vis)continue;m.position.set(cam.position.x,0,cam.position.z);m.material.uniforms.uT.value=t;m.material.uniforms.uA.value=AUR.o}
+}
+function pickWeather(){
+  const s=WX.season;
+  const opts=[
+    ['cerah',[3,4,2,2][s]],
+    ['hujan',[3,2,3,1][s]],
+    ['salju',[0,0,1,4][s]],
+    ['panas',[1,4,0,0][s]],
+    ['angin',[2,1,3,3][s]],
+    ['kabut',[3,1,3,2][s]],
+    ['badai',[1,2,1,0][s]],
+    ['puting',[2,1,1,0][s]],
+    ['gerimis',[3,1,3,2][s]],
+    ['deras',[1,2,1,0][s]],
+    ['bsalju',[0,0,0,2][s]],
+    ['pasir',[0,2,0,0][s]],
+    ['es',[1,2,1,0][s]],
+    ['embun',[1,0,2,3][s]]
+  ];
+  let tot=0; for(const o of opts)tot+=o[1];
+  let r=Math.random()*tot,pick='cerah';
+  for(const o of opts){r-=o[1];if(r<=0){pick=o[0];break}}
+  if(pick!==WX.cur){WX.cur=pick;msg(WX_ICON[pick]+' '+WX_LABEL[pick]+' mulai')}
+  WX.timer=CONFIG.WX_MIN+Math.random()*(CONFIG.WX_MAX-CONFIG.WX_MIN);
+}
+function updWX(dt){
+  WX.timer-=dt;
+  if(WX.timer<=0)pickWeather();
+  WX.target = WX.cur==='cerah'?0:1;
+  WX.intensity += (WX.target-WX.intensity)*Math.min(1,dt*0.8);
+  if(!WX.target&&WX.intensity<0.01)WX.intensity=0;
+  WX.windT = ({angin:1,badai:.6,puting:.8,deras:.3,bsalju:.9,pasir:1,es:.5})[WX.cur]||0;
+  WX.wind += (WX.windT-WX.wind)*Math.min(1,dt*0.9);
+  // Hujan/salju/es memudar halus (dulu langsung hilang begitu cuaca berganti ke cerah, karena visible ikut jenis cuaca)
+  const kk=Math.min(1,dt*.9),rpT=RAINP[WX.cur];
+  if(rpT){RP.n+=(rpT.n-RP.n)*kk;RP.f+=(rpT.f-RP.f)*kk;RP.sz+=(rpT.sz-RP.sz)*kk}
+  RP.o+=((rpT?rpT.o:0)-RP.o)*kk;
+  rain.visible=RP.o>.03;
+  if(rain.visible){rainGeo.setDrawRange(0,(RAIN_N*RP.n)|0);rainMat.opacity=RP.o;rainMat.size=RP.sz;rain.userData.f=RP.f}
+  const sn=WX.cur==='salju'||WX.cur==='bsalju';
+  SN.o+=((sn?.9:0)-SN.o)*kk;SN.bs+=((WX.cur==='bsalju'?1:0)-SN.bs)*kk;
+  snow.visible=SN.o>.03;snowMat.opacity=SN.o;
+  HL.o+=((WX.cur==='es'?.95:0)-HL.o)*kk;
+  hail.visible=HL.o>.03;hailMat.opacity=HL.o;
+  windP.visible = WX.wind>0.05;
+  const sd=WX.cur==='pasir';windMat.opacity=(sd?.85:.5)*WX.wind;windMat.size=sd?.4:.2;windMat.color.setHex(sd?0xd9b36a:0xddeeff);
+  const e=$('wx'); if(e)e.textContent = WX_ICON[WX.cur]+' '+WX_LABEL[WX.cur]+(WX.cur=='puting'&&TOR.lv?' T'+TOR.lv:'')+(AUR.o>.05?' · 🌌':'')+(MET.on?' · 🌠':'')+' · '+SEASON_ICON[WX.season]+' '+SEASONS[WX.season];
+}
+function updClouds(dt){
+  const w=1+WX.wind*6, t=performance.now()*0.001;
+  for(const c of clouds){
+    c.position.x += c.userData.spd * w * dt * 2;
+    if(c.position.x>170)c.position.x=-170;
+    c.position.y = c.userData.baseY + Math.sin(t*0.6+c.userData.ph)*1.5;
+  }
+}
+function updPrecip(dt){
+  const cx=cam.position.x,cz=cam.position.z,t=performance.now()*0.001;
+  if(rain.visible){
+    const p=rainGeo.attributes.position.array, fall=(rain.userData.f||38)*dt, w=WX.wind*10*dt;
+    for(let i=0;i<RAIN_N;i++){
+      p[i*3+1]-=fall; p[i*3]+=w; if(p[i*3]>35)p[i*3]-=70;
+      if(p[i*3+1]<-2){p[i*3+1]=45+Math.random()*10;p[i*3]=(Math.random()-.5)*70;p[i*3+2]=(Math.random()-.5)*70}
+    }
+    rainGeo.attributes.position.needsUpdate=true;
+    rain.position.set(cx,0,cz);
+  }
+  if(snow.visible){
+    const p=snowGeo.attributes.position.array, fall=(6+5*SN.bs)*dt, w=WX.wind*(4+12*SN.bs)*dt;
+    for(let i=0;i<SNOW_N;i++){
+      p[i*3+1]-=fall;
+      p[i*3]+=w+Math.sin(t+i)*.3*dt; if(p[i*3]>35)p[i*3]-=70;
+      p[i*3+2]+=Math.cos(t*1.3+i)*.3*dt;
+      if(p[i*3+1]<-2){p[i*3+1]=45+Math.random()*10;p[i*3]=(Math.random()-.5)*70;p[i*3+2]=(Math.random()-.5)*70}
+    }
+    snowGeo.attributes.position.needsUpdate=true;
+    snow.position.set(cx,0,cz);
+  }
+  if(windP.visible){
+    const p=windGeo.attributes.position.array, w=20*WX.wind*dt;
+    for(let i=0;i<WIND_N;i++){
+      p[i*3]+=w;
+      if(p[i*3]>35){p[i*3]=-35;p[i*3+1]=2+Math.random()*35;p[i*3+2]=(Math.random()-.5)*70}
+    }
+    windGeo.attributes.position.needsUpdate=true;
+    windP.position.set(cx,0,cz);
+  }
+}
+const WX_ORDER=['cerah','gerimis','hujan','deras','badai','es','salju','bsalju','embun','kabut','angin','pasir','panas','puting'];
+function wxNext(){const i=WX_ORDER.indexOf(WX.cur);WX.cur=WX_ORDER[(i+1)%WX_ORDER.length];WX.timer=CONFIG.WX_MIN+Math.random()*(CONFIG.WX_MAX-CONFIG.WX_MIN);msg(WX_ICON[WX.cur]+' '+WX_LABEL[WX.cur]+' (manual)')}
+$('wx').onclick=e=>{
+  if(e.altKey){const L=[null,'aurora','meteor'];SKYEV.force=L[(L.indexOf(SKYEV.force)+1)%3];
+    msg(SKYEV.force?'Paksa '+SKYEV.force+' (tampak saat malam & langit cerah/embun)':'Peristiwa langit kembali acak');return}
+  if(e.shiftKey){wxNext();return}
+  WX.timer=0.01};
+$('wx').oncontextmenu=e=>{e.preventDefault();wxNext()};   // klik kanan / tekan lama (ponsel): cuaca berikutnya
+$('wx').title='Klik: cuaca acak · Shift+klik / klik kanan / tekan lama: cuaca berikutnya · Alt+klik: paksa aurora / hujan meteor';
+
+/* ============================================================
+   UNDO / REDO
+   ============================================================ */
+const snap=k=>{const b=H.get(k);return b?[b.x,b.y,b.z,b.t,b.c]:null};
+const ap=(k,s)=>{if(H.has(k))del(H.get(k));if(s)put(...s)};
+function edit(L){const A=L.map(([x,y,z,t,c])=>{const k=x+','+y+','+z;return[k,snap(k),t?[x,y,z,t,c]:null]});A.forEach(a=>ap(a[0],a[2]));U.push(A);R=[];if(U.length>100)U.shift()}
+function undo(){if(play)return;const A=U.pop();if(!A)return;A.forEach(a=>ap(a[0],a[1]));R.push(A)}
+function redo(){if(play)return;const A=R.pop();if(!A)return;A.forEach(a=>ap(a[0],a[2]));U.push(A)}
+
+/* ============================================================
+   ISI AREA
+   ============================================================ */
+function reg(){const a=F.a,b=F.b,hh=F.er||MD[cur].h>=1?Math.max(1,Math.min(10,+$('th').value||1)):1;return[Math.min(a[0],b[0]),Math.max(a[0],b[0]),Math.min(a[2],b[2]),Math.max(a[2],b[2]),a[1],hh]}
+function fillMove(e){const r=pick(e);if(!r)return;const c=r.b?[r.b.x,r.b.y,r.b.z]:r.c;if(!c)return;F.b=c;const[x0,x1,z0,z1,y0,hh]=reg();
+ ghost.visible=true;ghost.material.color.set(F.er?0xff4444:0x33ff66);ghost.scale.set(x1-x0+1,hh,z1-z0+1);ghost.position.set((x0+x1+1)/2,y0+hh/2,(z0+z1+1)/2)}
+function commitFill(){const[x0,x1,z0,z1,y0,hh]=reg(),L=[],hl=$('hl').checked;
+ if((x1-x0+1)*(z1-z0+1)*hh>200000){msg('Area terlalu besar (maks 200.000 blok)');return}
+ for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)for(let y=y0;y<y0+hh;y++){
+  if(F.er){if(H.has(x+','+y+','+z))L.push([x,y,z,null]);continue}
+  if(hl&&x>x0&&x<x1&&z>z0&&z<z1)continue;L.push([x,y,z,cur,$('cb').value])}
+ if(L.length)edit(L)}
+function togFill(){fillOn=!fillOn;$('bfill').classList.toggle('on',fillOn)}
+function del(b){const k=b.x+','+b.y+','+b.z;if(b.im){const im=b.im,l=--im.count,i=b.i;if(i!=l){const kl=im.userData.keys[l];im.getMatrixAt(l,MX);im.setMatrixAt(i,MX);im.userData.keys[i]=kl;H.get(kl).i=i}im.userData.keys.length=l;im.instanceMatrix.needsUpdate=true}else{sc.remove(b.m);disp(b.m);NI.delete(b.m);CO.delete(b);LTS.delete(b)}H.delete(k)}
+function put(x,y,z,t,c){if(!MD[t])t='blok';if(!cellIn(x,z)||y<0||y>=Y_MAX)return;const k=x+','+y+','+z;if(H.has(k))del(H.get(k));
+ const d=MD[t],h=d.h;if(!d.o.dec&&!IND[t]){const im=imFor(t,c);if(im.count>=CAP)capCheck(im,t);if(im.count<CAP){const i=im.count++;im.userData.keys[i]=k;iSet(im,i,x,y,z,h);capCheck(im,t);H.set(k,{m:null,im,i,h,x,y,z,t,c,ns:!!d.o.ns});return}}
+ const m=d.o.dec?DEC[t]():new THREE.Mesh(BG,t=='blok'?mat(c||'#c97b4a'):mfor(t));
+ if(d.o.dec){const bl=H.get(x+','+(y-1)+','+z);m.position.set(x+.5,y+(bl&&bl.h<1?bl.h-1:0),z+.5)}else{m.scale.y=h;m.position.set(x+.5,y+h/2,z+.5)}m.userData.k=k;
+ if(t=='marka'||t=='markaz'||t=='sepedam'){const z=t=='markaz',e=t=='sepedam',s=new THREE.Mesh(new THREE.BoxGeometry(e?.4:z?.1:.6,.2,e?.4:z?.6:.1),mat(e?0xffffff:0xffd23f));s.position.set(z&&!e?.5:0,.6,e||z?0:.5);m.add(s)}
+ sc.add(m);NI.add(m);const bb={m,h,x,y,z,t,c,ns:!!d.o.ns};H.set(k,bb);if(t=='koin')CO.add(bb);if(t.startsWith('lalin'))LTS.add(bb)}
+
+function box(w,h,d,c,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);return m}
+function limb(w,h,c,x,y){const g=new THREE.Group();g.position.set(x,y,0);g.add(box(w,h,w,c,0,-h/2,0));return g}
+function makeChar(c){const g=new THREE.Group(),lL=limb(.25,.6,c.pants,-.14,.6),lR=limb(.25,.6,c.pants,.14,.6),aL=limb(.2,.65,c.skin,-.38,1.35),aR=limb(.2,.65,c.skin,.38,1.35);
+ const hd=box(.5,.5,.5,c.skin,0,1.6,0);hd.add(box(.52,.14,.52,c.hair,0,.2,0),box(.08,.08,.02,0x222222,-.12,.04,.26),box(.08,.08,.02,0x222222,.12,.04,.26));
+  const hs=c.hs||'pendek',ac=c.ac||'tidak';
+ if(hs=='botak'||hs=='topi')hd.children[0].visible=false;
+ if(hs=='panjang')hd.add(box(.52,.5,.14,c.hair,0,-.02,-.2));
+ if(hs=='topi')hd.add(box(.56,.16,.56,c.shirt,0,.22,0),box(.56,.05,.3,c.shirt,0,.15,.38));
+ if(hs=='jambul')hd.add(box(.2,.2,.2,c.hair,0,.38,0));
+ if(ac=='kacamata')hd.add(box(.4,.1,.02,'#111111',0,.05,.27));
+ if(ac=='tas')g.add(box(.4,.45,.18,'#8a5a2b',0,.95,-.23));
+ if(c.name)g.add(nameTag(c.name));
+ g.add(lL,lR,aL,aR,hd,box(.5,.75,.28,c.shirt,0,.975,0));g.userData={lL,lR,aL,aR};return g}
+const swing=(g,s)=>{const u=g.userData,a=Math.sin(s)*.8;u.lL.rotation.x=a;u.lR.rotation.x=-a;u.aL.rotation.x=-a;u.aR.rotation.x=a};
+const cc=()=>({skin:$('skin').value,hair:$('hair').value,shirt:$('shirt').value,pants:$('pants').value,hs:$('hs').value,ac:$('ac').value,name:$('nm').value.trim(),say:$('sy').value.trim(),beh:$('bh').value,role:$('rl').value});
+function hTop(x,z,py){for(let y=Y_MAX;y>=0;y--){const b=H.get(x+','+y+','+z);if(b&&!b.ns&&y<=py+.6)return y+b.h}return 0}
+function addNpc(x,z,c,y){const g=makeChar(c),n={g,c,s:1.1+Math.random()*.8,ph:0,wait:Math.random()*2,tx:x,tz:z,hp:40,hpDirty:true,aggr:0};g.position.set(x,hTop(Math.floor(x),Math.floor(z),y||0),z);g.userData.npc=n;sc.add(g);npcs.push(n);newT(n);if(play)makeNpcBar(n)}
+function newT(n){const a=Math.random()*6.28,r=3+Math.random()*6;n.tx=n.g.position.x+Math.sin(a)*r;n.tz=n.g.position.z+Math.cos(a)*r}
+function wander(n,dt){if(n.chase)return;const g=n.g,p=g.position;
+ if(n.c.beh=='duduk'){sitPose(g,1);p.y=hTop(Math.floor(p.x),Math.floor(p.z),0)-.15;return}
+ if(n.c.beh=='diam'){swing(g,0);return}
+ if(n.c.beh=='ikut'&&play&&P){n.tx=P.g.position.x;n.tz=P.g.position.z;if(Math.hypot(n.tx-p.x,n.tz-p.z)<2){swing(g,0);return}n.wait=0}if(n.wait>0){n.wait-=dt;swing(g,0);return}
+ const dx=n.tx-p.x,dz=n.tz-p.z,d=Math.hypot(dx,dz);if(d<.2){n.wait=Math.random()*2;newT(n);return}
+ const nx=p.x+dx/d*n.s*dt,nz=p.z+dz/d*n.s*dt;
+ if(hTop(Math.floor(nx),Math.floor(nz),0)>.3||(isAsph(nx,nz)&&!isAsph(p.x,p.z))||posOut(nx,nz)){newT(n);n.wait=.2;return}
+ p.x=nx;p.z=nz;p.y=hTop(Math.floor(nx),Math.floor(nz),0);g.rotation.y=Math.atan2(dx,dz);n.ph+=dt*8;swing(g,n.ph)}
+
+let tool='blok',cur='bata',fillOn=false,rec=['bata'],ctab=1;const TL=[['blok','🧱 Bangun'],['karakter','🧍 Karakter'],['hapus','🗑 Hapus'],['mobil','🚗 Mobil']],TB={};
+TL.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>selTool(k);TB[k]=b;$('bar').appendChild(b)});
+function selTool(k){tool=k;for(const i in TB)TB[i].classList.toggle('on',i==k)}selTool('blok');
+[['bcat','📦 Katalog',()=>{const c=$('cat');c.style.display=c.style.display=='none'?'':'none'}],['bfill','📐 Isi area',togFill]].forEach(([id,l,f])=>{const b=document.createElement('button');b.id=id;b.textContent=l;b.onclick=f;$('bar').appendChild(b)});
+const ray=new THREE.Raycaster();
+function pick(e){ray.setFromCamera(new THREE.Vector2(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1),cam);
+ const h=ray.intersectObjects([ground,...NI,...Object.values(IM),...npcs.map(n=>n.g),...cars.map(n=>n.g)],true)[0];if(!h)return null;
+ if(h.object.isInstancedMesh){const b=H.get(h.object.userData.keys[h.instanceId]);if(!b)return null;const n=h.face.normal;let c=[b.x,b.y,b.z];if(!(b.h<1&&n.y>.5&&!(tool=='blok'&&MD[cur].o.dec)))c=[c[0]+n.x,c[1]+n.y,c[2]+n.z];return{c,b}}
+ let o=h.object;while(o.parent&&!o.userData.k&&!o.userData.npc&&o!==ground)o=o.parent;
+ if(o===ground)return{c:[Math.floor(h.point.x),0,Math.floor(h.point.z)]};
+ if(o.userData.k){const b=H.get(o.userData.k),n=h.face.normal;let c=[b.x,b.y,b.z];if(!(b.h<1&&n.y>.5&&!(tool=='blok'&&MD[cur].o.dec)))c=[c[0]+n.x,c[1]+n.y,c[2]+n.z];return{c,b}}
+ return{npc:o.userData.npc}}
+function hover(e){if(play){ghost.visible=false;return}const nw=performance.now();if(nw-lh<70)return;lh=nw;ghost.scale.set(1,1,1);const r=pick(e);
+ if(!r){ghost.visible=false;return}ghost.visible=true;const er=tool=='hapus';ghost.material.color.set(er?0xff4444:0x33ff66);
+ if(er){if(r.b)ghost.position.set(r.b.x+.5,r.b.y+.5,r.b.z+.5);else if(r.npc)ghost.position.copy(r.npc.g.position).y+=.9;else ghost.visible=false}
+ else if(r.c)ghost.position.set(r.c[0]+.5,r.c[1]+.5,r.c[2]+.5);else ghost.visible=false}
+function act(e){if(play)return;const r=pick(e);if(!r)return;
+ if(tool=='hapus'){if(r.b)edit([[r.b.x,r.b.y,r.b.z,null]]);else if(r.npc){sc.remove(r.npc.g);disp(r.npc.g);[npcs,cars].forEach(a=>{const i=a.indexOf(r.npc);if(i>=0)a.splice(i,1)})}return}
+ if(!r.c)return;const[x,y,z]=r.c;
+ if(tool=='karakter')addNpc(x+.5,z+.5,cc(),y);else if(tool=='mobil'){if(isRoad(x,z))addCar(x,z)}else edit([[x,y,z,cur,$('cb').value]])}
+let dn=null,mv=0;const cv=ren.domElement;
+cv.onpointerdown=e=>{PT.set(e.pointerId,{x:e.clientX,y:e.clientY});dn=e;mv=0;cv.setPointerCapture(e.pointerId);F=null;
+ if(!play&&tool!='karakter'&&tool!='mobil'&&(fillOn||e.shiftKey)){const r=pick(e),er=tool=='hapus',c=er?(r&&r.b&&[r.b.x,r.b.y,r.b.z]):(r&&r.c);if(c)F={a:c,b:c,er}}};
+cv.onpointermove=e=>{if(PT.size==2){pinch(e);return}if(PT.has(e.pointerId))PT.set(e.pointerId,{x:e.clientX,y:e.clientY});if(F){fillMove(e);return}if(dn){const dx=e.clientX-dn.clientX,dy=e.clientY-dn.clientY;mv+=Math.abs(dx)+Math.abs(dy);if(mv>5){yaw-=dx*.006;pitch=Math.max(fp?-1.3:.1,Math.min(1.5,pitch+dy*.006))}dn=Object.assign({},{clientX:e.clientX,clientY:e.clientY})}else hover(e)};
+cv.onpointerup=cv.onpointercancel=e=>{const two=PT.size>1;PT.delete(e.pointerId);if(two){pd=0;dn=null;F=null;ghost.scale.set(1,1,1);return}if(F){commitFill();F=null;ghost.scale.set(1,1,1)}else if(dn&&mv<=5)act(e);dn=null};
+cv.onwheel=e=>{dist=Math.max(3,Math.min(Math.max(140,S),dist*(e.deltaY>0?1.1:.9)))};
+addEventListener('keydown',e=>{if(e.target.tagName=='INPUT'&&e.target.type!='color')return;const k=e.key.toLowerCase();
+ if((e.ctrlKey||e.metaKey)&&(k=='z'||k=='y')){e.preventDefault();(k=='y'||e.shiftKey)?redo():undo();return}
+ K[k]=1;if(k==' ')e.preventDefault();
+ if(k==' '&&!e.repeat)Combat.jumpPressed=true;
+ if(k=='escape'&&play)toggle();if(play){if(k=='e')useE();if(k=='v')togFP();if(k=='f')useF();if(k=='q')toggleSit()}if(k=='m'){mute=!mute;msg(mute?'Suara mati':'Suara hidup')}
+ if(!play){const t={1:'blok',2:'karakter',3:'hapus',4:'mobil'}[k];if(t)selTool(t);if(k=='c')$('bcat').click();if(k=='f')togFill()}});
+addEventListener('keyup',e=>delete K[e.key.toLowerCase()]);
+// Fokus hilang (alt-tab, ganti tab): lepaskan semua input yang 'tertahan', termasuk guard (keyup Shift tidak akan datang).
+const releaseInput=()=>{for(const k in K)delete K[k];Combat.guard=false;for(const k in lastTapDir)lastTapDir[k]=null};
+addEventListener('blur',releaseInput);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseInput()});
+addEventListener('change',e=>e.target.blur&&e.target.blur());
+addEventListener('click',e=>{if(e.target.tagName=='BUTTON')e.target.blur()});
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});
+
+/* ============================================================
+   COMBAT
+   ============================================================ */
+function damagePlayer(n){
+  if(Combat.invuln>0||Combat.dead)return;
+  if(Combat.guard)n=Math.max(1,Math.floor(n*0.2));
+  Combat.hp=Math.max(0,Combat.hp-n);updHpBar();
+  shake=Math.max(shake,n*0.6);beep(Combat.guard?180:140,.08,'square');
+  if(Combat.hp<=0){Combat.dead=true;say('K.O.! Kamu tumbang');setTimeout(()=>{if(play&&Combat.dead)toggle();Combat.dead=false;Combat.hp=Combat.hpMax;updHpBar()},1800)}
+}
+function updHpBar(){const e=$('hpf');if(e)e.style.width=(Combat.hp/Combat.hpMax*100)+'%'}
+function npcTakeDmg(n,dmg,kb,dir){
+  if(n.dead)return;
+  if(n.c.role&&n.c.role!='warga'){say((n.c.name||'NPC')+': Jangan ganggu aku!');return}   // peran layanan kebal
+  crime(2);
+  n.aggr = 8;
+  n.hp=(n.hp||40)-dmg;n.hitstun=.35;n.hpDirty=true;
+  n.kbx=(n.kbx||0)+Math.sin(dir)*kb;n.kbz=(n.kbz||0)+Math.cos(dir)*kb;
+  hitSpark(n.g.position.x,n.g.position.y+1.2,n.g.position.z);
+  beep(90+Math.random()*40,.1,'square');comboHit();
+  if(n.hp<=0){n.dead=true;questAdd('tumbang');say((n.c.name||'NPC')+' K.O.!');sc.remove(n.g);disp(n.g);
+    setTimeout(()=>{const i=npcs.indexOf(n);if(i>=0)npcs.splice(i,1)},50)}
+}
+const sparkMat=new THREE.PointsMaterial({color:0xffdd55,size:.35,transparent:true,opacity:1,blending:THREE.AdditiveBlending});
+const sparks=[];
+function hitSpark(x,y,z){
+  const n=12,pos=new Float32Array(n*3),vel=[];
+  for(let i=0;i<n;i++){pos[i*3]=x;pos[i*3+1]=y;pos[i*3+2]=z;vel.push({x:(Math.random()-.5)*6,y:(Math.random()*.8+.2)*5,z:(Math.random()-.5)*6})}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const p=new THREE.Points(g,sparkMat.clone());p.frustumCulled=false;sc.add(p);
+  sparks.push({p,vel,life:.5,life0:.5});
+}
+function updSparks(dt){
+  for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.life-=dt;
+    const a=s.p.geometry.attributes.position.array;
+    for(let j=0;j<s.vel.length;j++){const v=s.vel[j];v.y-=18*dt;a[j*3]+=v.x*dt;a[j*3+1]+=v.y*dt;a[j*3+2]+=v.z*dt}
+    s.p.geometry.attributes.position.needsUpdate=true;
+    s.p.material.opacity=Math.max(0,s.life/s.life0);
+    if(s.life<=0){sc.remove(s.p);s.p.geometry.dispose();s.p.material.dispose();sparks.splice(i,1)}}
+}
+let shake=0;
+let comboN=0,comboT=0;
+function comboHit(){comboN++;comboT=.9;const e=$('combo');e.textContent=comboN+(comboN>=3?' HIT!':' HIT');e.style.display='block';e.style.fontSize=Math.min(60,24+comboN*4)+'px'}
+function updCombo(dt){if(comboT>0){comboT-=dt;if(comboT<=0){comboN=0;$('combo').style.display='none'}}}
+/* ---------- KERUSAKAN ----------
+   Hanya tipe di DESTR yang bisa rusak (angka = kekuatan). Lantai (aspal, trotoar, rumput, paving, dll), koin, lampu lalu lintas,
+   air, dan tipe lain yang tidak terdaftar KEBAL. Blok rusak dicatat di REP lalu diperbaiki NPC pekerja (tanpa masuk undo). */
+const DESTR={kaca:2,semak:1,bunga:1,taman:2,daun:2,pagar:3,rambu:3,bangku:4,sampah:4,pos:4,pintu:5,seng:5,gentengmerah:5,gentenggelap:5,pohonkering:5,papan:4,
+  kayu:6,batang:6,lampjalan:6,halte:6,hydrant:8,pohon:8,pohoncemara:8,pohonpalm:8,plester:8,atapdatar:8,blok:8,bata:10,bataputih:10,batu:14,beton:18};
+const REP=[],WRK=[],WK={delay:8,max:3,speed:3.6,time:2.2},CAR_HP=100;
+function breakBlockAt(x,y,z,pw){
+  const b=H.get(Math.floor(x)+','+Math.floor(y)+','+Math.floor(z));if(!b)return 0;
+  const hd=DESTR[b.t];if(!hd)return 1;                     // kebal (tetap menghentikan hadouken)
+  b.hp=(b.hp==null?hd:b.hp)-pw;hitSpark(b.x+.5,b.y+.5,b.z+.5);beep(150+Math.random()*60,.06,'square');
+  if(b.hp<=0){crime(1);REP.push({x:b.x,y:b.y,z:b.z,t:b.t,c:b.c,at:performance.now()/1000,w:0});del(b);hitSpark(b.x+.5,b.y+.5,b.z+.5);shake=Math.max(shake,1.2)}
+  return 1}
+function repairAll(){for(const r of REP)if(!H.has(r.x+','+r.y+','+r.z))put(r.x,r.y,r.z,r.t,r.c);REP.length=0;WRK.splice(0).forEach(w=>{sc.remove(w.g);disp(w.g)})}
+function spawnWorker(r){
+  let best=null,bd=1e9;
+  for(let dx=-14;dx<=14;dx++)for(let dz=-14;dz<=14;dz++){const d=Math.hypot(dx,dz),x=r.x+dx,z=r.z+dz;
+    if(d>=7&&d<bd&&cellIn(x,z,1)&&(isRoad(x,z)||sw(x,z))){bd=d;best=[x,z]}}
+  const x=best?best[0]+.5:lim(r.x+7),z=best?best[1]+.5:r.z+.5;
+  const g=makeChar({skin:'#e0ac69',hair:'#3b2a1a',shirt:'#ff8a00',pants:'#333b55',hs:'topi',ac:'tidak',name:'👷 Pekerja'});
+  g.position.set(x,hTop(Math.floor(x),Math.floor(z),0),z);g.raycast=()=>{};sc.add(g);
+  WRK.push({g,r,t:0,ph:0,idle:0});beep(330,.12,'triangle',440);}
+function updWorkers(dt){
+  const now=performance.now()/1000;
+  if(WRK.length<WK.max){const r=REP.find(r=>!r.w&&now-r.at>WK.delay);if(r){r.w=1;spawnWorker(r)}}
+  for(let i=WRK.length-1;i>=0;i--){const w=WRK[i],g=w.g,p=g.position,u=g.userData;
+    if(!w.r){let b=null,bd=1e9;for(const r of REP)if(!r.w){const d=Math.hypot(r.x-p.x,r.z-p.z);if(d<bd){bd=d;b=r}}
+      if(b){b.w=1;w.r=b;w.t=0;w.idle=0}
+      else{swing(g,0);if((w.idle+=dt)>2){sc.remove(g);disp(g);WRK.splice(i,1)}continue}}
+    const r=w.r,dx=r.x+.5-p.x,dz=r.z+.5-p.z,d=Math.hypot(dx,dz);
+    g.rotation.y=Math.atan2(dx,dz);
+    if(d>1.6){const st=Math.min(d-1.5,WK.speed*dt);p.x+=dx/d*st;p.z+=dz/d*st;p.y=hTop(Math.floor(p.x),Math.floor(p.z),0);w.ph+=dt*9;swing(g,w.ph)}
+    else{swing(g,0);const t0=w.t;w.t+=dt;u.aR.rotation.x=-1.2+Math.sin(w.t*14)*.7;
+      if(Math.floor(w.t*3)!==Math.floor(t0*3)){beep(200,.04,'square');hitSpark(r.x+.5,r.y+.2,r.z+.5)}   // palu
+      if(w.t>=WK.time){if(!H.has(r.x+','+r.y+','+r.z))put(r.x,r.y,r.z,r.t,r.c);
+        const k=REP.indexOf(r);if(k>=0)REP.splice(k,1);hitSpark(r.x+.5,r.y+.5,r.z+.5);beep(520,.1,'triangle',780);u.aR.rotation.x=0;w.r=null}}}
+}
+// Mobil: HP 100. Makin rusak makin lambat, berasap/percikan di bawah 45, hancur & hilang di 0 (mobil pengganti muncul 20 detik kemudian).
+function carTakeDmg(c,dmg){
+  if(c.dead||c.drv)return;
+  c.hp=(c.hp==null?CAR_HP:c.hp)-dmg;crime(c.hp<=0?5:1);c.s0=c.s0||c.s;c.s=c.s0*(.35+.65*Math.max(0,c.hp)/CAR_HP);
+  hitSpark(c.px,.9,c.pz);beep(70+Math.random()*30,.12,'square');comboHit();
+  if(c.hp<=0){c.dead=1;for(let i=0;i<4;i++)hitSpark(c.px+(Math.random()-.5)*2,.6+Math.random(),c.pz+(Math.random()-.5)*2);shake=Math.max(shake,2.5);beep(60,.4,'sawtooth',30);msg('💥 Mobil hancur');
+    const gen=cityGen;setTimeout(()=>{if(gen!==cityGen)return;for(let i=0;i<40;i++){const x=Math.floor((Math.random()-.5)*(S-2)),z=Math.floor((Math.random()-.5)*(S-2));
+      if(isRoad(x,z)&&!isI(x,z)&&(!P||Math.hypot(x+.5-P.g.position.x,z+.5-P.g.position.z)>25)){const n0=cars.length;tryCar(x,z);if(cars.length>n0)break}}},20000)}}
+function updCarSmoke(dt){for(const c of cars)if(!c.dead&&c.hp<45&&Math.random()<dt*2.5)hitSpark(c.px,1.1,c.pz)}
+/* ---------- PERAN NPC, MISI & PEDAGANG ----------
+   NPC punya c.role (tersimpan bersama c di save). ROLES = tabel peran: label, nama, tampilan, perilaku, dan talk() yang dipanggil saat pemain menekan E.
+   Peran selain "warga" tidak bisa dipukul. WAL = dompet + peningkatan; koin yang diambil = +1 uang. Q = misi aktif. */
+const WAL={money:0,spd:0,hp:0},Q={cur:null,done:0};
+const ROLES={
+ warga:{label:'Warga'},
+ misi:{label:'Pemberi misi',name:'📜 Pemberi misi',look:{shirt:'#7b3fbf',pants:'#2b2b3b',hs:'topi',ac:'tas'},beh:'diam',talk:()=>talkQuest()},
+ pedagang:{label:'Pedagang',name:'🛒 Pedagang',look:{shirt:'#2e9e5b',pants:'#6b4a2b',hs:'pendek',ac:'tas'},beh:'diam',talk:n=>openShop(n)},
+ pekerja:{label:'Pekerja konstruksi',name:'👷 Pekerja',look:{shirt:'#ff8a00',pants:'#333b55',hs:'topi',ac:'tidak'},beh:'diam',talk:()=>say('👷 '+['Sedang memperbaiki, permisi!','Kota harus tetap rapi.','Jangan dirusak lagi, ya!'][Math.random()*3|0])}
+};
+$('rl').innerHTML=Object.entries(ROLES).map(([k,r])=>'<option value="'+k+'">'+r.label+'</option>').join('');
+$('rl').onchange=()=>{const R=ROLES[$('rl').value]||{};for(const k in R.look||{})$(k).value=R.look[k];$('nm').value=R.name||'';$('bh').value=R.beh||'jalan'};
+const qText=q=>q.t=='koin'?'Kumpulkan '+q.n+' koin':'Kalahkan '+q.n+' NPC';
+function talkQuest(){const q=Q.cur;
+ if(!q){const t=Math.random()<.6?'koin':'tumbang',n=t=='koin'?5+(Math.random()*6|0):2+(Math.random()*3|0);Q.cur={t,n,p:0,rew:t=='koin'?n*3+10:n*8+10};say('📜 Misi: '+qText(Q.cur)+' · Hadiah 💰'+Q.cur.rew)}
+ else if(q.p>=q.n){WAL.money+=q.rew;Q.done++;Q.cur=null;say('Terima kasih! +💰'+q.rew+' · misi selesai: '+Q.done);beep(660,.15,'triangle',990)}
+ else say('Misi belum selesai: '+qText(q)+' ('+q.p+'/'+q.n+')');
+ hudU()}
+function questAdd(t){const q=Q.cur;if(!q||q.t!=t||q.p>=q.n)return;q.p++;if(q.p>=q.n)say('✅ Misi selesai! Temui pemberi misi');hudU()}
+function applyUp(){CONFIG.MOVE_SPEED=5*(1+.2*WAL.spd);Combat.hpMax=100+20*WAL.hp;Combat.hp=Math.min(Combat.hp,Combat.hpMax);updHpBar()}
+const SHOP=[
+ {n:'🧪 Obat · HP penuh',p:()=>8,ok:()=>Combat.hp<Combat.hpMax,buy:()=>{Combat.hp=Combat.hpMax;updHpBar()}},
+ {n:'👟 Sepatu cepat +20% kecepatan',p:()=>15+10*WAL.spd,ok:()=>WAL.spd<3,buy:()=>{WAL.spd++;applyUp()},lv:()=>WAL.spd+'/3'},
+ {n:'🛡 Baju tangguh +20 HP maks',p:()=>20+10*WAL.hp,ok:()=>WAL.hp<3,buy:()=>{WAL.hp++;applyUp();Combat.hp+=20;updHpBar()},lv:()=>WAL.hp+'/3'}];
+const shopEl=document.createElement('div');shopEl.className='p';shopEl.style.cssText='display:none;left:50%;top:40%;transform:translate(-50%,-50%);z-index:9;min-width:250px;line-height:1.9';document.body.appendChild(shopEl);
+let shopN=null;
+function renderShop(){shopEl.innerHTML='<b>🛒 Pedagang</b> · 💰 '+WAL.money+SHOP.map((it,i)=>'<div><button data-i="'+i+'">'+it.n+(it.lv?' ('+it.lv()+')':'')+' · 💰'+it.p()+'</button></div>').join('')+'<div><button data-x="1">Tutup</button></div>'}
+function openShop(n){shopN=n;renderShop();shopEl.style.display='block'}
+function closeShop(){shopN=null;shopEl.style.display='none'}
+shopEl.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.x)return closeShop();
+ const it=SHOP[+b.dataset.i];if(!it.ok())msg('Sudah maksimal / tidak perlu');else if(WAL.money<it.p())msg('Uang kurang');else{WAL.money-=it.p();it.buy();beep(660,.1,'triangle',880)}renderShop();hudU()};
+function shopCheck(){if(shopN&&(!play||!P||shopN.dead||Math.hypot(P.g.position.x-shopN.g.position.x,P.g.position.z-shopN.g.position.z)>4))closeShop()}
+/* ---------- DOKTER & POLISI ----------
+   Dokter: E = pulihkan HP penuh (jeda 20 dtk). Polisi: tingkat "dicari" W.heat naik karena kejahatan (memukul warga +2, merusak blok +1, merusak mobil +1/+5),
+   turun .25/dtk. Di atas 6 (2 bintang) polisi dalam 30 petak mengejar; kena sentuh = ditangkap: denda koin, tingkat dicari nol. Bila tak ada polisi dekat,
+   polisi patroli sementara datang dari trotoar (maks 2, hilang setelah tenang). */
+const W={heat:0,spT:0};let docT=0,wStars=-1;
+ROLES.dokter={label:'Dokter',name:'🩺 Dokter',look:{shirt:'#f2f2f2',pants:'#3a6ea5',hs:'pendek',ac:'tas'},beh:'diam',talk:()=>{const now=performance.now()/1000;
+  if(Combat.hp>=Combat.hpMax)say('🩺 Kamu sehat sekali!');else if(now<docT)say('🩺 Tunggu '+Math.ceil(docT-now)+' detik lagi');
+  else{Combat.hp=Combat.hpMax;updHpBar();docT=now+20;say('🩺 Sudah pulih. Hati-hati!');beep(520,.15,'triangle',780)}}};
+ROLES.polisi={label:'Polisi',name:'👮 Polisi',look:{shirt:'#1f3a8a',pants:'#1b2236',hs:'topi',ac:'tidak'},beh:'jalan',talk:()=>say(W.heat>=6?'👮 Berhenti di sana!':'👮 Jaga ketertiban kota, ya.')};
+const crime=n=>{W.heat=Math.min(20,W.heat+n)};
+$('rl').innerHTML=Object.entries(ROLES).map(([k,r])=>'<option value="'+k+'">'+r.label+'</option>').join('');   // daftar peran diperbarui setelah dokter & polisi ditambahkan
+const wantedEl=document.createElement('div');wantedEl.className='p';wantedEl.style.cssText='display:none;left:50%;top:110px;transform:translateX(-50%);z-index:6;font-size:18px';document.body.appendChild(wantedEl);
+function dropNpc(n){n.dead=true;sc.remove(n.g);disp(n.g);const i=npcs.indexOf(n);if(i>=0)npcs.splice(i,1)}
+function endPolice(){W.heat=0;wStars=-1;wantedEl.style.display='none';for(const n of[...npcs]){n.chase=0;if(n.temp)dropNpc(n)}}
+function nearSide(x,z,d0){let best=null,bd=1e9;for(let dx=-24;dx<=24;dx++)for(let dz=-24;dz<=24;dz++){const d=Math.hypot(dx,dz),cx=Math.floor(x)+dx,cz=Math.floor(z)+dz;
+  if(d>=d0&&d<bd&&cellIn(cx,cz,1)&&sw(cx,cz)){bd=d;best=[cx,cz]}}return best}
+function arrest(){const fine=Math.min(WAL.money,10+Math.round(W.heat*3));WAL.money-=fine;W.heat=0;
+  for(const n of npcs)if(n.chase){n.chase=0;n.cool=6;newT(n)}say('🚔 Ditangkap! Denda 💰'+fine);beep(200,.3,'sawtooth',100);hudU()}
+function updPolice(dt){
+  W.heat=Math.max(0,W.heat-dt*.25);
+  const stars=Math.min(5,Math.ceil(W.heat/4));
+  if(stars!==wStars){wStars=stars;wantedEl.style.display=stars?'block':'none';wantedEl.textContent='🚨 '+'⭐'.repeat(stars)}
+  const pp=P.g.position,hot=W.heat>=6;let near=0,temps=0;
+  for(const n of[...npcs]){if(n.dead||n.c.role!='polisi')continue;
+    const g=n.g,p=g.position,dx=pp.x-p.x,dz=pp.z-p.z,d=Math.hypot(dx,dz);
+    if(n.cool>0)n.cool-=dt;if(n.temp)temps++;
+    if(hot&&!(n.cool>0)&&d<30)n.chase=1;else if(!hot&&n.chase){n.chase=0;newT(n)}
+    if(d<30)near++;
+    if(n.chase){
+      const st=4.4*dt,ux=dx/(d||1),uz=dz/(d||1),nx=p.x+ux*st,nz=p.z+uz*st,ok=(x,z)=>hTop(Math.floor(x),Math.floor(z),p.y)<=p.y+.3&&!posOut(x,z);
+      if(ok(nx,nz)){p.x=nx;p.z=nz}else if(ok(nx,p.z))p.x=nx;else if(ok(p.x,nz))p.z=nz;
+      p.y=hTop(Math.floor(p.x),Math.floor(p.z),p.y);g.rotation.y=Math.atan2(dx,dz);n.ph=(n.ph||0)+dt*10;swing(g,n.ph);
+      if(d<1.8){arrest();break}}
+    else if(n.temp&&!W.heat&&((n.tt=(n.tt||0)+dt)>8))dropNpc(n)}
+  if(hot&&near<1&&temps<2&&(W.spT-=dt)<=0){W.spT=10;const c=nearSide(pp.x,pp.z,16);
+    if(c){addNpc(c[0]+.5,c[1]+.5,{...ROLES.polisi.look,skin:'#e0ac69',hair:'#2b2b2b',role:'polisi',name:ROLES.polisi.name,beh:'jalan'});const n=npcs[npcs.length-1];n.temp=1;n.chase=1;msg('🚔 Polisi datang!')}}
+}
+function startAttack(type){
+  if(Combat.atk||Combat.dead||Combat.guard||!P||drv||sit)return;
+  const d=HITBOX[type];if(!d)return;
+  Combat.atk={type,...d,t:0,hit:false,hitList:new Set(),bk:new Set()};
+  const u=P.g.userData;
+  if(type=='pH')u.aR.rotation.x=-1.4;
+  if(type=='kH')u.lR.rotation.x=-1.6;
+  if(type=='hadouken'){u.aL.rotation.x=-1.2;u.aR.rotation.x=-1.2}
+  if(type=='tatsumaki'){u.lL.rotation.x=-1.6;u.lR.rotation.x=-1.6}
+  beep(type=='hadouken'||type=='tatsumaki'?300:200,.05,'sawtooth');
+  if(type=='hadouken')spawnHadouken();
+}
+const projectiles=[];
+function spawnHadouken(){
+  const p=P.g.position,y2=P.g.rotation.y;
+  const m=new THREE.Mesh(GEO_HADO,MAT_HADO);
+  m.position.set(p.x+Math.sin(y2)*1.2,p.y+1.1,p.z+Math.cos(y2)*1.2);sc.add(m);
+  projectiles.push({m,vx:Math.sin(y2)*14,vz:Math.cos(y2)*14,life:1.5,dmg:HITBOX.hadouken.dmg,kb:HITBOX.hadouken.kb,bp:HITBOX.hadouken.bp,cd:HITBOX.hadouken.cd});
+}
+function updProjectiles(dt){
+  for(let i=projectiles.length-1;i>=0;i--){const p=projectiles[i];p.life-=dt;
+    p.m.position.x+=p.vx*dt;p.m.position.z+=p.vz*dt;p.m.rotation.y+=dt*10;
+    let hit=0;
+    for(const n of npcs){if(n.dead)continue;
+      if(Math.hypot(n.g.position.x-p.m.position.x,n.g.position.z-p.m.position.z)<1.1){npcTakeDmg(n,p.dmg,p.kb,Math.atan2(p.vx,p.vz));hit=1;break}}
+    if(!hit)for(const c of cars){if(!c.dead&&!c.drv&&Math.hypot(c.px-p.m.position.x,c.pz-p.m.position.z)<1.8){carTakeDmg(c,p.cd);hit=1;break}}
+    if(!hit){const bx=Math.floor(p.m.position.x),by=Math.floor(p.m.position.y),bz=Math.floor(p.m.position.z);
+      if(H.has(bx+','+by+','+bz)){breakBlockAt(bx,by,bz,p.bp);hit=1}}
+    if(hit||p.life<=0){sc.remove(p.m);projectiles.splice(i,1)}}
+}
+function updAttack(dt){
+  if(!Combat.atk)return;
+  const a=Combat.atk;a.t+=dt;
+  if(a.t>=a.start&&a.t<=a.start+a.act){
+    if(!a.proj){
+      const p=P.g.position,y2=P.g.rotation.y;
+      for(const n of npcs){if(n.dead||(!a.multi&&a.hitList.has(n)))continue;   // tatsumaki (multi): boleh kena berulang tiap .12 dtk
+        const dx=n.g.position.x-p.x,dz=n.g.position.z-p.z,d=Math.hypot(dx,dz);
+        if(d>a.range)continue;
+        const ang=Math.atan2(dx,dz),diff=Math.abs(Math.atan2(Math.sin(ang-y2),Math.cos(ang-y2)));
+        if(diff>a.arc)continue;
+        if(a.multi){if(!n._tatsuHit||a.t-n._tatsuHit>.12){n._tatsuHit=a.t;npcTakeDmg(n,a.dmg,a.kb,ang)}}
+        else{npcTakeDmg(n,a.dmg,a.kb,ang);a.hit=true}
+        a.hitList.add(n)}
+      const bx=p.x+Math.sin(y2)*1.4,bz=p.z+Math.cos(y2)*1.4;
+      for(const c of cars){if(c.dead||c.drv||(!a.multi&&a.hitList.has(c)))continue;
+        const dx=c.px-p.x,dz=c.pz-p.z,d=Math.hypot(dx,dz);if(d>a.range+1.2)continue;
+        const ang=Math.atan2(dx,dz),diff=Math.abs(Math.atan2(Math.sin(ang-y2),Math.cos(ang-y2)));if(diff>a.arc)continue;
+        if(a.multi&&c._tatsuHit&&a.t-c._tatsuHit<=.12)continue;c._tatsuHit=a.t;carTakeDmg(c,a.cd);a.hitList.add(c)}
+      const cx=Math.floor(bx),cy=Math.floor(p.y+.5),cz=Math.floor(bz);
+      if(!a.multi||a.bt==null||a.t-a.bt>.12){if(a.multi)a.bt=a.t;
+        for(const yy of[cy,cy+1]){const k=cx+','+yy+','+cz;if(!a.multi&&a.bk.has(k))continue;a.bk.add(k);breakBlockAt(cx,yy,cz,a.bp)}}   // sekali per serangan (dulu tiap frame)
+    }
+  }
+  if(a.t>=a.dur){
+    Combat.atk=null;
+    npcs.forEach(n=>{delete n._tatsuHit});cars.forEach(c=>{delete c._tatsuHit});
+    const u=P.g.userData;u.aL.rotation.x=u.aR.rotation.x=u.lL.rotation.x=u.lR.rotation.x=0;
+  }
+}
+const dashTrail=[];
+function doDash(dir){
+  if(Combat.dead||Combat.guard||Combat.dashCd>0||drv||sit)return;
+  let mx=0,mz=0;const sy=Math.sin(yaw),cy=Math.cos(yaw);
+  if(dir=='w'){mx=-sy;mz=-cy}
+  if(dir=='s'){mx=sy;mz=cy}
+  if(dir=='a'){mx=-cy;mz=sy}
+  if(dir=='d'){mx=cy;mz=-sy}
+  if(!mx&&!mz)return;
+  const p=P.g.position,DIST=CONFIG.DASH_DIST,sx=p.x,sz=p.z,STEP=.25;
+  // Melangkah bertahap dengan aturan tabrakan yang sama seperti berjalan (per sumbu, tinggi maks +.3),
+  // supaya dash berhenti di dinding dan tidak mendarat di dalam blok.
+  for(let d=0;d<DIST;d+=STEP){
+    const nx=lim(p.x+mx*STEP),nz=lim(p.z+mz*STEP);let moved=false;
+    if(hTop(Math.floor(nx+Math.sign(mx)*.25),Math.floor(p.z),p.y)<=p.y+.3){p.x=nx;moved=true}
+    if(hTop(Math.floor(p.x),Math.floor(nz+Math.sign(mz)*.25),p.y)<=p.y+.3){p.z=nz;moved=true}
+    if(!moved)break;
+  }
+  if(Math.hypot(p.x-sx,p.z-sz)<.05)return;   // terhalang sejak awal: tidak memakai cooldown
+  p.y=hTop(Math.floor(p.x),Math.floor(p.z),p.y);
+  P.g.rotation.y=Math.atan2(mx,mz);
+  Combat.invuln=.2;Combat.dashCd=.4;
+  beep(600,.08,'sawtooth',1200);
+  for(let i=0;i<6;i++){const t=i/6;
+    const ex=sx+(p.x-sx)*t,ez=sz+(p.z-sz)*t;
+    const m=new THREE.Mesh(GEO_DASH,MAT_DASH.clone());
+    m.position.set(ex,hTop(Math.floor(ex),Math.floor(ez),p.y)+.5,ez);sc.add(m);
+    dashTrail.push({m,life:.35,life0:.35});}
+}
+function updDashTrail(dt){
+  for(let i=dashTrail.length-1;i>=0;i--){const d=dashTrail[i];d.life-=dt;
+    d.m.material.opacity=Math.max(0,d.life/d.life0*.6);
+    d.m.scale.setScalar(1+(1-d.life/d.life0)*1.5);
+    if(d.life<=0){sc.remove(d.m);d.m.material.dispose();dashTrail.splice(i,1)}}
+}
+const ATK_KEY={u:'pH',j:'kH',i:'hadouken',k:'tatsumaki'};
+const lastTapTime={},lastTapDir={};
+addEventListener('keydown',e=>{
+  if(!play||Combat.dead)return;
+  if(e.target.tagName=='INPUT'&&e.target.type!='color')return;
+  const k=e.key.toLowerCase();if(e.repeat)return;
+  if('wasd'.includes(k)){const now=performance.now();
+    if(lastTapDir[k]&&now-lastTapTime[k]<280){doDash(k);lastTapDir[k]=null}
+    else{lastTapDir[k]=k;lastTapTime[k]=now}}
+  if(k=='shift')Combat.guard=true;
+  if(ATK_KEY[k])startAttack(ATK_KEY[k]);
+});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k=='shift')Combat.guard=false});
+function npcAI(n,dt){
+  if(n.dead)return;
+  if(n.hitstun>0){n.hitstun-=dt;const p=n.g.position;
+    const kx=lim(p.x+(n.kbx||0)*dt),kz=lim(p.z+(n.kbz||0)*dt);
+    if(hTop(Math.floor(kx),Math.floor(kz),p.y)<=p.y+.3){p.x=kx;p.z=kz}else{n.kbx=n.kbz=0}
+    n.kbx=(n.kbx||0)*.85;n.kbz=(n.kbz||0)*.85;return}
+  if(!play||!P)return;
+  if(n.aggr>0)n.aggr-=dt;
+  const dist=Math.hypot(P.g.position.x-n.g.position.x,P.g.position.z-n.g.position.z);
+  if(n.c.beh!='jalan')return;
+  if(n.aggr<=0)return;
+  if(dist<2.2){n.atkCd=(n.atkCd||0)-dt;
+    if(n.atkCd<=0){n.atkCd=1.2+Math.random()*.8;
+      damagePlayer(4+Math.floor(Math.random()*5));swing(n.g,1);
+      const a=Math.atan2(P.g.position.x-n.g.position.x,P.g.position.z-n.g.position.z);
+      n.g.position.x+=Math.sin(a)*.5;n.g.position.z+=Math.cos(a)*.5}}
+}
+function animAttackPose(dt){
+  if(!Combat.atk)return;
+  const a=Combat.atk,u=P.g.userData,t=a.t;
+  if(a.type=='pH'){const ph=t<.18?t/.18:t<.36?1:(a.dur-t)/(a.dur-.36);u.aR.rotation.x=-1.4*Math.max(0,ph)}
+  else if(a.type=='kH'){const ph=t<.20?t/.20:t<.40?1:(a.dur-t)/(a.dur-.40);u.lR.rotation.x=-1.6*Math.max(0,ph)}
+  else if(a.type=='hadouken'){
+    const ph=t<.15?1:Math.max(0,1-(t-.15)/.25);
+    u.aL.rotation.x=-1.2*ph;u.aR.rotation.x=-1.2*ph;
+  }
+  else if(a.type=='tatsumaki'){P.g.rotation.y+=dt*14;u.lL.rotation.x=u.lR.rotation.x=-1.6}
+}
+function animGuard(){
+  const u=P.g.userData;
+  if(Combat.guard){u.aL.rotation.x=-1.5;u.aR.rotation.x=-1.5;u.aL.rotation.z=-.3;u.aR.rotation.z=.3}
+  else if(!Combat.atk){u.aL.rotation.z=0;u.aR.rotation.z=0}
+}
+function makeNpcBar(n){
+  if(n.c.role&&n.c.role!='warga')return;
+  const c=document.createElement('canvas');c.width=64;c.height=8;
+  const tex=new THREE.CanvasTexture(c);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false}));
+  s.scale.set(1.2,.15,1);s.position.y=2.5;s.raycast=()=>{};
+  n.g.add(s);n.bar={s,c,tex};n.hpDirty=true;
+}
+function updNpcBars(){
+  for(const n of npcs){
+    if(!n.bar||!n.hpDirty)continue;
+    n.hpDirty=false;
+    const x=n.bar.c.getContext('2d');x.clearRect(0,0,64,8);
+    x.fillStyle='#300';x.fillRect(0,0,64,8);
+    const r=Math.max(0,(n.hp||40)/40);
+    x.fillStyle=r>.5?'#4caf50':r>.25?'#ffb02e':'#f44336';
+    x.fillRect(0,0,64*r,8);n.bar.tex.needsUpdate=true;
+  }
+}
+
+function toggle(){play=!play;if(!play){repairAll();closeShop();endPolice();restorePop()}   // keluar dari Main: semua kerusakan langsung pulih
+ 
+ ghost.visible=false;
+ $('bar').style.display=$('side').style.display=$('cat').style.display=play?'none':'';
+ $('mode').textContent=play?'⏹ Kreator':'▶ Main';
+ if(play){
+   P={g:makeChar(cc()),ph:0};P.g.position.set(.5,hTop(0,0,99),.5);sc.add(P.g);dist=9;vy=0;grid.visible=false;fp=false;sit=false;drv=null;coins=0;coinTot=0;coinTot=CO.size;$('hud').style.display='';if(TOUCH){$('joy').style.display='block';$('tb').style.display='flex'}hudU();say('U pukul · J tendang · I hadouken · K tatsumaki');
+   Combat.hp=Combat.hpMax;Combat.dead=false;Combat.jumpCount=0;Combat.jumpPressed=false;Combat.guard=false;Combat.atk=null;Combat.invuln=0;Combat.dashCd=0;
+   updHpBar();$('hpbar').style.display='block';$('dmg').style.display='block';
+   $('compass').style.display='block';
+   npcs.forEach(n=>{if(!n.bar&&!n.dead)makeNpcBar(n);n.hp=n.hp||40;n.hpDirty=true;n.aggr=0});
+   SNAP={n:npcs.filter(n=>!n.temp).map(n=>({n,x:n.g.position.x,z:n.g.position.z,y:n.g.position.y,c:n.c})),c:cars.map(c=>({c,x:c.x,z:c.z,col:c.col}))};
+ }
+ else{
+   if(drv){releaseCar(drv);drv=null}
+   sc.remove(P.g);disp(P.g);P=null;dist=26;grid.visible=true;if(fp){fp=false;pitch=.7}
+   for(const b of CO)if(b.got){b.got=false;b.m.visible=true}
+   for(const p of projectiles){sc.remove(p.m)}projectiles.length=0;
+   for(const s of sparks){sc.remove(s.p);s.p.geometry.dispose();s.p.material.dispose()}sparks.length=0;
+   for(const d of dashTrail){sc.remove(d.m);d.m.material.dispose()}dashTrail.length=0;
+   Combat.hp=Combat.hpMax;Combat.dead=false;Combat.guard=false;
+   Combat.jumpPressed=false;Combat.jumpCount=0;Combat.dashCd=0;Combat.invuln=0;Combat.atk=null;
+   comboN=0;comboT=0;$('combo').style.display='none';
+   $('hud').style.display=$('joy').style.display=$('tb').style.display='none';
+   $('hpbar').style.display='none';$('dmg').style.display='none';
+   $('compass').style.display='none';
+ }
+ ['ld','im','un','re','bgen','bseed','brb','sz'].forEach(i=>$(i).disabled=play);help()}
+function help(){$('help').textContent=play?'WASD jalan · Spasi lompat (2× = dobel) · Shift guard · 2× arah dash · U pukul · J tendang · I hadouken · K tatsumaki · E pintu · F mobil · Q duduk · V kamera · Esc keluar':'Klik: taruh · Shift+seret: isi area · Ctrl+Z: undo · 1-4: alat · C: katalog · WASD: geser kamera'}
+function updPlayer(dt){
+  const wantJump=Combat.jumpPressed;Combat.jumpPressed=false;
+  if(drv){drive(dt);return}
+  if(sit){follow(P.g.position,dt);return}
+  if(Combat.dead)return;
+  if(Combat.invuln>0)Combat.invuln-=dt;
+  if(Combat.dashCd>0)Combat.dashCd-=dt;
+  animAttackPose(dt);animGuard();updAttack(dt);
+  const p=P.g.position,f=(K.w||0)-(K.s||0)-JV.y,r=(K.d||0)-(K.a||0)+JV.x,sy=Math.sin(yaw),cy=Math.cos(yaw);
+  let mx=-sy*f+cy*r,mz=-cy*f-sy*r;const l=Math.hypot(mx,mz);
+  const spd=Combat.guard?CONFIG.GUARD_SPEED:CONFIG.MOVE_SPEED;
+  const lockMove = Combat.atk && (Combat.atk.type=='pH'||Combat.atk.type=='kH');
+  if(l>0&&!lockMove){
+    mx/=l;mz/=l;const sp=spd*dt,nx=p.x+mx*sp,nz=p.z+mz*sp;
+    if(hTop(Math.floor(nx+Math.sign(mx)*.25),Math.floor(p.z),p.y)<=p.y+.3)p.x=nx;
+    if(hTop(Math.floor(p.x),Math.floor(nz+Math.sign(mz)*.25),p.y)<=p.y+.3)p.z=nz;
+    P.g.rotation.y=Math.atan2(mx,mz);
+    if(!Combat.guard){P.ph+=dt*10;swing(P.g,P.ph)}else swing(P.g,0);
+  } else swing(P.g,0);
+  // First person: badan menghadap arah kamera (bukan arah gerak), supaya pukulan & hadouken keluar ke arah yang dilihat. Putaran tatsumaki dibiarkan.
+  if(fp&&!(Combat.atk&&Combat.atk.type=='tatsumaki'))P.g.rotation.y=yaw+Math.PI;
+  p.x=lim(p.x);p.z=lim(p.z);
+  vy-=CONFIG.GRAVITY*dt;p.y+=vy*dt;
+  if(vy>0&&solidAt(Math.floor(p.x),Math.floor(p.y+1.85),Math.floor(p.z))){p.y=Math.floor(p.y+1.85)-1.85;vy=0}
+  const g=hTop(Math.floor(p.x),Math.floor(p.z),p.y);
+  if(p.y<=g){p.y=g;vy=0;onG=true}else onG=false;
+  if(wantJump&&!Combat.guard){
+    if(onG){vy=CONFIG.JUMP_1;Combat.jumpCount=1}
+    else if(Combat.jumpCount<2){vy=CONFIG.JUMP_2;Combat.jumpCount=2;beep(700,.08,'sine',900)}
+  }
+  if(onG)Combat.jumpCount=0;
+  coinCheck(p);follow(p,dt)
+}
+/* Batas gerak kamera mode kreator.
+   Yang digeser adalah titik yang dilihat (tgt), sedangkan kamera berada sejauh dist*cos(pitch) di belakangnya.
+   Jika hanya tgt yang dijepit ke tepi peta, kamera tampak "berhenti di tengah peta" saat di-zoom-out
+   (makin jauh zoom, makin jauh kamera dari tgt). Karena itu tgt boleh melewati tepi sejauh offset kamera,
+   sehingga kamera sendiri selalu bisa mencapai tepi peta di semua level zoom. */
+function panLimit(){const c=Math.cos(pitch)*dist,ox=Math.sin(yaw)*c,oz=Math.cos(yaw)*c,h=S/2;
+ return{x0:-h-Math.max(ox,0),x1:h+Math.max(-ox,0),z0:-h-Math.max(oz,0),z1:h+Math.max(-oz,0)}}
+/* Gerak keras di dalam batas. Jika zoom membuat batas menyempit dan tgt sudah di luar, tgt ditarik masuk halus (tanpa lompatan). */
+const panAxis=(v,mv,lo,hi,k)=>{let n=v+mv;if(n<lo)n=Math.max(n,Math.min(v,lo));if(n>hi)n=Math.min(n,Math.max(v,hi));return n<lo?n+(lo-n)*k:n>hi?n+(hi-n)*k:n};
+function pan(dt){const f=(K.w||0)-(K.s||0),r=(K.d||0)-(K.a||0),sy=Math.sin(yaw),cy=Math.cos(yaw),s=14*dt*Math.max(1,dist/20),L=panLimit(),k=Math.min(1,8*dt);
+ tgt.x=panAxis(tgt.x,(-sy*f+cy*r)*s,L.x0,L.x1,k);tgt.z=panAxis(tgt.z,(-cy*f-sy*r)*s,L.z0,L.z1,k);tgt.y-=tgt.y*Math.min(1,6*dt)}
+$('mode').onclick=toggle;
+$('rnd').onclick=()=>{const R2=()=>'#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');['hair','shirt','pants'].forEach(i=>$(i).value=R2());$('skin').value=['#f1c27d','#e0ac69','#8d5524','#ffdbac','#c68642'][Math.floor(Math.random()*5)]};
+$('sv').onclick=()=>{
+  let js;
+  try{js=ser()}catch(e){return msg('Gagal menyimpan: '+e.message)}
+  const mb=(js.length/1048576).toFixed(1);
+  try{localStorage.setItem('kk'+$('slot').value,js);msg('Tersimpan di slot '+$('slot').value+' ('+mb+' MB)')}
+  catch(e){
+    const quota=e&&(e.name=='QuotaExceededError'||e.name=='NS_ERROR_DOM_QUOTA_REACHED'||e.code==22||e.code==1014);
+    msg(quota?'Penyimpanan penuh ('+mb+' MB). Kosongkan slot lain atau pakai ⬇ Ekspor':'Gagal menyimpan: penyimpanan browser tidak tersedia');
+  }
+};
+/* v34: mobil yang sedang dikemudikan dilepas bila dihapus dari kota (clear/setCity), supaya pemain tidak mengendalikan mobil 'hantu'. */
+function dropDrive(){if(!drv)return;drv.drv=0;drv=null;if(P)P.g.visible=true}
+/* v34: keluar dari Main memulihkan blok (repairAll), maka NPC & mobil yang hancur/tumbang selama Main ikut dipulihkan
+   (sebelumnya kota makin sepi tiap sesi). cityGen++ membatalkan timer mobil pengganti agar tidak ada kelebihan mobil. */
+function restorePop(){const s=SNAP;SNAP=null;cityGen++;if(!s)return;
+  for(const e of s.n)if(e.n.dead||!npcs.includes(e.n))addNpc(e.x,e.z,e.c,e.y);
+  for(const e of s.c)if(!cars.includes(e.c))addCar(e.x,e.z,e.col)||addCar(e.x,e.z,e.col,1.2)}
+function clear(){cityGen++;SNAP=null;dropDrive();
+  RB=[];REP.length=0;WRK.splice(0).forEach(w=>{sc.remove(w.g);disp(w.g)});
+  [...H.values()].forEach(del);
+  [...npcs.splice(0),...cars.splice(0)].forEach(n=>{sc.remove(n.g);disp(n.g)});
+}
+$('ld').onclick=()=>{try{const s=localStorage.getItem('kk'+$('slot').value);if(!s)return msg('Slot kosong');des(s);msg('Kota dimuat')}catch(e){msg('Gagal memuat: '+e.message)}};
+// Blok -> daftar entri [x,y,z,tipe,warna] atau [x,y,z,tipe,warna,n] bila n>1 petak berurutan di sumbu z (tipe & warna sama).
+// Urutan x,y,z menjamin blok di bawah selalu ditulis lebih dulu (dibutuhkan dekorasi yang bertumpu pada blok bawahnya).
+function packBlocks(){
+  const L=[...H.values(),...REP.filter(r=>!H.has(r.x+','+r.y+','+r.z))].sort((a,b)=>a.x-b.x||a.y-b.y||a.z-b.z),out=[];let r=null;
+  for(const b of L){const c=b.c==null?null:b.c;
+    if(r&&r[0]==b.x&&r[1]==b.y&&r[2]+(r[5]||1)==b.z&&r[3]==b.t&&r[4]===c){r[5]=(r[5]||1)+1;continue}
+    r=[b.x,b.y,b.z,b.t,c];out.push(r)}
+  return out}
+const ser=()=>JSON.stringify({v:CONFIG.SAVE_VER,b:packBlocks(),n:npcs.filter(n=>!n.temp&&!n.dead).map(n=>[n.g.position.x,n.g.position.z,n.c,n.g.position.y]),c:cars.map(c=>[c.x,c.z,c.col]),s:S,r:RB,d:CAL.day,t:tv,w:[WAL.money,WAL.spd,WAL.hp]});
+const isInt=v=>Number.isInteger(v), isNum=v=>typeof v=='number'&&isFinite(v);
+const hex6=(v,d)=>typeof v=='string'&&/^#[0-9a-fA-F]{6}$/.test(v)?v:d,oneOf=(v,L,d)=>L.includes(v)?v:d;
+function cleanNpc(c){return{skin:hex6(c.skin,'#f1c27d'),hair:hex6(c.hair,'#3b2a1a'),shirt:hex6(c.shirt,'#2f80ed'),pants:hex6(c.pants,'#333b55'),
+ hs:oneOf(c.hs,['pendek','panjang','topi','jambul','botak'],'pendek'),ac:oneOf(c.ac,['tidak','kacamata','tas'],'tidak'),
+ name:typeof c.name=='string'?c.name.slice(0,30):'',say:typeof c.say=='string'?c.say.slice(0,60):'',
+ beh:oneOf(c.beh,['jalan','diam','ikut','duduk'],'jalan'),role:Object.prototype.hasOwnProperty.call(ROLES,c.role)?c.role:undefined}}
+const cleanRB=r=>(Array.isArray(r)?r:[]).filter(q=>q&&[q.cx,q.cz,q.ri,q.ro,q.rm].every(isNum)).map(q=>({cx:q.cx,cz:q.cz,ri:q.ri,ro:q.ro,rm:q.rm,arms:Array.isArray(q.arms)?q.arms.filter(a=>Array.isArray(a)&&isNum(a[0])&&isNum(a[1])):undefined}));
+// Validasi SELURUH berkas sebelum menyentuh kota yang sedang berjalan; error dilempar dengan pesan yang jelas.
+function parseSave(s){
+  let d;try{d=JSON.parse(s)}catch(e){throw new Error('bukan berkas JSON yang valid')}
+  if(!d||typeof d!='object'||!Array.isArray(d.b))throw new Error('format tidak dikenali')
+  if(d.v&&d.v>CONFIG.SAVE_VER)throw new Error('save versi '+d.v+' tidak didukung')
+  const blocks=[];
+  for(let i=0;i<d.b.length;i++){const a=d.b[i];
+    if(!Array.isArray(a)||!isInt(a[0])||!isInt(a[1])||!isInt(a[2])||typeof a[3]!='string'||(a[4]!=null&&typeof a[4]!='string')||(a.length>5&&!(isInt(a[5])&&a[5]>=1&&a[5]<=100000)))
+      throw new Error('blok rusak pada entri #'+i);
+    const n=a[5]||1;for(let k=0;k<n;k++)blocks.push([a[0],a[1],a[2]+k,a[3],a[4]==null?undefined:a[4]])}
+  const npcL=(Array.isArray(d.n)?d.n:[]).filter(a=>Array.isArray(a)&&isNum(a[0])&&isNum(a[1])&&a[2]&&typeof a[2]=='object'&&(a[3]==null||isNum(a[3]))).map(a=>[a[0],a[1],cleanNpc(a[2]),a[3]==null?undefined:a[3]]);
+  const carL=(Array.isArray(d.c)?d.c:[]).filter(a=>Array.isArray(a)&&isNum(a[0])&&isNum(a[1])).map(a=>[a[0],a[1],/^#[0-9a-fA-F]{6}$/.test(a[2])?a[2]:undefined]);
+  return{d,blocks,npcL,carL}}
+function des(s){
+  const{d,blocks,npcL,carL}=parseSave(s);
+  if([40,64,96,128,192,256,400].includes(d.s)&&d.s!=S){setCity(d.s);$('sz').value=d.s}
+  if(isInt(d.d)&&d.d>=0&&d.d<3e7){setDay(d.d);if(isNum(d.t)&&d.t>=0&&d.t<1){tv=d.t;$('tm').value=tv*100}}   // tanggal & jam (save lama tanpa field ini: kalender tidak diubah)
+  if(Array.isArray(d.w)&&d.w.length>=3&&d.w.every(isNum)){WAL.money=Math.max(0,d.w[0]|0);WAL.spd=Math.min(3,Math.max(0,d.w[1]|0));WAL.hp=Math.min(3,Math.max(0,d.w[2]|0));applyUp()}
+  clear();RB=cleanRB(d.r);
+  blocks.forEach(a=>put(...a));npcL.forEach(a=>addNpc(...a));carL.forEach(a=>addCar(...a));U=[];R=[]}
+$('ex').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ser()],{type:'application/json'}));a.download='kota-kotak.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
+$('im').onclick=()=>$('fi').click();
+$('fi').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(s=>{des(s);msg('Kota diimpor')}).catch(e=>msg('Impor gagal: '+e.message));e.target.value=''};
+$('un').onclick=undo;$('re').onclick=redo;
+function pickM(id){cur=id;rec=[id,...rec.filter(x=>x!=id)].slice(0,8);selTool('blok');renderCat()}
+$('cb').oninput=()=>pickM('blok');$('q').oninput=renderCat;
+function renderCat(){const q=$('q').value.toLowerCase(),TA=['★ Terakhir',...CAT];
+ let L=Object.values(MD).filter(d=>q?d.name.toLowerCase().includes(q):ctab==0?rec.includes(d.id):d.cat==ctab-1);
+ if(ctab==0&&!q)L.sort((a,b)=>rec.indexOf(a.id)-rec.indexOf(b.id));
+ $('ch').innerHTML='<b>Material: '+MD[cur].name+'</b>';$('ct').innerHTML='';
+ TA.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;if(i==ctab)b.className='on';b.onclick=()=>{ctab=i;renderCat()};$('ct').appendChild(b)});
+ $('cg').innerHTML='';L.forEach(d=>{const s=document.createElement('div');s.className='sw'+(d.id==cur?' on':'');
+  s.style.background=d.id=='blok'?$('cb').value:d.o.tr||d.o.emit?d.base:"url('"+(d.tx||(d.tx=mkTex(d.base,d.pat))).image.toDataURL()+"')";
+  s.style.backgroundSize='cover';s.innerHTML='<span>'+d.name+'</span>';s.onclick=()=>pickM(d.id);$('cg').appendChild(s)})}
+$('tm').oninput=e=>{tv=e.target.value/100;au=false;$('bauto').classList.remove('on')};
+$('bauto').onclick=()=>{au=!au;$('bauto').classList.toggle('on',au)};
+// UI kalender: label di toolbar + panel (klik tombol 📅). Teks hanya ditulis ulang bila berubah.
+let calKey='',calLbl='';
+function renderCalPanel(){
+  const c=calInfo(),g=c.g,h=c.h,ph=moonPhase(),mi=moonIdx(ph),n=gDim(g.y,g.m),first=((g.wd-(g.d-1))%7+7)%7;
+  let grid=WEEKDAYS.map(w=>'<span class="ch">'+w.slice(0,3)+'</span>').join('');
+  for(let i=0;i<first;i++)grid+='<span></span>';
+  for(let i=1;i<=n;i++)grid+='<span class="cd'+(i==g.d?' now':i<g.d?' past':'')+'">'+i+'</span>';
+  $('calp').innerHTML='<b>'+WEEKDAYS[g.wd]+', '+g.d+' '+MONTHS[g.m]+' '+gYearLbl(g.y)+'</b>'+
+   '<div>'+SEASON_ICON[c.season]+' Musim '+SEASONS[c.season]+' · '+n+' hari bulan ini · tahun '+(isLeap(g.y)?366:365)+' hari</div><div class="cdays">'+grid+'</div>'+
+   '<div>🌙 '+h.d+' '+HMONTHS[h.m]+' '+hYearLbl(h.y)+' · bulan '+h.len+' hari</div>'+
+   '<div>'+MOON_ICON[mi]+' '+MOON_NAMES[mi]+' (hari ke-'+h.d+' Hijriah)</div>'+
+   '<div class="crow"><button data-d="1" title="Maju satu hari">+1 hari</button><button data-d="7" title="Maju satu pekan">+1 pekan</button><button data-m="1" title="Maju satu bulan Masehi">+1 bulan</button>'+
+   SEASONS.map((n,i)=>'<button data-s="'+i+'" title="Lompat ke awal musim '+n+'">'+SEASON_ICON[i]+'</button>').join('')+'</div>';
+}
+function updCalUI(){
+  const c=calInfo(),mi=moonIdx(moonPhase()),lbl='📅 '+c.g.d+' '+MONTHS[c.g.m].slice(0,3)+' '+gYearLbl(c.g.y)+' · 🌙 '+c.h.d+' '+HMONTHS[c.h.m].slice(0,3)+' '+hYearLbl(c.h.y)+' '+MOON_ICON[mi];
+  if(lbl!==calLbl){calLbl=lbl;$('cal').textContent=lbl}
+  const key=CAL.day+'|'+mi;if(key!==calKey){calKey=key;if($('calp').classList.contains('open'))renderCalPanel()}
+}
+$('cal').onclick=()=>{const p=$('calp');if(p.classList.toggle('open'))renderCalPanel()};
+$('calp').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.d)setDay(CAL.day+(+b.dataset.d),true);else if(b.dataset.m)addMonths(+b.dataset.m);else if(b.dataset.s!=null)jumpToSeason(+b.dataset.s);
+  renderCalPanel()};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#calw'))$('calp').classList.remove('open')});
+
+/* ============================================================
+   LALU LINTAS
+   ============================================================ */
+/* Jarak mobil - satu sumber angka:
+   CAR_MIN       jarak minimum antar-pusat mobil (dipakai dorongan separateCars, penolakan addCar, dan tabrakan mobil pemain)
+   CAR_SPAWN_GAP jarak minimum saat spawn acak (lebih longgar supaya mobil baru tidak langsung berdesakan)
+   Pembagian tugas: blk() = mengerem agar tidak menabrak dari belakang; separateCars() = satu-satunya dorongan
+   untuk sisa tumpang tindih (persimpangan, belokan, mobil pemain). */
+const CAR_MIN=2.8,CAR_SPAWN_GAP=3.8;
+function rd(a){return a[RNG()*a.length|0]}function rn(n){return RNG()*n|0}
+function run(x,z,a,b,m){let n=0;while(n<m&&isRoad(x+a*(n+1),z+b*(n+1)))n++;return n}
+const isI=(x,z)=>isRoad(x,z)&&!inRB(x,z)&&run(x,z,1,0,10)+run(x,z,-1,0,10)>=12&&run(x,z,0,1,10)+run(x,z,0,-1,10)>=12;
+const ctl2=(x,z)=>{for(const b of LTS)if(Math.abs(b.x-x)<=9&&Math.abs(b.z-z)<=9)return 1;return 0};
+function laneC(c){const cx=Math.floor(c.px),cz=Math.floor(c.pz);if(!isRoad(cx,cz))return null;const hx=c.dx,a=hx?0:1,b=hx?1:0,lo=run(cx,cz,-a,-b,8),hi=run(cx,cz,a,b,8),W=lo+hi+1;if(W>10)return null;
+ const mn=(hx?cz:cx)-lo,rs=hx?hx:-c.dz;return mn+W*(rs>0?.75:.25)}
+function setCar(c,dt){c.x=Math.floor(c.px);c.z=Math.floor(c.pz);c.g.position.set(c.px,.1,c.pz);const t=Math.atan2(c.dx,c.dz);if(c.a===undefined)c.a=t;c.a+=Math.atan2(Math.sin(t-c.a),Math.cos(t-c.a))*Math.min(1,dt*8);c.g.rotation.y=c.a}
+function addCar(x,z,col,gap=CAR_MIN){
+  const px=x+.5,pz=z+.5;
+  if(cars.some(o=>Math.hypot(o.px-px,o.pz-pz)<gap))return null;
+  col=col||['#e74c3c','#f1c40f','#2ecc71','#3498db','#ecf0f1','#9b59b6'][rn(6)];const g=new THREE.Group();
+ g.add(box(1.5,.5,3.4,col,0,.5,0),box(1.3,.45,1.7,'#bfe6ff',0,.98,-.2));
+ for(const sx of[-1,1]){for(const sz of[-1,1])g.add(box(.26,.5,.55,'#111111',sx*.78,.25,sz*1.1));const l=new THREE.Mesh(BG,CAR_HL),t=new THREE.Mesh(BG,CAR_TL);l.scale.set(.34,.2,.04);l.position.set(sx*.5,.6,1.71);t.scale.set(.34,.2,.04);t.position.set(sx*.5,.6,-1.71);g.add(l,t)}
+ {const bm=new THREE.Mesh(BEAM_G,BEAM_M);bm.position.y=.03;bm.raycast=()=>{};g.add(bm)}
+ const c={g,px,pz,dx:0,dz:0,s:3+Math.random()*1.6,col,inI:0,id:++CID};g.userData.npc=c;sc.add(g);cars.push(c);pickDir(c);
+ const L=laneC(c);if(L!=null){if(c.dx)c.pz=L;else c.px=L}c.a=Math.atan2(c.dx,c.dz);
+ if(cars.some(o=>o!==c&&Math.hypot(o.px-c.px,o.pz-c.pz)<gap)){cars.pop();sc.remove(g);disp(g);return null}
+ setCar(c,0);return c}
+function releaseCar(c){const g=c.g;c.drv=0;c.arc=null;c.inI=0;c.px=g.position.x;c.pz=g.position.z;const m=Math.abs(Math.sin(c.h))>Math.abs(Math.cos(c.h));c.dx=m?Math.sign(Math.sin(c.h)):0;c.dz=m?0:Math.sign(Math.cos(c.h));c.a=c.h}
+function togFP(){fp=!fp;
+ // Arah pandang kamera = (-sin yaw, -cos yaw); arah hadap karakter = (sin r, cos r) -> yaw = r + PI. Pitch 0 = menatap lurus (bukan miring ke bawah seperti kamera orang ketiga).
+ if(fp){if(play&&P){yaw=P.g.rotation.y+Math.PI;pitch=0}}else pitch=Math.max(.1,pitch)}
+function useF(){if(sit)return;
+ if(drv){const c=drv,g=c.g,y=g.position.y;drv=null;releaseCar(c);let ex=g.position.x+Math.cos(c.h)*1.8,ez=g.position.z-Math.sin(c.h)*1.8;
+  if(hTop(Math.floor(ex),Math.floor(ez),y)>y+.6){ex=g.position.x-Math.cos(c.h)*1.8;ez=g.position.z+Math.sin(c.h)*1.8}
+  P.g.position.set(ex,hTop(Math.floor(ex),Math.floor(ez),y+.6),ez);vy=0;beep(200,.1,'square');return}
+ let b=null,bd=4;cars.forEach(c=>{const d=Math.hypot(c.g.position.x-P.g.position.x,c.g.position.z-P.g.position.z);if(d<bd){bd=d;b=c}});
+ if(b){drv=b;b.drv=1;b.v=0;b.h=b.g.rotation.y;b.arc=null;say('Mengemudi: W/S gas-rem, A/D belok, F turun');beep(330,.1,'square')}}
+/* Mobil yang sama-sama berbelok di persimpangan tidak boleh punya busur yang saling memotong.
+   Sebelumnya dua mobil belok kiri dari arah berlawanan bisa berjalan berdampingan (jarak < 2.4) di tengah
+   persimpangan sampai saling menembus: blk() hanya melihat kerucut lurus, sedangkan busur melengkung, dan
+   busur yang sudah berjalan tidak bisa dihentikan di titik aman. Karena itu diputuskan DI AWAL belokan:
+   bila busur baru memotong busur mobil lain yang sedang berbelok, belokan dibatalkan (mobil lurus saja).
+   Dua busur yang bersilangan tidak pernah ada bersamaan, jadi tidak ada mobil yang saling menunggu.
+   Bundaran (arc.rt) tidak ikut: sudah diatur rbCheck(). */
+const ARC_N=14,ARC_R=2.4;
+const isTurn=c=>c.arc&&!c.arc.rt;
+function arcPt(c,s){const A=c.arc,rem=(A.end-A.th)*A.dir,L=Math.max(0,rem)*A.r;
+ if(s<=L){const th=A.th+A.dir*s/A.r;return[A.cx+A.r*Math.cos(th),A.cz+A.r*Math.sin(th)]}
+ return[A.cx+A.r*Math.cos(A.end)+A.d[0]*(s-L),A.cz+A.r*Math.sin(A.end)+A.d[1]*(s-L)]}
+function arcBlocked(c){const P=[];for(let i=0;i<=ARC_N;i++)P.push(arcPt(c,i));
+ for(const o of cars){if(o===c||!isTurn(o))continue;
+  if(Math.hypot(o.arc.cx-c.arc.cx,o.arc.cz-c.arc.cz)<.5&&o.arc.d[0]===c.arc.d[0]&&o.arc.d[1]===c.arc.d[1])continue; // busur yang sama (antre): diatur blk()
+  for(let j=0;j<=ARC_N;j++){const q=arcPt(o,j);for(const a of P)if(Math.hypot(a[0]-q[0],a[1]-q[1])<ARC_R)return 1}}
+ return 0}
+function startTurn(c,d){const hx=c.dx,hz=c.dz;let ex=Math.floor(c.px),ez=Math.floor(c.pz),n=0;while(n++<14&&isI(ex,ez)){ex+=d[0];ez+=d[1]}
+ let U2=null;if(isRoad(ex,ez))U2=laneC({px:ex+.5,pz:ez+.5,dx:d[0],dz:d[1]});
+ const s1=hx||hz,u0=hx?c.px:c.pz,r=U2==null?0:s1*(U2-u0);
+ if(r<.8||r>12){c.dx=d[0];c.dz=d[1];return}
+ const cx=c.px+d[0]*r,cz=c.pz+d[1]*r,th=Math.atan2(-d[1],-d[0]),dir=(-d[0]*hz+d[1]*hx)>0?1:-1;
+ c.arc={cx,cz,r,th,end:th+dir*Math.PI/2,dir,d}}
+function pickDir(c,nx,nz){if(nx===undefined){const D2=[[1,0],[-1,0],[0,1],[0,-1]].filter(([a,b])=>run(Math.floor(c.px),Math.floor(c.pz),a,b,10)>=9),p=D2.length?rd(D2):[0,0];c.dx=p[0];c.dz=p[1];c.inI=0;return}
+ const hx=c.dx,hz=c.dz,I=isI(nx,nz),was=c.inI;c.inI=I?1:0;
+ if(I&&!was){const rt=[-hz,hx],lf=[hz,-hx],can=d=>run(nx,nz,d[0],d[1],4)>=3,o=[];if(can(rt))o.push(rt);if(can(lf))o.push(lf);
+  let ex=nx,ez=nz,k=0;while(k++<14&&isI(ex,ez)){ex+=hx;ez+=hz}const st=isRoad(ex,ez);   // lurus hanya bila di depan masih JALAN (dulu trotoar dianggap bisa dilewati -> mobil lurus naik trotoar di pertigaan)
+  if(o.length&&(!st||Math.random()<.4)){startTurn(c,rd(o));if(c.arc&&arcBlocked(c)){c.arc=null;if(!st){c.dx=-hx;c.dz=-hz}}return}
+  if(!st){c.dx=-hx;c.dz=-hz}return}
+ if(!I&&was)return;
+ if(!I&&!isRoad(nx+hx,nz+hz)){c.dx=-hx;c.dz=-hz}}   // ujung jalan: putar balik sebelum menyentuh trotoar/rumput
+function faceRoadCar(c){const x=Math.floor(c.px),z=Math.floor(c.pz),D4=[[1,0],[-1,0],[0,1],[0,-1]],r=D4.map(([a,b])=>run(x,z,a,b,10)),best=Math.max(...r);c.inI=0;c.wt=0;c.arc=null;
+ if(best<1){c.dx=c.dz=0;c.dead=1;return}   // petak jalan terpencil tanpa tetangga: tak bisa jalan ke mana pun
+ const ok=D4.filter((d,i)=>r[i]>=Math.min(9,best)),p=ok[Math.random()*ok.length|0];c.dx=p[0];c.dz=p[1]}
+function updCar(c,dt){if(c.drv)return;
+ const cx0=Math.floor(c.px),cz0=Math.floor(c.pz);
+ if(!c.arc && !isRoad(cx0,cz0)){
+   // Mobil di luar jalan (terdorong, diparkir pemain, dll): cari petak jalan terdekat (cincin makin lebar, maks 40 petak),
+   // geser ke sana lalu hadapkan searah jalan. Target disimpan supaya tidak dicari ulang tiap frame.
+   if(!c._rt||!isRoad(c._rt[0],c._rt[1])){
+     let bd=Infinity,bx=0,bz=0;
+     for(let r=1;r<=40&&bd===Infinity;r++)for(let dx=-r;dx<=r;dx++)for(let dz=-r;dz<=r;dz++){
+       if(Math.max(Math.abs(dx),Math.abs(dz))!==r||!isRoad(cx0+dx,cz0+dz))continue;
+       const d=dx*dx+dz*dz;if(d<bd){bd=d;bx=cx0+dx;bz=cz0+dz}}
+     if(bd===Infinity){c.dead=1;return}   // tak ada jalan sama sekali: mobil dibuang
+     c._rt=[bx,bz]}
+   const tx=c._rt[0]+.5,tz=c._rt[1]+.5,ddx=tx-c.px,ddz=tz-c.pz,dd=Math.hypot(ddx,ddz)||1,st=Math.min(dd,Math.max(2,Math.min(5,dd*3))*dt);
+   c.px+=ddx/dd*st;c.pz+=ddz/dd*st;
+   c.dx=Math.abs(ddx)>Math.abs(ddz)?Math.sign(ddx):0;c.dz=c.dx?0:Math.sign(ddz);   // badan menghadap arah gerak
+   setCar(c,dt);
+   if(isRoad(Math.floor(c.px),Math.floor(c.pz))){c._rt=null;faceRoadCar(c)}
+   return;
+ }
+ c._rt=null;
+ if(c.arc){const A=c.arc;
+  const bk=blk(c,3.8,1.7),gw=(c.wt=bk?(c.wt||0)+dt:0)>20;if(gw&&c.wt>23)c.wt=0;if(bk&&!gw)return;
+  if(A.rt)A.r+=(A.rt-A.r)*Math.min(1,3*dt);A.th+=A.dir*c.s*.8*dt/A.r;const done=(A.th-A.end)*A.dir>=0;if(done)A.th=A.end;
+  c.px=A.cx+A.r*Math.cos(A.th);c.pz=A.cz+A.r*Math.sin(A.th);c.a=Math.atan2(-Math.sin(A.th)*A.dir,Math.cos(A.th)*A.dir);
+  if(done){c.arc=null;c.dx=A.d[0];c.dz=A.d[1];c.inI=isI(Math.floor(c.px),Math.floor(c.pz))?1:0}setCar(c,0);return}
+ const hx=c.dx,hz=c.dz;if(!hx&&!hz){pickDir(c);return}
+ const cx=Math.floor(c.px),cz=Math.floor(c.pz);if(!isRoad(cx,cz))return;
+ if(rbCheck(c))return;
+ const ax=Math.floor(c.px+hx*2.2),az=Math.floor(c.pz+hz*2.2),inA=(x,z)=>isI(x,z)||isZ(x,z),
+ stop=(inA(ax,az)&&!inA(cx,cz)&&ctl2(ax,az)&&(hx?xs:zs)!='G')||blk(c,4.2,1.4);
+ const gw=(c.wt=stop?(c.wt||0)+dt:0)>20;if(gw&&c.wt>23)c.wt=0;
+ if(!stop||gw){c.px+=hx*c.s*dt;c.pz+=hz*c.s*dt}
+ const nx=Math.floor(c.px),nz=Math.floor(c.pz);if(nx!=cx||nz!=cz)pickDir(c,nx,nz);
+ if(!c.arc&&(!stop||gw)){const L=laneC(c),m=Math.min(4,c.s*.25)*dt;if(L!=null){if(c.dx)c.pz+=Math.max(-m,Math.min(m,L-c.pz));else c.px+=Math.max(-m,Math.min(m,L-c.px))}}
+ setCar(c,dt)}
+const stepOK=(c,sx,sz)=>isRoad(Math.floor(c.px+sx),Math.floor(c.pz+sz))||!isRoad(Math.floor(c.px),Math.floor(c.pz));   // tujuan dorongan masih jalan (atau mobil memang sudah di luar jalan)
+function separateCars(){
+  const free=c=>!c.drv&&!c.arc; // mobil pemain & mobil yang sedang berbelok mengikuti lintasannya sendiri: tidak didorong
+  for(let pass=0;pass<2;pass++){
+    let moved=0;
+    for(let i=0;i<cars.length;i++){
+      const a=cars[i],fa=free(a);
+      for(let j=i+1;j<cars.length;j++){
+        const b=cars[j],fb=free(b);
+        if(!fa&&!fb)continue;
+        const dx=b.px-a.px,dz=b.pz-a.pz,d=Math.hypot(dx,dz);
+        if(d>=CAR_MIN||d<.001)continue;
+        const k=(CAR_MIN-d)*.5,ux=dx/d,uz=dz/d;
+        // Dorongan tidak boleh mengeluarkan mobil dari jalan: bila a terhalang, b menerima seluruh dorongan; bila b juga terhalang, tidak ada yang bergerak.
+        let ka=fa?k:0,kb=fb?k:0;
+        if(ka&&!stepOK(a,-ux*ka,-uz*ka)){if(fb)kb+=ka;ka=0}
+        if(kb&&!stepOK(b,ux*kb,uz*kb))kb=0;
+        a.px-=ux*ka;a.pz-=uz*ka;b.px+=ux*kb;b.pz+=uz*kb;
+        moved=1;
+      }
+    }
+    if(!moved)break;
+  }
+  for(const c of cars)if(free(c))setCar(c,0);
+}
+const rbDim=(W,av)=>{const ri=Math.max(2.5,W/2-.5);let ro=ri+6.5;if(av&&av<2*ro)ro=Math.floor(av/2);return ro-ri<4.5?null:{ri,ro}};
+const GR=new Set(['trotoar','sepeda','sepedam','rumput','jalan','marka','markaz','zebrax','zebraz','zebrad','zebraxa','zebraxb','zebraza','zebrazb','paving','ubin','pasir','tanah','pulau']);
+function deadEnds(){const out=[],seen=new Set(),face=(x,z,a,b)=>isRoad(x,z)&&!isRoad(x+a,z+b);
+ for(const b of H.values()){if(b.y||!isRoad(b.x,b.z))continue;
+  for(const[dx,dz]of[[1,0],[-1,0],[0,1],[0,-1]]){if(!face(b.x,b.z,dx,dz))continue;const px=Math.abs(dz),pz=Math.abs(dx);let sx=b.x,sz=b.z;
+   while(face(sx-px,sz-pz,dx,dz)){sx-=px;sz-=pz}
+   const key=sx+','+sz+','+dx+','+dz;if(seen.has(key))continue;seen.add(key);
+   let W=0;while(face(sx+px*W,sz+pz*W,dx,dz))W++;
+   if(W<4||W>12||isRoad(sx-px,sz-pz)||isRoad(sx+px*W,sz+pz*W))continue;
+   const full=j=>{for(let w=0;w<W;w++)if(!isRoad(sx+px*w-dx*j,sz+pz*w-dz*j))return 0;return 1};
+   let n=0;while(n<24&&full(n+1))n++;
+   let ok=1;for(let j=0;j<=Math.min(n,6);j++)if(isRoad(sx-px-dx*j,sz-pz-dz*j)||isRoad(sx+px*W-dx*j,sz+pz*W-dz*j))ok=0;
+   if(!ok||n<6)continue;
+   const dm=rbDim(W,n+1);if(!dm||dm.ro*2<W+2)continue;const{ri,ro}=dm;
+   const e=dx?sx:sz,E=e+(dx+dz>0?1:0),ca=E-(dx+dz)*ro,cl=(px?sx:sz)+W/2;
+   out.push({cx:dx?ca:cl,cz:dx?cl:ca,dx,dz,ri,ro,arms:[[-dx,-dz]]})}}
+ return out}
+function mkRB(g){const L=[],{cx,cz,dx,dz,ri,ro}=g,m=Math.ceil(ro+3),x0=Math.floor(cx),z0=Math.floor(cz);
+ for(let x=x0-m;x<=x0+m;x++)for(let z=z0-m;z<=z0+m;z++){const b=floorAt(x,z);if(b&&!GR.has(b.t))continue;
+  const ux=x+.5-cx,uz=z+.5-cz,r=Math.hypot(ux,uz),road=isRoad(x,z);
+  const zb=isZ(x,z),t=r<ri?'pulau':r<=ro||(zb&&r<=ro+2.5)?'jalan':road&&ux*dx+uz*dz>0?'trotoar':!road&&r<=ro+1.3?'trotoar':null;
+  if(!t)continue;if(!(b&&b.t==t))L.push([x,0,z,t]);
+  if(r<=ro)for(let y=1;y<4;y++)if(H.has(x+','+y+','+z))L.push([x,y,z,null])}
+ L.push([x0,1,z0,'pohon']);RB.push({cx,cz,ri,ro,rm:(ri+ro)/2,arms:g.arms});return L}
+function addRoundabouts(und){const fit=g=>boxIn(g.cx,g.cz,g.ro+1.8),es=[...deadEnds(),...corners(),...tees()].filter(fit),L=[];es.forEach(g=>L.push(...mkRB(g)));
+ if(L.length){if(und)edit(L);else L.forEach(([x,y,z,t,c])=>{const k=x+','+y+','+z;if(H.has(k))del(H.get(k));if(t)put(x,y,z,t,c)})}
+ for(let i=cars.length-1;i>=0;i--){const c=cars[i];if(!c.drv&&!c.arc&&!isRoad(Math.floor(c.px),Math.floor(c.pz))){sc.remove(c.g);disp(c.g);cars.splice(i,1)}}
+ return es.length}
+const rbOk=R=>floorT(Math.floor(R.cx),Math.floor(R.cz))=='pulau';
+const inRB=(x,z)=>RB.some(R=>Math.hypot(x+.5-R.cx,z+.5-R.cz)<=R.ro+.5&&rbOk(R));
+function corners(){const out=[],CD=[[[-1,0],[0,-1]],[[-1,0],[0,1]],[[1,0],[0,-1]],[[1,0],[0,1]]];
+ for(const b of H.values()){if(b.y||!isRoad(b.x,b.z))continue;
+  for(const[e1,e2]of CD){if(isRoad(b.x+e1[0],b.z+e1[1])||isRoad(b.x+e2[0],b.z+e2[1]))continue;
+   for(let W=4;W<=12;W++){let ok=1;
+    for(let i=0;i<W&&ok;i++)for(let j=0;j<W;j++){const x=b.x-e1[0]*i-e2[0]*j,z=b.z-e1[1]*i-e2[1]*j;
+     if(!isRoad(x,z)||(j==0&&isRoad(x+e2[0],z+e2[1]))||(i==0&&isRoad(x+e1[0],z+e1[1]))){ok=0;break}}
+    for(let m=W;m<W+3&&ok;m++)for(let q=-1;q<=W;q++){const ins=q>=0&&q<W,
+     r1=isRoad(b.x-e1[0]*m-e2[0]*q,b.z-e1[1]*m-e2[1]*q),r2=isRoad(b.x-e1[0]*q-e2[0]*m,b.z-e1[1]*q-e2[1]*m);
+     if(r1!==ins||r2!==ins){ok=0;break}}
+    if(!ok)continue;
+    const ex=e1[0]||e2[0],ez=e1[1]||e2[1],xs2=ex<0?b.x:b.x-W+1,zs2=ez<0?b.z:b.z-W+1,dm=rbDim(W);
+    out.push({cx:xs2+W/2,cz:zs2+W/2,ri:dm.ri,ro:dm.ro,arms:[[-e1[0],-e1[1]],[-e2[0],-e2[1]]]});break}}}
+ return out}
+function tees(){const out=[];
+ for(const b of H.values()){if(b.y||!isRoad(b.x,b.z))continue;
+  for(const[cx,cz]of[[1,0],[-1,0],[0,1],[0,-1]]){if(isRoad(b.x+cx,b.z+cz))continue;const px=Math.abs(cz),pz=Math.abs(cx);
+   if(!isRoad(b.x-px,b.z-pz))continue;const at=(q,i)=>isRoad(b.x+px*q-cx*i,b.z+pz*q-cz*i);
+   for(let W=4;W<=12;W++){let ok=1;
+    for(let q=-3;q<W+3&&ok;q++)if(at(q,-1))ok=0;
+    for(let i=0;i<W&&ok;i++)for(let q=0;q<W;q++)if(!at(q,i)){ok=0;break}
+    for(let m=W;m<W+3&&ok;m++)if(at(-1,m)||at(W,m))ok=0;else for(let q=0;q<W;q++)if(!at(q,m)){ok=0;break}
+    for(let m=1;m<=3&&ok;m++)for(let i=0;i<=W;i++){const ins=i<W;if(at(-m,i)!==ins||at(W-1+m,i)!==ins){ok=0;break}}
+    if(!ok)continue;
+    const x1=b.x+px*(W-1)-cx*(W-1),z1=b.z+pz*(W-1)-cz*(W-1),dm=rbDim(W);
+    out.push({cx:Math.min(b.x,x1)+W/2,cz:Math.min(b.z,z1)+W/2,ri:dm.ri,ro:dm.ro,arms:[[-px,-pz],[px,pz],[-cx,-cz]]});break}}}
+ return out}
+function rbCheck(c){if(!c.dx&&!c.dz)return 0;
+ for(const R of RB){if(!R.arms)R.arms=[[-R.dx,-R.dz]];const same=a=>a[0]===-c.dx&&a[1]===-c.dz;if(!R.arms.some(same)||!rbOk(R))continue;
+  const ux=c.px-R.cx,uz=c.pz-R.cz,dd=Math.hypot(ux,uz),u=ux*c.dx+uz*c.dz,v=-ux*c.dz+uz*c.dx;
+  if(u>=0||dd>R.rm+.4||dd<R.rm-.6||v<.4)continue;
+  if(cars.some(o=>o!==c&&o.arc&&o.arc.rt&&Math.hypot(o.px-c.px,o.pz-c.pz)<5.5))return 2;
+  const O=R.arms.filter(a=>!same(a)),b=rd(O.length?O:R.arms),ph=Math.asin(Math.min(.95,v/R.rm)),th=Math.atan2(uz,ux),T=2*Math.PI,sw2=(((th-Math.atan2(b[1],b[0])-ph)%T)+T)%T;
+  c.arc={cx:R.cx,cz:R.cz,r:dd,rt:R.rm,th,end:th-sw2,dir:-1,d:b};return 1}
+ return 0}
+let CID=0;
+const hv=c=>c.drv?[Math.sin(c.h),Math.cos(c.h)]:c.arc?[Math.sin(c.a),Math.cos(c.a)]:[c.dx,c.dz];
+function blk(c,D,Wd){const[hx,hz]=hv(c),ring=c.arc&&c.arc.rt;
+ for(const o of cars){if(o===c)continue;const rx=o.px-c.px,rz=o.pz-c.pz,f=rx*hx+rz*hz;if(f<=0||f>=D||Math.abs(rx*hz-rz*hx)>=Wd)continue;
+  if(ring&&!o.arc&&!o.drv)continue;
+  const[ox,oz]=hv(o),b=-(rx*ox+rz*oz);if(!o.drv&&b>0&&b<D&&c.id<o.id)continue;
+  return 1}
+ return 0}
+function tryCar(x,z){const c=addCar(x,z,null,CAR_SPAWN_GAP);if(c&&!c.dx&&!c.dz){cars.pop();sc.remove(c.g);disp(c.g)}}
+$('brb').onclick=()=>{const n=addRoundabouts(1);msg(n?n+' bundaran ditambahkan (Ctrl+Z untuk batal)':'Tidak ada jalan buntu yang cocok')};
+
+/* ============================================================
+   HELPER: SISI PINTU & WALKWAY
+   ============================================================ */
+function faceRoad(x0,z0,w,d){
+  const cx=x0+Math.floor(w/2), cz=z0+Math.floor(d/2);
+  const dirs=[
+    {n:'N', sx:cx, sz:z0-1, dx:0, dz:-1, doorX:cx, doorZ:z0},
+    {n:'S', sx:cx, sz:z0+d, dx:0, dz:1, doorX:cx, doorZ:z0+d-1},
+    {n:'W', sx:x0-1, sz:cz, dx:-1, dz:0, doorX:x0, doorZ:cz},
+    {n:'E', sx:x0+w, sz:cz, dx:1, dz:0, doorX:x0+w-1, doorZ:cz}
+  ];
+  let best=null,bd=1e9;
+  for(const s of dirs){
+    for(let k=0;k<12;k++){
+      const x=s.sx+s.dx*k, z=s.sz+s.dz*k;
+      const b=floorAt(x,z);
+      if(!b)break;
+      if(isDriv(x,z)){if(k<bd){bd=k;best={...s,dist:k}}break;}
+      if(!GR.has(b.t))break;
+    }
+  }
+  return best||dirs[0];
+}
+function layWalkway(s,x0,z0,w,d){
+  let sx,sz;
+  if(s.n=='N'){sx=s.doorX;sz=z0-1;}
+  else if(s.n=='S'){sx=s.doorX;sz=z0+d;}
+  else if(s.n=='W'){sx=x0-1;sz=s.doorZ;}
+  else {sx=x0+w;sz=s.doorZ;}
+  for(let k=0;k<10;k++){
+    const x=sx+s.dx*k, z=sz+s.dz*k;
+    const b=floorAt(x,z);
+    if(!b)break;
+    if(isDriv(x,z))break;
+    if(!GR.has(b.t))break;
+    put(x,0,z,'ubin');
+  }
+}
+function placeDoor(s,x0,z0,w,d){
+  const dx=s.doorX, dz=s.doorZ;
+  put(dx,0,dz,'pintu');put(dx,1,dz,'pintu');
+  if(s.n=='N'||s.n=='S'){
+    put(dx-1,0,dz,'kayu');put(dx-1,1,dz,'kayu');
+    put(dx+1,0,dz,'kayu');put(dx+1,1,dz,'kayu');
+    put(dx-1,2,dz,'kayu');put(dx,2,dz,'kayu');put(dx+1,2,dz,'kayu');
+  } else {
+    put(dx,0,dz-1,'kayu');put(dx,1,dz-1,'kayu');
+    put(dx,0,dz+1,'kayu');put(dx,1,dz+1,'kayu');
+    put(dx,2,dz-1,'kayu');put(dx,2,dz,'kayu');put(dx,2,dz+1,'kayu');
+  }
+}
+
+/* ============================================================
+   CANGKANG GEDUNG (dipakai genCity & genToko)
+   lantai ubin + 4 dinding berjendela + atap + parapet.
+   s (opsional) = hasil faceRoad -> bila ada, dinding sisi jalan
+   lantai-1 dijadikan etalase kaca (khusus toko).
+   ============================================================ */
+function buildShell(x0,z0,w,d,h,wm,rm,s){
+  for(let x=x0;x<x0+w;x++)for(let z=z0;z<z0+d;z++)put(x,0,z,'ubin');
+  for(let y=0;y<h;y++){
+    const winRow=(y>=2&&y<h-1&&y%2==0);
+    for(let x=x0;x<x0+w;x++){
+      for(const z of[z0,z0+d-1]){
+        const onRoadSide=s&&((s.n=='N'&&z==z0)||(s.n=='S'&&z==z0+d-1));
+        if(y===1&&onRoadSide&&x>x0&&x<x0+w-1){
+          put(x,y,z,'kaca');
+        } else {
+          const corner=(x==x0||x==x0+w-1);
+          const win=winRow&&!corner&&((x-x0)%3==1);
+          put(x,y,z,win?'kaca':wm);
+        }
+      }
+    }
+    for(let z=z0+1;z<z0+d-1;z++){
+      for(const x of[x0,x0+w-1]){
+        const onRoadSide=s&&((s.n=='W'&&x==x0)||(s.n=='E'&&x==x0+w-1));
+        if(y===1&&onRoadSide)put(x,y,z,'kaca');
+        else{const win=winRow&&((z-z0)%3==1);put(x,y,z,win?'kaca':wm);}
+      }
+    }
+  }
+  for(let x=x0;x<x0+w;x++)for(let z=z0;z<z0+d;z++)put(x,h,z,rm);
+  if(h+1<Y_MAX){
+    for(let x=x0;x<x0+w;x++){put(x,h+1,z0,'atapdatar');put(x,h+1,z0+d-1,'atapdatar')}
+    for(let z=z0+1;z<z0+d-1;z++){put(x0,h+1,z,'atapdatar');put(x0+w-1,h+1,z,'atapdatar')}
+  }
+}
+
+/* Helper arah: satu sumber untuk pola cermin N/S/W/E.
+   along(s,i,x0,z0)  -> petak ke-i sepanjang fasad (i=0 = pintu), pada garis dinding
+   inset  = geser ke dalam (+) / ke luar (-) tegak lurus fasad, dari garis dinding. */
+function facade(s,x0,z0,w,d,inset){
+  const horiz=(s.n=='N'||s.n=='S');
+  const wallX = s.n=='W'?x0:s.n=='E'?x0+w-1:null, wallZ = s.n=='N'?z0:s.n=='S'?z0+d-1:null;
+  // vektor ke dalam gedung: N:+z, S:-z, W:+x, E:-x
+  const ix = s.n=='W'?1:s.n=='E'?-1:0, iz = s.n=='N'?1:s.n=='S'?-1:0;
+  return{
+    horiz,
+    at:(i)=>horiz?[s.doorX+i, wallZ+iz*inset]:[wallX+ix*inset, s.doorZ+i],
+    inSpan:(i)=>horiz?(s.doorX+i>=x0&&s.doorX+i<x0+w):(s.doorZ+i>=z0&&s.doorZ+i<z0+d),
+    inWall:(i)=>horiz?(s.doorX+i>x0&&s.doorX+i<x0+w-1):(s.doorZ+i>z0&&s.doorZ+i<z0+d-1)
+  };
+}
+// Kanopi menjorok KE LUAR dinding (inset -1), di atas pintu (y=3), bukan di dalam gedung.
+function putCanopy(s,x0,z0,w,d,half,type){
+  const f=facade(s,x0,z0,w,d,-1);
+  for(let i=-half;i<=half;i++){
+    const[x,z]=f.at(i);
+    const t=floorAt(x,z);
+    if(t&&GR.has(t.t)&&!isDriv(x,z))put(x,3,z,type);
+  }
+}
+
+/* ============================================================
+   TOKO SERBA ADA
+   ============================================================ */
+function genToko(x0,z0,w,d,h,wm,rm){
+  const s = faceRoad(x0,z0,w,d);
+  buildShell(x0,z0,w,d,h,wm,rm,s);
+  const dx=s.doorX, dz=s.doorZ;
+  const f=facade(s,x0,z0,w,d,0);
+  for(let i=-3;i<=3;i++){if(f.inWall(i)){const[x,z]=f.at(i);put(x,3,z,'lampu');}}
+  putCanopy(s,x0,z0,w,d,2,'gentengmerah');
+  placeDoor(s,x0,z0,w,d);
+  if(w>4&&d>4){
+    const e=facade(s,x0,z0,w,d,1), L=e.horiz?w:d;
+    const pos=(i)=>e.horiz?[x0+i,e.at(0)[1]]:[e.at(0)[0],z0+i]; // i = indeks dari sudut kiri/atas fasad
+    for(const i of[1,2,L-2,L-3]){const[x,z]=pos(i);put(x,1,z,'seng');}
+    for(const i of[1,L-2]){const[x,z]=pos(i);put(x,2,z,'kaca');}
+  }
+  layWalkway(s,x0,z0,w,d);
+}
+
+/* ============================================================
+   GENERATOR KOTA
+   - Grid jalan dipusatkan tepat di tengah peta (192x192: margin 6 petak kiri=kanan=atas=bawah)
+   - Seluruh petak tepi diisi rumput + pohon pembatas, sehingga kota memenuhi 192x192
+   - Zebra cross simetris (strip digeser setengah petak: jarak sama ke kedua trotoar)
+   - Bundaran yang tidak muat di dalam peta dilewati (tidak ada yang terpotong)
+   - Zebra tidak dibuat di area bundaran (bundaran dibuat lebih dulu, zebra menyesuaikan)
+   ============================================================ */
+function genCity(seed){citySeed=(seed==null?newSeed():seed>>>0);RNG=mulberry32(citySeed);try{buildCity()}finally{RNG=Math.random}}
+/* ============================================================
+   KONSTANTA TATA LETAK KOTA
+   Satu sumber untuk semua angka yang saling bergantung. Ubah satu nilai dasar (ROAD_W, WALK, BLOCK, ...)
+   dan semua turunannya ikut. Offset relatif terhadap k = petak pertama aspal sebuah jalan:
+     k+SW_L trotoar kiri | k+BK_L jalur sepeda | k .. k+ROAD_W-1 aspal | k+BK_R jalur sepeda | k+SW_R trotoar kanan
+     k+GR_L / k+GR_R = petak rumput tepat di luar trotoar (lampu, pohon, rambu, lampu lalin)
+   ============================================================ */
+const CITY=(()=>{
+ const ROAD_W=8,           // lebar aspal (petak)
+       WALK=2,             // jalur sepeda + trotoar di tiap sisi
+       BLOCK=30,           // lebar blok kota di antara dua grid jalan
+       EDGE=6,             // petak sisa di tiap tepi peta = ruang bundaran terluar
+       GRID_W=ROAD_W+2*WALK,       // 12: lebar satu jalan penuh (trotoar ke trotoar)
+       STEP=BLOCK+GRID_W,          // 42: jarak antar jalan
+       BLDG_MARGIN=2;              // jarak gedung dari tepi blok
+ return{ROAD_W,WALK,BLOCK,EDGE,GRID_W,STEP,BLDG_MARGIN,
+  SW_L:-WALK, BK_L:-1, BK_R:ROAD_W, SW_R:ROAD_W+WALK-1, GR_L:-WALK-1, GR_R:ROAD_W+WALK,
+  MID:ROAD_W/2-1,                         // petak marka tengah jalan
+  BLK_A:ROAD_W+WALK, BLK_B:STEP-WALK,     // blok rumput: k+BLK_A .. k+BLK_B (eksklusif)
+  BLDG_PITCH:(BLOCK-2*BLDG_MARGIN)/2,     // 13: 2x2 gedung per blok
+  // gedung
+  W_MIN:7,W_VAR:3,JIT:2,H_LOW:3,H_TALL:9,H_VAR:5,SHOP_MIN:8,
+  P_SKIP:.12,P_TALL:.15,P_SHOP:.20,P_CHIMNEY:.55,
+  // dekorasi & isi kota
+  LAMP_STEP:14,COINS:8,PROP_STEP:4,STOP_STEP:26,BENCH_PAD:8,
+  N_NPC:24,N_SEAT:6,N_CAR_H:26,N_CAR_V:10,
+  // tabel properti jalan: r<.42 pohon campur (diundi terpisah), lalu kumulatif di bawah
+  PROP_TREE_P:.42,PROPS:[[.56,'pohoncemara'],[.68,'pohonpalm'],[.74,'pohonkering'],[.82,'sampah'],[.88,'pos'],[.94,'hydrant'],[1,'taman']]
+ };
+})();
+const BLDG_WALLS=['bata','bataputih','beton','plester','batu','kayu'],
+      BLDG_ROOFS=['atapdatar','gentengmerah','gentenggelap','seng'];
+const randColor=()=>'#'+(RNG()*0xffffff|0).toString(16).padStart(6,'0');
+const randLook=()=>({skin:rd(['#f1c27d','#e0ac69','#8d5524','#ffdbac','#c68642']),hair:randColor(),shirt:randColor(),pants:randColor(),hs:rd(['pendek','panjang','topi','jambul','botak']),ac:rd(['tidak','tidak','kacamata','tas']),beh:'jalan'});
+// cari petak yang lolos tes `ok` dari generator posisi f (maks 40 percobaan)
+const pickTile=(f,ok)=>{for(let n=0;n<40;n++){const p=f();if(ok(p[0],p[1]))return p}return null};
+const onSidewalk=f=>pickTile(f,sw), onGrass=f=>pickTile(f,isGrass);
+
+/* ============================================================
+   GENERATOR KOTA — tahap demi tahap
+   buildCity: planCity -> layRoads -> fillGrass -> placeBuildings -> bundaran -> paintZebra
+              -> dekorasi (lampu/koin, properti, pohon tepi, rambu, halte, air mancur) -> populate (NPC & mobil)
+   Urutan pemanggilan RNG tiap tahap TIDAK boleh diubah: seed yang sama harus menghasilkan kota yang sama.
+   ============================================================ */
+// Rencana: jumlah & posisi jalan (grid dipusatkan di tengah peta) + batas sabuk rumput tepi.
+function planCity(){
+ const {STEP,EDGE,GRID_W,WALK,ROAD_W}=CITY,ks=[];
+ // Jumlah jalan menyesuaikan ukuran peta; EDGE petak sisa di tiap tepi = ruang untuk bundaran terluar.
+ const nR=Math.max(1,Math.min(5,Math.floor((S-2*EDGE-GRID_W)/STEP)+1)), span=(nR-1)*STEP+GRID_W, kA=-span/2+WALK;
+ for(let j=0;j<nR;j++)ks.push(kA+j*STEP);
+ const ext=ks.length==1,k0=ext?-S/2:ks[0],k1=ext?S/2-ROAD_W:ks[ks.length-1],lo=k0-WALK,hi=k1+ROAD_W+WALK-1;
+ const fx0=Math.max(-S/2,lo-EDGE),fx1=Math.min(S/2-1,hi+EDGE);
+ return{ks,ext,k0,k1,lo,hi,fx0,fx1,onR:i=>ks.some(q=>i>=q&&i<=q+ROAD_W-1)};
+}
+
+// Jalan, jalur sepeda, trotoar, marka.
+function layRoads({ks,k0,k1,lo,hi,onR}){
+ const {ROAD_W,SW_L,BK_L,BK_R,SW_R,MID}=CITY;
+ for(const k of ks)for(let i=lo;i<=hi;i++){const bk=i%6?'sepeda':'sepedam';for(const[o,t]of[[SW_L,'trotoar'],[BK_L,bk],[BK_R,bk],[SW_R,'trotoar']]){put(i,0,k+o,t);put(k+o,0,i,t)}}
+ for(const k of ks)for(let i=k0;i<=k1+ROAD_W-1;i++)for(let o=0;o<ROAD_W;o++){put(i,0,k+o,'jalan');put(k+o,0,i,'jalan')}
+ for(const k of ks)for(let i=k0;i<=k1+ROAD_W-1;i++)if(!onR(i)&&i%3==0){put(i,0,k+MID,'marka');put(k+MID,0,i,'markaz')}
+}
+
+// Tanah blok -> rumput, lalu sabuk tepi (di 192x192 = seluruh peta).
+function fillGrass({ks,fx0,fx1}){
+ const {BLK_A,BLK_B}=CITY;
+ for(let ia=0;ia<ks.length-1;ia++)for(let ib=0;ib<ks.length-1;ib++)
+  for(let x=ks[ia]+BLK_A;x<ks[ia]+BLK_B;x++)for(let z=ks[ib]+BLK_A;z<ks[ib]+BLK_B;z++){
+   const t=floorT(x,z);
+   if(!t||t=='rumput')put(x,0,z,'rumput')}
+ for(let x=fx0;x<=fx1;x++)for(let z=fx0;z<=fx1;z++)if(!floorAt(x,z))put(x,0,z,'rumput');
+}
+
+// Tapak gedung bebas dari jalan/trotoar/jalur sepeda?
+function footprintFree(x0,z0,w,d){
+ for(let x=x0;x<x0+w;x++)for(let z=z0;z<z0+d;z++){
+  const t=floorT(x,z);
+  if(DRIV.has(t)||t=='sepeda'||t=='sepedam')return false}
+ return true;
+}
+
+// Rumah/gedung biasa: cangkang + ventilasi atap + pintu + kanopi + jalur masuk.
+function genHouse(x0,z0,w,d,h,wm,rm){
+ buildShell(x0,z0,w,d,h,wm,rm);
+ if(w>=9&&d>=9&&h+3<Y_MAX){
+  for(let y=h+1;y<=h+2;y++){put(x0+2,y,z0+2,'seng');put(x0+3,y,z0+2,'seng');put(x0+2,y,z0+3,'seng');put(x0+3,y,z0+3,'seng')}
+ }
+ if(w>=8&&d>=8&&h+2<Y_MAX&&RNG()<CITY.P_CHIMNEY){
+  put(x0+w-3,h+1,z0+d-3,'batu');put(x0+w-3,h+2,z0+d-3,'batu');
+ }
+ const s = faceRoad(x0,z0,w,d);
+ placeDoor(s,x0,z0,w,d);
+ putCanopy(s,x0,z0,w,d,1,'seng');
+ layWalkway(s,x0,z0,w,d);
+}
+
+// 2x2 gedung per blok; sebagian kosong, sebagian toko, sebagian menara.
+function placeBuildings({ks}){
+ const C=CITY;
+ for(let ia=0;ia<ks.length-1;ia++)for(let ib=0;ib<ks.length-1;ib++)for(let bx=0;bx<2;bx++)for(let bz=0;bz<2;bz++){
+  if(RNG()<C.P_SKIP)continue;
+  const kx=ks[ia],kz=ks[ib],w=C.W_MIN+rn(C.W_VAR),d=C.W_MIN+rn(C.W_VAR),
+        x0=kx+C.BLK_A+C.BLDG_MARGIN+bx*C.BLDG_PITCH+rn(C.JIT),z0=kz+C.BLK_A+C.BLDG_MARGIN+bz*C.BLDG_PITCH+rn(C.JIT),
+        h=RNG()<C.P_TALL?C.H_TALL+rn(C.H_VAR):C.H_LOW+rn(C.H_VAR),wm=rd(BLDG_WALLS),rm=rd(BLDG_ROOFS);
+  if(!footprintFree(x0,z0,w,d))continue;
+  if(RNG()<C.P_SHOP && w>=C.SHOP_MIN && d>=C.SHOP_MIN)genToko(x0,z0,w,d,h,wm,rm);
+  else genHouse(x0,z0,w,d,h,wm,rm);
+ }
+}
+
+// Zebra cross simetris.
+// Jalan lebar 8 petak (genap), jadi pola "putih-aspal-putih-..." per petak selalu menempel satu trotoar
+// dan menyisakan celah di trotoar seberang. Solusi: 4 strip selebar 1 petak digeser setengah petak:
+//   strip di 0.5-1.5, 2.5-3.5, 4.5-5.5, 6.5-7.5  -> jarak ke kedua trotoar sama (0.5 petak).
+// Petak genap memakai tekstur "strip di separuh akhir" (a), petak ganjil "strip di separuh awal" (b).
+// Bundaran menggantikan persimpangan, jadi area di sekitarnya tidak diberi zebra sama sekali.
+function paintZebra({ks}){
+ const ROAD_W=CITY.ROAD_W;
+ const nearRB=(x,z)=>RB.some(q=>Math.abs(x+.5-q.cx)<=q.ro+4&&Math.abs(z+.5-q.cz)<=q.ro+4);
+ // Dua orientasi dibuat dari satu loop: ka = sumbu tempat 2 petak zebra di tiap sisi persimpangan,
+ // kb = sumbu sepanjang strip (belang a/b bergantian). tuk=1 -> sumbu x/z ditukar (lintas jalan vertikal).
+ for(const kx of ks)for(const kz of ks)
+   for(const[ka,kb,tuk,nm]of[[kx,kz,0,'zebrax'],[kz,kx,1,'zebraz']])
+     for(const side of[-1,1])for(let dd=1;dd<=2;dd++){
+       const a=side<0?ka-dd:ka+ROAD_W-1+dd;
+       for(let b=kb;b<=kb+ROAD_W-1;b++){
+         const x=tuk?b:a, z=tuk?a:b;
+         if(!isRoad(x,z)||nearRB(x,z))continue;
+         put(x,0,z,nm+(((b-kb)%2===0)?'a':'b'));
+       }
+     }
+}
+
+/* ---------- Dekorasi ---------- */
+// D = keadaan dekorasi bersama: LAMP (petak berisi lampu/halte) dan occ() (petak lantai-1 terisi).
+const newDecor=()=>{const LAMP=new Set();return{LAMP,occ:(x,z)=>H.has(x+',1,'+z)||LAMP.has(x+','+z)}};
+const nearLamp=(D,x,z)=>{
+ for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)
+   if(D.LAMP.has((x+dx)+','+(z+dz)))return true;
+ return false;
+};
+const tryLamp=(D,x,z)=>{
+ const key=x+','+z;
+ if(D.LAMP.has(key)||nearLamp(D,x,z)||!isGrass(x,z))return;
+ if(!cellIn(x,z,1))return;
+ D.LAMP.add(key);
+ put(x,1,z,'lampjalan');
+};
+
+// Lampu jalan, lampu lalin di sudut persimpangan, koin.
+function decorLampsCoins({ks,lo,hi},D){
+ const {GR_L,GR_R,LAMP_STEP,COINS}=CITY;
+ for(const k of ks){
+   for(let i=lo-2;i<=hi+2;i+=LAMP_STEP){tryLamp(D,i,k+GR_L);tryLamp(D,i,k+GR_R)}
+   for(let i=lo-2;i<=hi+2;i+=LAMP_STEP){tryLamp(D,k+GR_L,i);tryLamp(D,k+GR_R,i)}
+   for(const k2 of ks){const L=(x,z,t)=>{if(isGrass(x,z))put(x,1,z,t)};
+     L(k+GR_L,k2+GR_R,'lalinbarat');L(k+GR_R,k2+GR_L,'lalintimur');
+     L(k+GR_L,k2+GR_L,'lalinutara');L(k+GR_R,k2+GR_R,'lalinselatan')}
+   for(let j=0;j<COINS;j++){
+     let p=onGrass(()=>[lo+rn(hi-lo),k+(RNG()<.5?GR_L:GR_R)]);
+     if(p&&!D.LAMP.has(p[0]+','+p[1]))put(p[0],1,p[1],'koin');
+     p=onGrass(()=>[k+(RNG()<.5?GR_L:GR_R),lo+rn(hi-lo)]);
+     if(p&&!D.LAMP.has(p[0]+','+p[1]))put(p[0],1,p[1],'koin');
+   }
+ }
+}
+
+// Properti sepanjang jalan: pohon, tong sampah, pos, hidran, taman.
+function decorProps({ks,lo,hi},D){
+ const {GR_L,GR_R,PROP_STEP,PROP_TREE_P,PROPS}=CITY;
+ for(const k of ks){
+   for(let i=lo;i<=hi;i+=PROP_STEP){
+     for(const[x,z]of[[i,k+GR_L],[i,k+GR_R],[k+GR_L,i],[k+GR_R,i]]){
+       if(!isGrass(x,z)||D.occ(x,z))continue;
+       if(!cellIn(x,z,2))continue;
+       const r=RNG();
+       if(r<PROP_TREE_P)put(x,1,z,RNG()<.55?'pohon':(RNG()<.5?'pohoncemara':'pohonpalm'));
+       else put(x,1,z,PROPS.find(([p])=>r<p)[1]);
+     }
+   }
+ }
+}
+
+// Pohon pembatas di tepi peta (posisi simetris kiri-kanan & atas-bawah).
+function decorBorderTrees({fx0,fx1},D){
+ const a0=fx0+2,b0=fx1-2;
+ for(let a=a0;a<=-1;a+=4)for(const i of[a,fx0+fx1-a])for(const[x,z]of[[i,a0],[i,b0],[a0,i],[b0,i]]){
+  if(!isGrass(x,z)||D.occ(x,z))continue;
+  put(x,1,z,rd(['pohon','pohon','pohoncemara','pohonpalm']));
+ }
+}
+
+// Rambu di empat sudut tiap persimpangan.
+function decorSigns({ks},D){
+ const {GR_L,GR_R}=CITY;
+ for(const kx of ks)for(const kz of ks){
+   const pts=[[kx+GR_L,kz+GR_L],[kx+GR_R,kz+GR_L],[kx+GR_L,kz+GR_R],[kx+GR_R,kz+GR_R]];
+   for(const[x,z]of pts){
+     if(isGrass(x,z)&&!D.occ(x,z))put(x,1,z,'rambu');
+   }
+ }
+}
+
+// Halte bus berselang STOP_STEP petak.
+function decorBusStops({ks,lo,hi},D){
+ const {GR_L,GR_R,STOP_STEP}=CITY;
+ for(const k of ks){
+   for(let i=lo+8;i<=hi+9;i+=STOP_STEP){
+     for(const[x,z]of[[i,k+GR_L],[k+GR_R,i]]){
+       if(isGrass(x,z)&&!D.occ(x,z)&&!H.has(x+',1,'+(z+1))&&!H.has((x+1)+',1,'+z)){
+         put(x,1,z,'halte');
+         D.LAMP.add(x+','+z);
+       }
+     }
+   }
+ }
+}
+
+// Air mancur di bundaran - posisikan tepat di tengah.
+function decorFountains(){
+ for(const R of RB){
+   const cx=Math.floor(R.cx),cz=Math.floor(R.cz);
+   const b=H.get(cx+',1,'+cz);
+   if(b&&b.t=='pohon')del(b);
+   put(cx,1,cz,'airmancur');
+   const f=H.get(cx+',1,'+cz);
+   if(f&&f.m){
+     f.m.position.x = R.cx;
+     f.m.position.z = R.cz;
+   }
+ }
+}
+
+// NPC pejalan di trotoar, NPC duduk di bangku, mobil di jalan.
+function populate({ks,lo,hi,k0,k1},D){
+ const {ROAD_W,SW_L,SW_R,GR_L,GR_R,N_NPC,N_SEAT,N_CAR_H,N_CAR_V,BENCH_PAD}=CITY;
+ for(let j=0;j<N_NPC;j++){const p=onSidewalk(()=>RNG()<.5?[lo+rn(hi-lo),rd(ks)+(RNG()<.5?SW_L:SW_R)]:[rd(ks)+(RNG()<.5?SW_L:SW_R),lo+rn(hi-lo)]);if(p)addNpc(p[0]+.5,p[1]+.5,randLook())}
+ for(let j=0;j<N_SEAT;j++){const p=onGrass(()=>[lo+BENCH_PAD+rn(Math.max(1,hi-lo-2*BENCH_PAD)),rd(ks)+(RNG()<.5?GR_L:GR_R)]);if(p&&!D.occ(p[0],p[1])){const c=randLook();c.beh='duduk';put(p[0],1,p[1],'bangku');addNpc(p[0]+.5,p[1]+.5,c)}}
+ for(let j=0;j<N_CAR_H;j++)tryCar(k0+rn(k1-k0+ROAD_W),rd(ks)+rn(ROAD_W));for(let j=0;j<N_CAR_V;j++)tryCar(rd(ks)+rn(ROAD_W),k0+rn(k1-k0+ROAD_W))
+}
+
+function buildCity(){clear();U=[];R=[];
+ const C=planCity();
+ layRoads(C);
+ fillGrass(C);
+ placeBuildings(C);
+ addRoundabouts(0);          // menggantikan persimpangan / dead-end / corner / tee
+ paintZebra(C);
+ const D=newDecor();
+ decorLampsCoins(C,D);
+ decorProps(C,D);
+ decorBorderTrees(C,D);
+ decorSigns(C,D);
+ decorBusStops(C,D);
+ decorFountains();
+ populate(C,D);
+}
+const mkL=(fx,fz)=>()=>{const g=new THREE.Group(),a=fx?'X':'Z';g.add(box(.12,2.4,.12,'#2b2b2b',0,1.2,0),box(.34,.95,.34,'#1a1a1a',0,2.45,0));['R','Y','G'].forEach((s,i)=>{const m=new THREE.Mesh(BG,LM[a+s]);m.scale.set(fx?.04:.2,.2,fz?.04:.2);m.position.set(fx*.18,2.7-i*.25,fz*.18);g.add(m)});return g};
+DEC.lalinbarat=mkL(-1,0);DEC.lalintimur=mkL(1,0);DEC.lalinutara=mkL(0,-1);DEC.lalinselatan=mkL(0,1);
+
+/* ======== INIT ======== */
+setCity(192);genCity();$('seed').value=citySeed;help();renderCat();
+const clock=new THREE.Clock();
+(function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),.05);
+  npcs.forEach(n=>wander(n,dt));
+  cars.forEach(c=>updCar(c,dt));for(let i=cars.length-1;i>=0;i--)if(cars[i].dead&&!cars[i].drv){sc.remove(cars[i].g);disp(cars[i].g);cars.splice(i,1)}
+  separateCars();
+  if(au){const nt=tv+dt/CONFIG.DAY_SEC;tv=nt%1;if(nt>=1)setDay(CAL.day+1,true);$('tm').value=tv*100}
+  updCalUI();
+  updWX(dt);
+  updLightning(dt);
+  updTornado(dt);
+  updSky(dt);
+  updClouds(dt);
+  updPrecip(dt);
+  updLeaves(dt);updRainbow(dt);updMeteors(dt);updHail(dt);updFrost(dt);updAurora(dt);
+  lightTick();
+  for(const b of CO)b.m.rotation.y+=dt*2.5;
+  play?updPlayer(dt):pan(dt);
+  if(play){shopCheck();updPolice(dt);updWorkers(dt);updCarSmoke(dt);updProjectiles(dt);updSparks(dt);updCombo(dt);updDashTrail(dt);npcs.forEach(n=>npcAI(n,dt));updNpcBars();
+    $('dmg').textContent='HP '+Combat.hp+'/'+Combat.hpMax
+    const el=$('cmp-needle');
+    if(el) el.style.transform='translate(-50%,-50%) rotate('+(-yaw*180/Math.PI)+'deg)';
+  }
+  updCam();if(shake>.02){shake*=.85;cam.position.x+=(Math.random()-.5)*shake*.3;cam.position.y+=(Math.random()-.5)*shake*.3}else shake=0;
+  ren.render(sc,cam);
+  fr++;if((ft+=dt)>=1){$('st').textContent=H.size+' blok · '+fr+' fps';fr=0;ft=0}
+})();
+</script></body></html>

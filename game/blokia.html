@@ -105,6 +105,76 @@ button .sep{display:inline-block;width:1px;height:1.1em;margin:0 9px;background:
 #compass .cmp-lbl.s{bottom:3px;left:50%;transform:translateX(-50%)}
 #compass .cmp-lbl.e{right:5px;top:50%;transform:translateY(-50%)}
 #compass .cmp-lbl.w{left:5px;top:50%;transform:translateY(-50%)}
+/* ===== LAYAR-HP: tata letak HP portrait + landscape (kelas body.mob dipasang JS, lihat region LAYAR-HP) ===== */
+:root{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+button,select,input[type=range],input[type=color]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#joy,#tb,#tb2,#mfab{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#joy{box-sizing:border-box}
+#mfab{display:none}
+#mright{display:contents}
+body.mob #mfab{display:flex;position:fixed;z-index:12;gap:6px;left:calc(8px + var(--sl));top:calc(8px + var(--st))}
+body.mob #mfab button{width:42px;height:42px;padding:0;font-size:18px;border-radius:12px;background:var(--pn);box-shadow:0 2px 8px #0006}
+body.mob #mfab button.on{border-color:var(--ac);background:#4a3f22}
+body.mob input,body.mob select{font-size:16px}
+body.mob #top{display:none;left:calc(8px + var(--sl));top:calc(58px + var(--st));max-width:min(440px,calc(100vw - 16px - var(--sl) - var(--sr)));max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);overflow:auto;z-index:11;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.mob.mtop #top{display:flex}
+body.mob #top,body.mob #side,body.mob #cat,body.mob #calp{box-sizing:border-box}
+body.mob #top #help,body.mob.mplay #wcut{display:none}
+body.mob #top button,body.mob #top select{min-height:38px}
+body.mob #calp{position:fixed;left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(58px + var(--st));min-width:0;max-width:none;max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);overflow:auto;z-index:13}
+body.mob #side{display:none;right:calc(8px + var(--sr));top:calc(58px + var(--st));width:min(250px,calc(100vw - 16px));max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);z-index:11;overscroll-behavior:contain}
+body.mob.mside #side{display:grid}
+body.mob #side select,body.mob #side input:not([type]){width:112px;min-height:34px}
+body.mob #side select[multiple]{width:120px;height:96px}
+body.mob #side input[type=color]{width:48px;height:32px}
+body.mob #side input[type=number]{width:56px;min-height:34px}
+body.mob #cat{left:calc(8px + var(--sl));right:calc(8px + var(--sr));width:auto;bottom:calc(66px + var(--sb));max-height:44vh;max-height:44dvh;z-index:10;overscroll-behavior:contain}
+body.mob #cg{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+body.mob #ct button{padding:6px 9px}
+body.mob #bar{left:calc(8px + var(--sl));right:calc(8px + var(--sr));transform:none;bottom:calc(8px + var(--sb));max-width:none;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+body.mob #bar::-webkit-scrollbar{display:none}
+body.mob #bar button{flex:0 0 auto;white-space:nowrap;min-height:42px;padding:6px 12px}
+body.mob #msg{top:calc(58px + var(--st));max-width:calc(100vw - 24px);text-align:center;z-index:14}
+body.mob .dlgc{top:50%!important;max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
+body.mob .dlgs{top:calc(58px + var(--st))!important;max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 90px)!important;max-height:calc(100dvh - 90px)!important}
+body.mob #tut{max-height:calc(100vh - 24px)!important;max-height:calc(100dvh - 24px)!important}
+body.mob #mright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;position:fixed;z-index:5;right:calc(8px + var(--sr));top:calc(8px + var(--st));pointer-events:none;max-width:calc(100vw - 120px - var(--sl) - var(--sr))}
+body.mob #mright>*{position:relative;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;margin:0;max-width:100%;box-sizing:border-box;pointer-events:none}
+body.mob #mright>#hud{font-size:13px!important;padding:5px 8px;line-height:1.35}
+body.mob #mright>.mwant{font-size:15px!important;padding:5px 8px}
+body.mob #mright>#compass{zoom:.72}
+body.mob #mright>#gpHud{pointer-events:auto;width:136px;font-size:10px;line-height:1.35;padding:5px}
+body.mob #gpHud .gb{height:12px;margin-top:3px}
+body.mob #gpHud .gb span{font:bold 9px/12px system-ui}
+body.mob #gpTg{margin-top:4px;padding:3px;font-size:10px;min-height:0!important}
+body.mob #stat,body.mob.touch #stat{left:calc(8px + var(--sl));top:calc(64px + var(--st));bottom:auto;width:150px;padding:5px 7px}
+body.mob #stat .lv{margin-bottom:3px}
+body.mob #stat .row{margin-top:3px}
+body.mob #say{bottom:calc(224px + var(--sb))!important;max-width:calc(100vw - 24px)!important}
+body.mob #joy{left:calc(16px + var(--sl))!important;bottom:calc(20px + var(--sb))!important;transform:scale(.86);transform-origin:left bottom;background:#262c3b99}
+body.mob #tb2{right:calc(8px + var(--sr));bottom:calc(20px + var(--sb));gap:5px;grid-template-columns:repeat(2,44px);padding:0;background:transparent}
+body.mob #tb2 button{width:44px;height:44px;padding:0;font-size:20px;background:#38405acc;border-radius:12px}
+body.mob #tb2 #bul{order:1}body.mob #tb2 #bsh{order:2}body.mob #tb2 #bgd{order:3}body.mob #tb2 #bds{order:4}
+body.mob #tb2 #ba3{order:5}body.mob #tb2 #ba4{order:6}body.mob #tb2 #ba1{order:7}body.mob #tb2 #ba2{order:8}
+body.mob #tb{right:calc(8px + 93px + 6px + var(--sr))!important;bottom:calc(20px + var(--sb))!important;flex-direction:row!important;flex-wrap:wrap-reverse;justify-content:flex-end;gap:5px!important;width:85px;padding:0;background:transparent}
+body.mob #tb button{flex:0 0 40px;width:40px;height:40px;padding:0;font-size:14px;background:#38405acc;border-radius:11px}
+body.mob #tb #bj{flex:0 0 85px;width:85px;height:44px}
+/* Kreator di HP: joystick = geser kamera (WASD), tombol ▲▼ = naik/turun saat kamera orang pertama */
+body.mob:not(.mplay) #joy{display:block!important;bottom:calc(72px + var(--sb))!important}
+#mfly{display:none}
+body.mob.mcfp:not(.mplay) #mfly{display:flex;position:fixed;z-index:6;flex-direction:column;gap:6px;right:calc(8px + var(--sr));bottom:calc(72px + var(--sb))}
+body.mob #mfly button{width:46px;height:46px;padding:0;font-size:18px;border-radius:12px;background:#38405acc}
+@media (orientation:landscape){
+body.mob #top{max-height:calc(100vh - 70px);max-height:calc(100dvh - 70px);max-width:min(560px,calc(100vw - 16px - var(--sl) - var(--sr)))}
+body.mob #side,body.mob #calp{max-height:calc(100vh - 70px);max-height:calc(100dvh - 70px)}
+body.mob #cat{right:auto;width:320px;max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px)}
+body.mob #say{bottom:calc(150px + var(--sb))!important;max-width:46vw!important}
+body.mob #mright>#compass{position:fixed;zoom:1;transform:scale(.72)!important;transform-origin:top left;left:calc(8px + var(--sl))!important;top:calc(152px + var(--st))!important}
+body.mob #joy{transform:none;left:calc(18px + var(--sl))!important;bottom:calc(16px + var(--sb))!important}
+body.mob #tb2{bottom:calc(16px + var(--sb));grid-template-columns:repeat(4,44px)}
+body.mob #tb{right:calc(8px + 191px + 8px + var(--sr))!important;bottom:calc(16px + var(--sb))!important;width:130px}
+body.mob #tb #bj{flex:0 0 130px;width:130px}
+}
 </style></head><body>
 <div class="p" id="top"><b>🧱 Blokia</b><button id="mode">▶ Main</button><button id="un">↶</button><button id="re">↷</button><span id="tml">🌗</span><input type="range" id="tm" min="0" max="100" value="35" style="width:90px"><button id="bauto" class="on">Auto</button><button id="wx" title="Klik untuk ganti cuaca">☀️ Cerah · 🌱 Semi</button><span id="calw"><button id="cal" title="Kalender">📅</button><div id="calp"></div></span><select id="sz"><option value="40">40×40</option><option value="64">64×64</option><option value="96">96×96</option><option value="128" selected="">128×128</option><option value="192">192×192</option><option value="256">256×256</option><option value="400">400×400</option></select><select id="gf"><option value="0">Hemat</option><option value="1" selected="">Normal</option><option value="2">Tajam</option></select><button id="bmus">🎵</button><button id="bh2">?</button><span id="st" style="font-size:12px;opacity:.7"></span><div id="help"></div></div>
 <div class="p" id="side"><h4>Warna polos</h4><span>Warna</span><input type="color" id="cb" value="#c97b4a"><h4>Isi area</h4><span>Tinggi</span><input type="number" id="th" min="1" max="10" value="1" style="width:44px"><span>Dinding saja</span><input type="checkbox" id="hl">
@@ -243,6 +313,7 @@ button .sep{display:inline-block;width:1px;height:1.1em;margin:0 9px;background:
    INTERIOR-ATAP                  Interior gedung, NPC masuk gedung, atap tembus.
    EKSPOR-GAME                    Tombol 🎮 Ekspor Game: HTML versi pemain (tanpa panel kreator) + gameBoot.
    GAMEPLAY-PLUS                  Mode Gelombang: monster+bos, senjata terhubung, parry, rage/ultimate, orb, angka damage, toko darurat.
+   LAYAR-HP                       Tata letak HP portrait+landscape: tombol melayang ☰ ▶ 🎨, laci panel, HUD kanan (CSS: body.mob).
    INIT                           Memuat kota tertanam, guard/reportErr, loop render utama.
    ============================================================ */
 
@@ -1130,9 +1201,11 @@ const PT=new Map();let pd=0,fr=0,ft=0;
 function pinch(e){PT.set(e.pointerId,{x:e.clientX,y:e.clientY});const[a,b]=[...PT.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pd&&d)dist=Math.max(3,Math.min(Math.max(140,S),dist*pd/d));pd=d;mv=99}
 let TOUCH=false;const JV={x:0,y:0,j:0},jy=$('joy'),kb=$('kn');
 function jm(e) {
+  /* pusat & radius dihitung dari ukuran tampil joystick, agar tetap benar saat diperkecil (transform:scale) di HP */
   const r = jy.getBoundingClientRect(),
-    dx = e.clientX - r.left - 55,
-    dy = e.clientY - r.top - 55,
+    k = r.width / 110 || 1,
+    dx = (e.clientX - r.left - r.width / 2) / k,
+    dy = (e.clientY - r.top - r.height / 2) / k,
     l = Math.hypot(dx, dy),
     m = Math.min(l, 45) / (l || 1);
   JV.x = (dx * m) / 45;
@@ -5122,6 +5195,11 @@ function updateModeUI() {
   });
   if (play) statEl.style.display = 'none';
   help();
+  try {
+    mobSync(true);
+  } catch (e) {
+    dbg('layar-hp', e);
+  }
 }
 /* Balik mode Main <-> Kreator. Urutan: balik `play` -> transisi -> UI. */
 function toggle() {
@@ -8998,6 +9076,76 @@ function gpTick(dt){
     else if(!alive)gpClear()}
   gpUI(dt)}
 //#endregion GAMEPLAY-PLUS
+//#region LAYAR-HP
+/* ============================================================
+   LAYAR-HP — tata letak layar HP (portrait + landscape). Di HP semua panel kreator disembunyikan
+   (☰ Menu = bilah atas, 🎨 = panel warna/karakter, 📦 = katalog) dan HUD/tombol main disusun ulang.
+   ➜ Aturan tampilan ada di CSS blok "LAYAR-HP" (selektor body.mob); region ini hanya memasang kelas & tombol melayang.
+   ➜ Kreator di HP: joystick kiri-bawah = geser kamera, ▲▼ = naik/turun saat 👁 Orang pertama.
+   ➜ Desktop/tablet (sisi terpendek ≥ 600px) tidak berubah.
+   ============================================================ */
+/* KONTRAK
+   Fungsi           : (5) isMobView, mobFab, mobInit, mobSync, mobPad
+   Konstanta/lain   : (1) MOB
+   Bergantung pada  : DASAR-DUNIA, PEMBUKA (GAME), KONTROL-SENTUH, GAMEPLAY-PLUS (gpH), PERAN-DASAR-MISI-TOKO-POLISI  */
+const MOB={on:false,moved:false};
+const isMobView=()=>Math.min(innerWidth,innerHeight)<600&&(innerWidth<700||matchMedia('(pointer:coarse)').matches);
+{const f=document.createElement('div');f.id='mfab';
+  f.innerHTML='<button id="mm" title="Menu">☰</button><button id="mp" title="Main / Kreator"></button><button id="mc" title="Warna dan karakter">🎨</button>';
+  document.body.appendChild(f)}
+function mobFab(){const b=document.body;
+  $('mm').classList.toggle('on',b.classList.contains('mtop'));$('mc').classList.toggle('on',b.classList.contains('mside'));
+  $('mp').textContent=play?'⏹':'▶';$('mp').style.display=GAME?'none':'';$('mc').style.display=play||GAME?'none':''}
+$('mm').onclick=()=>{const b=document.body;b.classList.remove('mside');b.classList.toggle('mtop');mobFab()};
+$('mc').onclick=()=>{const b=document.body;b.classList.remove('mtop');b.classList.toggle('mside');mobFab()};
+$('mp').onclick=()=>$('mode').click();
+/* Ketuk dunia game saat laci terbuka: tutup laci saja (jangan ikut menaruh blok). */
+document.addEventListener('pointerdown',e=>{
+  if(!MOB.on||e.target!==ren.domElement)return;
+  const b=document.body;
+  if(b.classList.contains('mtop')||b.classList.contains('mside')){b.classList.remove('mtop','mside');mobFab();e.stopPropagation()}
+},true);
+function mobInit(){
+  if(!MOB.moved){
+    MOB.moved=true;
+    const r=document.createElement('div');r.id='mright';document.body.appendChild(r);
+    wantedEl.classList.add('mwant');
+    [$('hud'),wantedEl,$('compass'),gpH].forEach(e=>{if(e)r.appendChild(e)});   /* HUD kanan: satu kolom, tidak saling menimpa */
+    [szEl,shopEl].forEach(e=>e.classList.add('dlgc'));statEl.classList.add('dlgs');
+    /* Katalog = lembar bawah: tutup otomatis setelah satu material dipilih. */
+    $('cg').addEventListener('click',e=>{if(MOB.on&&e.target.closest&&e.target.closest('.sw'))setTimeout(()=>{if(!play)$('cat').style.display='none'},0)});
+  }
+  if(!play)$('cat').style.display='none';
+}
+function mobSync(modeChanged){
+  const b=document.body,on=isMobView();
+  if(on!==MOB.on){MOB.on=on;b.classList.toggle('mob',on);if(on)mobInit();else b.classList.remove('mtop','mside')}
+  b.classList.toggle('mplay',!!play);
+  if(modeChanged){b.classList.remove('mtop','mside');if(on)$('cat').style.display='none'}
+  mobFab();
+}
+/* Kreator di HP: joystick menggerakkan kamera lewat K.w/a/s/d (dibaca pan() dan flyCam()); ▲▼ = K[' '] / K.q saat orang pertama. */
+{const f=document.createElement('div');f.id='mfly';
+  f.innerHTML='<button id="mup" title="Naik">▲</button><button id="mdn" title="Turun">▼</button>';document.body.appendChild(f);
+  [['mup','up'],['mdn','dn']].forEach(([i,k])=>{const b=$(i);
+    b.onpointerdown=e=>{e.preventDefault();MOB[k]=1};b.onpointerup=b.onpointercancel=b.onpointerleave=()=>{MOB[k]=0}})}
+function mobPad(){
+  const b=document.body,on=MOB.on&&!play;
+  if(on){
+    const dz=v=>Math.abs(v)<.15?0:v,x=dz(JV.x),y=dz(JV.y);
+    if(x||y){K.w=Math.max(0,-y);K.s=Math.max(0,y);K.d=Math.max(0,x);K.a=Math.max(0,-x);MOB.pad=1}
+    else if(MOB.pad){K.w=K.s=K.a=K.d=0;MOB.pad=0}
+    if(MOB.up||MOB.dn){K[' ']=MOB.up?1:0;K.q=MOB.dn?1:0;MOB.vz=1}
+    else if(MOB.vz){K[' ']=0;K.q=0;MOB.vz=0}
+  }else if(MOB.pad||MOB.vz){K.w=K.s=K.a=K.d=0;K[' ']=0;K.q=0;MOB.pad=MOB.vz=0}
+  b.classList.toggle('mcfp',!!cfp);
+  requestAnimationFrame(mobPad);
+}
+requestAnimationFrame(mobPad);
+addEventListener('resize',()=>mobSync());
+addEventListener('orientationchange',()=>setTimeout(mobSync,200));
+mobSync();
+//#endregion LAYAR-HP
 //#region INIT
 /* ============================================================
    INIT — Memuat kota tertanam, guard/reportErr, loop render utama.

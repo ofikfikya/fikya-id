@@ -837,6 +837,38 @@ const $ = id => document.getElementById(id),
   cars = [],
   K = {};
 
+/* fix54: registri & definisi collider dekorasi. Format: ['c', ox, oz, radius, tinggi] lingkaran; ['b', ox, oz, hx, hz, tinggi] kotak sumbu-X/Z.
+   ox/oz relatif ke tengah sel. Ukuran mengikuti model di DEKORASI. semak/bunga/taman tidak ada → boleh ditembus. */
+const DCOL = new Map(),
+  DC_NPC_SKIP = new Set(['bangku', 'halte']),
+  DC_DEF = {
+    pohon: [['c', 0, 0, 0.2, 3.5]],
+    pohoncemara: [['c', 0, 0, 0.3, 4.2]],
+    pohonpalm: [['c', 0, 0, 0.2, 4.6]],
+    pohonkering: [['c', 0, 0, 0.22, 3.2]],
+    lampjalan: [['c', 0, 0, 0.14, 2.8]],
+    lalinbarat: [['c', 0, 0, 0.14, 3.2]],
+    lalintimur: [['c', 0, 0, 0.14, 3.2]],
+    lalinutara: [['c', 0, 0, 0.14, 3.2]],
+    lalinselatan: [['c', 0, 0, 0.14, 3.2]],
+    bangku: [['b', 0, -0.02, 0.45, 0.19, 0.8]],
+    sampah: [['b', 0, 0, 0.3, 0.3, 0.95]],
+    hydrant: [['c', 0, 0, 0.27, 0.85]],
+    pos: [['c', 0, 0, 0.2, 1.6]],
+    rambu: [['c', 0, 0, 0.1, 2.3]],
+    airmancur: [['b', 0, 0, 0.95, 0.95, 2.2]],
+    pagar: [['b', 0, 0, 0.5, 0.06, 0.85]],
+    pagarz: [['b', 0, 0, 0.06, 0.5, 0.85]],
+    halte: [
+      ['c', -0.5, 0, 0.1, 2.7],
+      ['c', 0.5, 0, 0.1, 2.7],
+      ['b', 0, -0.4, 0.75, 0.05, 2.2],
+      ['b', -0.75, 0, 0.03, 0.4, 2.2],
+      ['b', 0, -0.15, 0.5, 0.2, 0.55]
+    ]
+  };
+let COL_T = null; /* tugas NPC aktif (diisi followPath) → dekorasi di sel tujuan tidak mengganjal */
+
 /* Cache elemen DOM statis yang dibaca tiap frame (hindari getElementById berulang).
    heatQ/fogQ/frostQ = nilai opacity terakhir yang ditulis ke overlay (tulis ulang hanya bila berubah). */
 const heatEl = $('heato'),
@@ -1661,10 +1693,16 @@ const LM = {};
 ['XR', 'XY', 'XG', 'ZR', 'ZY', 'ZG'].forEach(k => (LM[k] = new THREE.MeshBasicMaterial({color: 0x222222})));
 let xs = 'G',
   zs = 'R';
+const LPH = {x: '', z: ''};   /* fase lampu yang terakhir DIGAMBAR (untuk hindari tulis material sia-sia) */
 function lightTick() {
   const p = (performance.now() / 1000) % 19;
-  xs = p < 5 ? 'G' : p < 6 ? 'Y' : 'R';
-  zs = p < 9.5 ? 'R' : p < 14.5 ? 'G' : p < 15.5 ? 'Y' : 'R';
+  const nx = p < 5 ? 'G' : p < 6 ? 'Y' : 'R';
+  const nz = p < 9.5 ? 'R' : p < 14.5 ? 'G' : p < 15.5 ? 'Y' : 'R';
+  /* xs/zs WAJIB diperbarui tiap frame: dibaca blkCar (mobil) & followPath (NPC).
+     Tapi material hanya ditulis saat fase BENAR-BENAR berubah (6× per 19 dtk, bukan 60×/dtk). */
+  xs = nx; zs = nz;
+  if (nx === LPH.x && nz === LPH.z) return;
+  LPH.x = nx; LPH.z = nz;
   const C = {R: 0xff3b30, Y: 0xffcc00, G: 0x30d158};
   for (const a of ['X', 'Z'])
     for (const s of 'RYG') {
@@ -2022,6 +2060,9 @@ const CHS = 32,
   IMFR = new THREE.Frustum(),
   IMPM = new THREE.Matrix4(),
   IMP = new THREE.Vector3();
+/* fix42: petunjuk kapasitas awal per key mesh ('tipe|chunk' → jumlah instance), hanya aktif selama desBlocks (muat kota).
+   Murni saran: bila meleset, imGrow tetap menjadi cadangan. null = perilaku lama (mulai CAP0, gandakan). */
+let IMHINT = null;
 let imCullOn = true;
 /* fix33: upload instanceMatrix PARSIAL (three r128: satu updateRange kontigu per atribut, offset/count dalam float, direset ke -1 oleh renderer setelah unggah).
    ATURAN: penulis matriks TIDAK boleh mengeset instanceMatrix.needsUpdate / updateRange langsung. Cukup setMatrixAt lalu imMark(mesh, indeks).
@@ -2160,6 +2201,40 @@ const ATLAS_TILE = {};
   ATLAS_TEX.needsUpdate = true;
 })();
 
+/* ===== Grup F — musim vegetasi via instanceColor =====
+   Daun di-bake PUTIH (lihat bake()), batang tetap coklat.
+   instanceColor per instance = warna musim (lihat VEG_TINT).
+   Warna akhir = vertex × instance = musim (daun) / coklat ber-tint (batang). */
+const VEG_TYPES = new Set(['pohon', 'pohoncemara', 'pohonpalm', 'pohonkering', 'semak']);
+const VEG_TINT = {
+  /* [Semi, Panas, Gugur, Dingin] */
+  pohon:       [0x60c860, 0x90d050, 0xd87838, 0xb8c8d8],
+  pohoncemara: [0x40a050, 0x60b060, 0x60b060, 0x8aa8b8],
+  pohonpalm:   [0x70d070, 0xa8d860, 0xd09040, 0xc0ccd8],
+  pohonkering: [0xa08868, 0xa89870, 0xc07040, 0xa8a098],
+  semak:       [0x70d070, 0x98d048, 0xd88840, 0xc0d0d8]
+};
+const VEG_MESHES = new Set();
+let _vegSeason = -1;
+function vegTint() {
+  if (_vegSeason === WX.season) return;
+  _vegSeason = WX.season;
+  for (const m of VEG_MESHES) {
+    const a = m.instanceColor;
+    if (!a) continue;
+    const cols = VEG_TINT[m.userData.t];
+    if (!cols) continue;
+    CC.setHex(cols[WX.season]);
+    const r = CC.r, g = CC.g, b = CC.b;
+    for (let i = 0, n = m.count * 3; i < n; i += 3) {
+      a.array[i] = r;
+      a.array[i + 1] = g;
+      a.array[i + 2] = b;
+    }
+    a.needsUpdate = true;
+  }
+}
+
 function imMk(t, key, ch, cap) {
   const isAtlas = t === 'ATLAS|BG',
     ct = t == 'blok' || t == 'karpet',
@@ -2175,7 +2250,24 @@ function imMk(t, key, ch, cap) {
     m.geometry.setAttribute('instanceTile', new THREE.InstancedBufferAttribute(new Float32Array(cap * 2), 2));
     m.geometry.userData.sh = 1;   /* cegah disp() membuang geometri atlas secara tidak sengaja */
   }
+  const isVeg = !isAtlas && VEG_TYPES.has(t);
   if (ct) m.setColorAt(0, CC.set(0xffffff));
+  else if (isVeg) {
+    /* instanceColor dibuat langsung dengan panjang penuh & semua 1 (putih) — lebih stabil
+       dari setColorAt(0,…) saat m.count masih 0, dan mencegah attribute internal jadi null. */
+    const arr = new Float32Array(cap * 3).fill(1);
+    m.instanceColor = new THREE.InstancedBufferAttribute(arr, 3);
+  }
+  if (isVeg) VEG_MESHES.add(m);
+  /* fix38: penjaga konsistensi — satu material tidak boleh dipakai campuran mesh ber-/tanpa instanceColor (lihat VCM_VEG). */
+  {
+    const hasIC = !!m.instanceColor, mu = mat.userData;
+    if (mu.ic === undefined) mu.ic = hasIC;
+    else if (mu.ic !== hasIC && !mu.icWarn) {
+      mu.icWarn = 1;
+      console.warn('[Blokia] material dipakai campuran instanceColor:', t);
+    }
+  }
   m.count = 0;
   m.frustumCulled = false;
   m.userData.keys = [];
@@ -2194,8 +2286,12 @@ function imRm(m) {
     j = ms.indexOf(m);
   if (j >= 0) ms.splice(j, 1);
   IMDIRTY.delete(m);
+  VEG_MESHES.delete(m);
   sc.remove(m);
   if (m.dispose) m.dispose();
+  /* fix40: geometri mesh atlas adalah klon unik (BG.clone() + instanceTile) — bebaskan buffer GPU-nya.
+     Hanya atlas: tipe lain memakai geometri bersama (BG, BG_FLOOR_*, dgeo) yang tidak boleh dibuang. */
+  if (m.userData.t === 'ATLAS|BG' && m.geometry && m.geometry !== BG) m.geometry.dispose();
 }
 /* Mesh g penuh tapi kapasitas < CH: ganti dengan mesh 2× lebih besar, salin matriks/warna, arahkan ulang b.im semua blok di dalamnya. */
 function imGrow(A, g) {
@@ -2235,7 +2331,13 @@ function imFor(t, x, z) {
   if (m) return m;
   const g = A.find(q => q.userData.cap < CH);
   if (g) return imGrow(A, g);
-  m = imMk(isAtlas ? 'ATLAS|BG' : t, key, ch, CAP0);
+  let cap0 = CAP0;
+  if (IMHINT) {
+    /* semua mesh di A penuh & berkapasitas CH (kalau tidak, sudah dikembalikan di atas) → sisa = petunjuk − A.length×CH */
+    const hn = IMHINT.get(key);
+    if (hn) cap0 = Math.min(CH, Math.max(CAP0, Math.ceil((hn - A.length * CH) * 1.1)));
+  }
+  m = imMk(isAtlas ? 'ATLAS|BG' : t, key, ch, cap0);
   A.push(m);
   return m;
 }
@@ -2693,7 +2795,9 @@ let MG = null,
   MGV = 0.8,
   NBUF = null,
   nV = 0,
-  SV = 1;
+  SV = 1,
+  SBUS = null; /* fix47: jalur keluaran sementara per panggilan sfx (null = SFXG; AMBG = slider Ambient) */
+const AMB_SFX = new Set(['birds', 'cat', 'rooster', 'crackle', 'bedug', 'chime', 'thunder']); /* fix47 */
 const SL = {},
   SG = {swing: 90, hit: 45, coin: 40, ui: 50, hurt: 120};
 const VOICES = new Set();
@@ -2785,7 +2889,7 @@ function beep(f, d, ty, f2, v, dl) {
     g.gain.exponentialRampToValueAtTime(Math.max((v || 0.15) * SV, 0.0002), t + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g);
-    g.connect(SFXG);
+    g.connect(SBUS || SFXG);
     v_ = voiceAdd({o, g, counted: 1});
     nV++;
     o.onended = () => voiceKill(v_);
@@ -2816,7 +2920,7 @@ function nz(d, ft, f1, f2, v, at, dl) {
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     s.connect(fl);
     fl.connect(g);
-    g.connect(SFXG);
+    g.connect(SBUS || SFXG);
     v_ = voiceAdd({s, f: fl, g, counted: 1});
     nV++;
     s.onended = () => voiceKill(v_);
@@ -2852,6 +2956,7 @@ const SFX = {
   },
   thunder: v => {
     v = v || 0.5;
+    if (P && (buildingAt(P.g.position.x, P.g.position.z, P.g.position.y) || uIn)) SV *= 0.4; /* fix45: redam di dalam gedung */
     nz(1.6 + v, 'lowpass', 520, 40, 0.45 + v * 0.4, 0.1);
     nz(1.2, 'lowpass', 300, 30, 0.35, 0.25, 0.35);
   },
@@ -2866,6 +2971,13 @@ const SFX = {
   level: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.22, 'triangle', 0, 0.2, i * 0.09)),
   dash: () => nz(0.22, 'bandpass', 500, 3200, 0.28, 0.01),
   jump: () => beep(300, 0.12, 'sine', 580, 0.16),
+  torsiren: () => {
+    /* fix45: puting beliung muncul 30-50 unit dari pemain, di luar jangkauan sfx() (45) — peringatan harus tetap terdengar,
+       jadi redam hanya sampai 25% dengan jarak 90 unit, bukan senyap. */
+    const d = P && TOR ? Math.hypot(TOR.x - P.g.position.x, TOR.z - P.g.position.z) : 0;
+    SV *= Math.max(0.25, 1 - d / 90);
+    beep(600, 0.5, 'sine', 900, 0.15);
+  },
   ui: () => beep(520, 0.03, 'square', 0, 0.05)
 };
 function sfx(n, x, z, a) {
@@ -2882,11 +2994,13 @@ function sfx(n, x, z, a) {
     if (now - (SL[n] || 0) < (SG[n] || 30)) return;
     SL[n] = now;
     SV = k;
+    SBUS = AMB_SFX.has(n) ? AMBG : null;
     SFX[n](a);
   } catch (e) {
     dbg('audio:sfx', e);
   } finally {
     SV = 1;
+    SBUS = null;
   }
 }
 addEventListener(
@@ -2914,7 +3028,7 @@ addEventListener(
       sfx($('calp').classList.contains('open') ? 'uiClose' : 'uiOpen');
       return;
     }
-    if (['bmute', 'bauto', 'broof', 'bcam', 'blab', 'bact', 'bfill', 'bmus', 'btouch'].includes(id)) {
+    if (['bauto', 'broof', 'bcam', 'blab', 'bact', 'bfill', 'bmus', 'btouch'].includes(id)) {
       sfx(btn.classList.contains('on') ? 'toggleOff' : 'toggleOn');
       return;
     }
@@ -3032,10 +3146,24 @@ Object.assign(SFX, {
     beep(420, 0.12, 'triangle', 150, 0.14);
   },
   bedug: () => {
-    for (let i = 0; i < 5; i++) {
-      beep(95, 0.5, 'sine', 60, 0.5, i * 0.9);
-      nz(0.15, 'lowpass', 500, 100, 0.3, 0.005, i * 0.9);
-    }
+    /* fix45: ketukan dijadwalkan satu per satu agar hanya 2 voice aktif sekaligus (dulu 10 voice menahan batas nV 4,5 dtk) */
+    const sv = SV,
+      sb = SBUS,
+      hit = () => {
+        const old = SV,
+          oldB = SBUS;
+        SV = sv;
+        SBUS = sb; /* fix47: ketukan tertunda tetap lewat jalur Ambient */
+        try {
+          beep(95, 0.5, 'sine', 60, 0.5);
+          nz(0.15, 'lowpass', 500, 100, 0.3, 0.005);
+        } finally {
+          SV = old;
+          SBUS = oldB;
+        }
+      };
+    hit();
+    for (let i = 1; i < 5; i++) setTimeout(hit, i * 900);
   },
   chime: () => [784, 988, 1175].forEach((f, i) => beep(f, 0.9, 'sine', 0, 0.1, i * 0.35)),
   steam: () => {
@@ -3172,7 +3300,7 @@ Object.assign(SFX, {
     } else if (c === 'wind') {
       nz(1.0, 'bandpass', 400, 900, 0.1, 0.2);
     } else if (c === 'fog') {
-      beep(220, 0.5, 'sine', 0, 0.08);
+      nz(0.9, 'lowpass', 320, 140, 0.05, 0.25); /* fix44: kabut = desau rendah, bukan nada */
     }
   }
 });
@@ -3207,7 +3335,8 @@ Object.assign(SG, {
   splash: 400,
   birds: 800,
   cat: 1200,
-  rooster: 1200
+  rooster: 1200,
+  torsiren: 200
 });
 Object.assign(SG, {
   charge: 120,
@@ -3228,6 +3357,7 @@ let AMB = null,
   eng = null,
   stT = 0,
   pSl = -1,
+  _pSlInit = false /* fix45: false = slot salat awal belum dicatat (tanpa bunyi) */,
   _wasInWater = false;
 let TRAF_DIST = null,
   TRAF_VER = -1,
@@ -3336,8 +3466,8 @@ function ambInit() {
   cr.frequency.value = 4300;
   cl.frequency.value = 17;
   cs.frequency.value = 2.3;
-  cm.gain.value = 0.5;
-  cn.gain.value = 0.5;
+  cm.gain.value = 0.25; /* fix44: total gain jangkrik 0..1, tidak negatif */
+  cn.gain.value = 0.25;
   cg.gain.value = 0.5;
   co.gain.value = 0;
   cl.connect(cm);
@@ -3494,10 +3624,15 @@ function updEng(dt) {
     th = Math.abs((K.w || 0) - (K.s || 0) - JV.y),
     f = 38 + v * 8 + th * 10;
   eng.o.frequency.value += (f - eng.o.frequency.value) * Math.min(1, dt * 8);
-  eng.o2.frequency.value = eng.o.frequency.value * 0.5;
+  eng.o2.frequency.value = eng.o.frequency.value * 1.005; /* fix44: dulu x0.5 (~19Hz, tak terdengar) */
   eng.fl.frequency.value = 300 + v * 55 + th * 150;
   lv(eng.g.gain, 0.07 + Math.min(v, 14) * 0.004 + th * 0.03, dt);
 }
+/* fix43: suara air mancur. Dulu puncak 0.35 (setara hujan badai) dan terdengar sampai 40 unit — terlalu keras untuk hiasan bundaran.
+   FNT_VOL = volume saat di samping air mancur · FNT_RANGE = jarak dengar (unit) · FNT_LO = rasio lapis bas terhadap lapis desis. */
+const FNT_VOL = 0.12,
+  FNT_RANGE = 28,
+  FNT_LO = 0.4;
 function updAmbSlow(dt) {
   if (mute || !AC || AC.state !== 'running' || !play || !P) {
     return;
@@ -3542,7 +3677,12 @@ function updAmbSlow(dt) {
   } else {
     ambSet(A.siren.g.gain, 0, G, GE);
   }
-  const inWater = P ? floorT(Math.floor(P.g.position.x), Math.floor(P.g.position.z)) === 'air' : false;
+  /* fix46: air itu non-solid (pemain berpijak di y=0), jembatan/dermaga selalu y>=1. Dulu hanya cek tipe lantai,
+     jadi berjalan di jembatan memicu dengung bawah air + splash. Lompat dari dalam air tetap dihitung "di air" (histeresis). */
+  const inWater = P
+    ? floorT(Math.floor(P.g.position.x), Math.floor(P.g.position.z)) === 'air' &&
+      (P.g.position.y < 0.9 || (_wasInWater && !onG && P.g.position.y < 1.8))
+    : false;
   if (inWater !== _wasInWater) {
     if (P) sfx('splash', P.g.position.x, P.g.position.z);
     _wasInWater = inWater;
@@ -3613,22 +3753,30 @@ function updAmbSlow(dt) {
       if (dd < fntD) fntD = dd;
     }
   }
-  const fntV = fntD < 40 ? Math.pow(1 - fntD / 40, 2) * 0.35 * out : 0;
+  const fntV = fntD < FNT_RANGE ? Math.pow(1 - fntD / FNT_RANGE, 2) * FNT_VOL * out : 0;
   ambSet(A.fntHi.g.gain, fntV, G, GE);
-  ambSet(A.fntLo.g.gain, fntV * 0.55, G, GE);
+  ambSet(A.fntLo.g.gain, fntV * FNT_LO, G, GE);
   const clear = cur == 'cerah' || cur == 'embun' || cur == 'panas' || cur == 'kabut' ? 1 : 0;
   ambSet(A.cri.gain, night > 0.6 && clear ? 0.05 * out : 0, G, GE);
   A.t -= dt;
   if (A.t <= 0) {
     A.t = 2.5 + Math.random() * 4;
-    if (d > 0.4 && tvv < 0.5 && rain < 0.1 && !ind && Math.random() < 0.8) {
+    if (d > 0.4 && tvv < 0.5 && rain < 0.1 && !ind && (cur === 'cerah' || cur === 'panas' || cur === 'embun' || cur === 'gerimis') && Math.random() < 0.8) { /* fix44: hanya cuaca cerah */
       const f = 2400 + Math.random() * 1600,
         n = 2 + ((Math.random() * 3) | 0);
-      for (let i = 0; i < n; i++) beep(f, 0.07, 'sine', f * (1.2 + Math.random() * 0.3), 0.05, i * 0.11);
+      SBUS = AMBG; /* fix47: kicau pagi lewat slider Ambient */
+      try {
+        for (let i = 0; i < n; i++) beep(f, 0.07, 'sine', f * (1.2 + Math.random() * 0.3), 0.05, i * 0.11);
+      } finally {
+        SBUS = null;
+      }
     }
   }
   const sl = prayerSlot();
-  if (sl !== pSl) {
+  if (!_pSlInit) {
+    _pSlInit = true;
+    pSl = sl; /* fix45: catat slot saat masuk game, jangan bunyikan bedug */
+  } else if (sl !== pSl) {
     if (sl >= 0 && pSl < 0) {
       const m = TOWN && TOWN.b && TOWN.b.find(q => q.kind == 'masjid');
       if (m) {
@@ -3641,12 +3789,21 @@ function updAmbSlow(dt) {
     pSl = sl;
   }
 }
+/* fix46: tipe blok yang benar-benar diinjak. Lantai (y=0) di bawah jembatan bisa 'air', padahal kaki berpijak di papan/kayu. */
+function feetT(fx, fz, py) {
+  if (py < 0.9) return floorT(fx, fz);
+  for (let yy = Math.min(Y_MAX - 1, Math.floor(py + 0.05)); yy >= 1; yy--) {
+    const b = H.get(fx + ',' + yy + ',' + fz);
+    if (b && !b.ns && Math.abs(b.y + b.h - py) < 0.3) return b.t;
+  }
+  return floorT(fx, fz);
+}
 function stepSfx() {
   const n = Math.floor(P.ph / Math.PI);
   if (n === stT || !onG) return;
   stT = n;
   const p = P.g.position,
-    t = floorT(Math.floor(p.x), Math.floor(p.z));
+    t = feetT(Math.floor(p.x), Math.floor(p.z), p.y);
   let s = SURF(t);
   const indoor = buildingAt(p.x, p.z, p.y) && s !== 'rug';
   if (indoor) s = 'in';
@@ -5097,7 +5254,7 @@ const VCM = new THREE.MeshLambertMaterial({vertexColors: true}),
     'bakmandi',
     'tanaman'
   ]);
-function bake(g) {
+function bake(g, isVeg) {
   const ch = g.children;
   if (
     !ch.length ||
@@ -5125,12 +5282,14 @@ function bake(g) {
       na = ge.attributes.normal,
       col = c.material.color,
       nm = new THREE.Matrix3().getNormalMatrix(c.matrix);
+	  let cr = col.r, cg = col.g, cb = col.b;
+      if (isVeg && cg > cr + 0.05 && cg > cb + 0.05) { cr = 1; cg = 1; cb = 1; }
     for (let i = 0; i < pa.count; i++) {
       v.fromBufferAttribute(pa, i).applyMatrix4(c.matrix);
       P.push(v.x, v.y, v.z);
       v.fromBufferAttribute(na, i).applyMatrix3(nm).normalize();
       N.push(v.x, v.y, v.z);
-      C.push(col.r, col.g, col.b);
+      C.push(cr, cg, cb);
     }
     for (const k of ge.index.array) I.push(k + off);
     off += pa.count;
@@ -5230,6 +5389,64 @@ function bakeChar(g, limbs) {
     dbg('bakeChar', e);
   }
 }
+
+const _bakeCache = new Map(),
+  BAKE_CACHE_MAX = 150;
+function bakeHash(c) {
+  return (
+    c.skin + '|' + c.hair + '|' + c.shirt + '|' + c.pants + '|' +
+    c.hs + '|' + (c.hat || '') + '|' + c.hc + '|' +
+    (c.isFem ? 1 : 0) + '|' + (c.mataOff ? 1 : 0) + '|' + (c.tanpaKaki ? 1 : 0) + '|' +
+    (c.label || '') + '|' + (c.vc || '') + '|' + (c.jc || '') + '|' +
+    (c.sc || '') + '|' + (c.sy || '') + '|' + (c.membran || '') + '|' + (c.perut || '') + '|' +
+    (c.outfit || []).join(',') + '|' + (c.items || []).join(',')
+  );
+}
+function bakeCharCached(g, limbs, hash) {
+  try {
+    const lset = new Set(limbs),
+      hit = hash && _bakeCache.get(hash);
+    if (hit) {
+      for (let i = 0; i < limbs.length; i++) {
+        const l = limbs[i];
+        while (l.children.length) l.remove(l.children[0]);
+        const m = new THREE.Mesh(hit.limbs[i], VCM);
+        m.matrixAutoUpdate = false;
+        l.add(m);
+      }
+      for (const c of g.children.slice()) if (!lset.has(c)) g.remove(c);
+      const body = new THREE.Mesh(hit.body, VCM);
+      body.matrixAutoUpdate = false;
+      g.add(body);
+      return;
+    }
+    bakeChar(g, limbs);
+    if (!hash) return;
+    /* Pastikan bake BERHASIL di semua subtree sebelum menyimpan ke cache. */
+    const limbGeos = [];
+    for (const l of limbs) {
+      if (l.children.length !== 1) return;
+      const m = l.children[0];
+      if (!m || !m.isMesh || !m.geometry) return;
+      limbGeos.push(m.geometry);
+    }
+    let bodyMesh = null,
+      bodyCount = 0;
+    for (const c of g.children) {
+      if (lset.has(c)) continue;
+      bodyCount++;
+      if (c.isMesh) bodyMesh = c;
+    }
+    if (bodyCount !== 1 || !bodyMesh || !bodyMesh.geometry) return;
+    for (const geo of limbGeos) geo.userData.sh = 1;
+    bodyMesh.geometry.userData.sh = 1;
+    if (_bakeCache.size >= BAKE_CACHE_MAX) _bakeCache.delete(_bakeCache.keys().next().value);
+    _bakeCache.set(hash, {limbs: limbGeos, body: bodyMesh.geometry});
+  } catch (e) {
+    dbg('bakeCharCached', e);
+  }
+}
+
 /* fix24: dekorasi yang di-bake & dirender sebagai InstancedMesh (per tipe+chunk). lampjalan/rambu belum. */
 const INSTD = new Set(['pohon', 'pohoncemara', 'pohonpalm', 'pohonkering', 'semak', 'bunga', 'taman', 'bangku', 'pagar', 'pagarz', 'sampah', 'hydrant', 'lampjalan', 'koin']),
   DG = {};
@@ -5264,8 +5481,12 @@ const dgeo = t =>
         ? CG.clone().translate(0, 0.03, 0)
         : t == 'lampjalan'
           ? bake(lampPole()).geometry
-          : bake(DEC[t]()).geometry);
-const dmatI = t => (STRP[t] ? mat(STRP[t][5]) : t == 'lampjalan_h' ? mfor('lampu') : t == 'lampjalan_g' ? GL : VCM);
+          : bake(DEC[t](), VEG_TYPES.has(t)).geometry);
+/* fix38: three r128 TIDAK mengecek instanceColor saat berganti objek pada material yang sama (setProgram hanya cek instancing true/false).
+   Program yang dikompilasi dgn USE_INSTANCING_COLOR + mesh lain yg instanceColor-nya null => attributes.get(null) => TypeError 'isInterleavedBufferAttribute'
+   (render satu frame gagal total). Maka mesh vegetasi (punya instanceColor) WAJIB memakai material sendiri, terpisah dari VCM milik dekorasi lain. */
+const VCM_VEG = VCM.clone();
+const dmatI = t => (STRP[t] ? mat(STRP[t][5]) : t == 'lampjalan_h' ? mfor('lampu') : t == 'lampjalan_g' ? GL : VEG_TYPES.has(t) ? VCM_VEG : VCM);
 function dhbFor(t) {
   const g = dgeo(t);
   g.computeBoundingBox();
@@ -5397,10 +5618,17 @@ var CUSTOM = {};
     _spc = c;
     _spo = c ? {emissive: '#4b2fd0', emissiveIntensity: 0.55} : null;
   }
-  function tb(w, h, d, c, x, y, z, o) {
-    if (_spc && c === _spc && !o) o = _spo;
-    const g = new THREE.BoxGeometry(w, h, d),
-      uv = g.attributes.uv,
+  /* fix40: cache geometri per (w,h,d). Dimensi dibulatkan 2 desimal (selisih <=0.005 unit model, tak terlihat)
+     agar ukuran float variatif (mis. segmen naga) berbagi kunci. Geometri ber-cache ditandai userData.sh=1
+     supaya disp() tidak membuangnya; bila cache penuh, geometri dibuat biasa (tak dibagi → tetap dibuang disp()). */
+  const TBG = new Map(),
+    TBG_MAX = 1000;
+  function tbGeo(w, h, d) {
+    const k = w + '|' + h + '|' + d;
+    let g = TBG.get(k);
+    if (g) return g;
+    g = new THREE.BoxGeometry(w, h, d);
+    const uv = g.attributes.uv,
       T = 16,
       dm = [
         [d, h],
@@ -5415,6 +5643,18 @@ var CUSTOM = {};
         const i = f * 4 + v;
         uv.setXY(i, (uv.getX(i) * dm[f][0]) / T, (uv.getY(i) * dm[f][1]) / T);
       }
+    if (TBG.size < TBG_MAX) {
+      g.userData.sh = 1;
+      TBG.set(k, g);
+    }
+    return g;
+  }
+  function tb(w, h, d, c, x, y, z, o) {
+    if (_spc && c === _spc && !o) o = _spo;
+    w = Math.round(w * 100) / 100;
+    h = Math.round(h * 100) / 100;
+    d = Math.round(d * 100) / 100;
+    const g = tbGeo(w, h, d);
     const m = new THREE.Mesh(g, dmat(c, 's', o));
     m.position.set(x, y, z);
     return m;
@@ -6724,7 +6964,7 @@ function makeChar(c) {
     lR.scale.set(0, 0, 0);
   }
   /* fix28: lewati ghost/melayang/sayap/ekor dan karakter yang punya animasi lewat userData (tanda, slime, api, dst) */
-  if (!c.ghost && !c.melayang && !c.wing && !c.tail && !Object.keys(g.userData).length) bakeChar(g, [lL, lR, aL, aR]);
+  if (!c.ghost && !c.melayang && !c.wing && !c.tail && !Object.keys(g.userData).length) bakeCharCached(g, [lL, lR, aL, aR], bakeHash(c));
   if (c.ghost)
     g.traverse(o => {
       if (o.isMesh) {
@@ -7475,7 +7715,7 @@ function wgCell3(x, y, z) {
       }
       if (ASPH.has(b.t)) return 9;
       if (ZEBRA.has(b.t)) return 3;
-      return 2;
+      return dcolCell(x, z) ? AVOID_W : 2; /* fix54: A* menghindari pohon/tiang/dll. */
     }
   }
   return canStand(x, y, z) ? 2 : 0; /* v-perbaikan: pintu terbuka tanpa blok di bawah → walkable */
@@ -8060,6 +8300,15 @@ function updSky(dt) {
 
   sc.fog.near = 50 * (1 - I) + WXS.fogN * I;
   sc.fog.far = far0 * (1 - I) + far0 * WXS.fogF * I;
+  /* fix41: far kamera = fog.far + 10 (di luar itu sudah tertutup kabut penuh) → imCull ikut membuang chunk jauh.
+     Lantai 250: benda langit fog:false (duskDome r=240, matahari/bulan/bintang 170) harus tetap di dalam far. */
+  {
+    const wf = Math.max(sc.fog.far + 10, 250);
+    if (Math.abs(wf - cam.far) > 2) {
+      cam.far = wf;
+      cam.updateProjectionMatrix();
+    }
+  }
 
   const sf = 1 + (0.45 + 0.55 * WXS.sun - 1) * I * (0.4 + 0.6 * d);
   hemi.intensity = (0.22 + 0.65 * d) * sf + LT.flash * 1.4;
@@ -8081,14 +8330,7 @@ function updSky(dt) {
 
   ground.material.color.copy(baseGround).lerp(seasonGroundC[WX.season], 0.6);
   updGround(dt, d);
-  cLeaf1.color
-    .copy(baseLeaf1)
-    .lerp(seasonLeaf1C[WX.season], 0.8)
-    .lerp(cWhite, GT.w * 0.4);
-  cLeaf2.color
-    .copy(baseLeaf2)
-    .lerp(seasonLeaf2C[WX.season], 0.8)
-    .lerp(cWhite, GT.w * 0.4);
+  vegTint();
 
   const cx = cam.position.x,
     cy = cam.position.y,
@@ -8330,7 +8572,7 @@ function spawnTornado() {
       ? '⚠️ PUTING BELIUNG ' + L.nm.toUpperCase() + ' (T' + lv + ')! Cari perlindungan'
       : '🌪️ Puting beliung tingkat ' + lv + ' · ' + L.nm
   );
-  const si = () => beep(600, 0.5, 'sine', 900);
+  const si = () => sfx('torsiren'); /* fix45: volume mengikuti jarak puting beliung (lihat SFX.torsiren) */
   si();
   setTimeout(si, 600);
   if (lv >= 4) {
@@ -8921,8 +9163,15 @@ function updHail(dt) {
   }
   hailGeo.attributes.position.needsUpdate = true;
   hail.position.set(cam.position.x, 0, cam.position.z);
-  if (Math.random() < dt * 3 * HL.o * (roofAt(cx, cz) > 2.5 ? 0.25 : 1))
-    beep(1800 + Math.random() * 1500, 0.02, 'square', 0, 0.05);
+  const hRoof = roofAt(cx, cz) > 2.5 ? 0.25 : 1;
+  if (Math.random() < dt * 3 * HL.o * hRoof) {
+    SBUS = AMBG; /* fix47: hujan es lewat slider Ambient */
+    try {
+      beep(1800 + Math.random() * 1500, 0.02, 'square', 0, 0.05 * hRoof);
+    } finally {
+      SBUS = null;
+    }
+  } /* fix45: volume ikut diredam di bawah atap */
 }
 //#endregion CUACA-HUJAN-ES
 //#region CUACA-EMBUN
@@ -9342,7 +9591,7 @@ function updKilau() {
       px = _m ? _m.position.x : q.b.x + 0.5,
       py = _m ? _m.position.y : q.b.y + (q.b.oy || 0),
       pz = _m ? _m.position.z : q.b.z + 0.5,
-      live = CO.has(q.b) && Math.abs(px - cx) < 80 && Math.abs(pz - cz) < 80;
+      live = CO.has(q.b) && !q.b.got && Math.abs(px - cx) < 80 && Math.abs(pz - cz) < 80; /* fix53: koin yang sudah diambil (got) tidak lagi berkilau; dulu hanya dicek ada di CO, padahal koin diambil hanya disembunyikan */
     for (const w of q.S) {
       let br = 0;
       if (live) {
@@ -9750,6 +9999,7 @@ function del(b) {
     if (isDoor(b.t)) DOORS.delete(b);
     if (SWAY.has(b.t)) SWAY_SET.delete(b);
   }
+  dcolDel(b); /* fix54 */
   H.delete(k);
   if (ROOF && !b.ns && b.y + b.h >= roofAt(b.x, b.z)) roofCol(b.x, b.z);
 }
@@ -9810,8 +10060,9 @@ function put(x, y, z, t, c) {
         at.needsUpdate = true;
       }
     }
-    if (im.instanceColor) {
-      CC.set(c || (t == 'karpet' ? MD.karpet.base : '#c97b4a'));
+        if (im.instanceColor) {
+      if (VEG_TYPES.has(t)) CC.setHex(VEG_TINT[t][WX.season]);
+      else CC.set(c || (t == 'karpet' ? MD.karpet.base : '#c97b4a'));
       im.setColorAt(i, CC);
       im.instanceColor.needsUpdate = true;
     }
@@ -9849,6 +10100,7 @@ function put(x, y, z, t, c) {
       bb.subs = [q];
     }
     H.set(k, bb);
+    dcolAdd(bb); /* fix54 */
     if (t == 'koin') CO.add(bb);   /* ← koin yang di-instance juga harus masuk himpunan CO
                                        agar coinCheck / updKilau / rotasi di INIT menemukannya */
     imBox(im.userData.ch, x, y, z, dI ? (FURNITURE.has(furnT(t)) ? (DHB[t] || dhbFor(t))[1] : 5) : h);
@@ -9884,6 +10136,7 @@ function put(x, y, z, t, c) {
   const bb = {m, h, x, y, z, t, c, ns: !!d.o.ns};
   NB.add(bb);
   H.set(k, bb);
+  dcolAdd(bb); /* fix54 */
   roofPut(bb);
   if (roofAct && y >= 3) roofDirty = true;
   if (t == 'koin') CO.add(bb);
@@ -10293,9 +10546,13 @@ function act(e) {
   const [x, y, z] = r.c;
   if (tool == 'karakter') addNpc(x + 0.5, z + 0.5, cc(), y);
   else if (tool == 'mobil') {
-    if (isRoad(x, z)) {
-      const vt = $('vtype');
-      addCar(x, z, null, CAR_MIN, (vt && vt.value) || 'sedan');
+    if (!isRoad(x, z)) { msg('🚗 Mobil hanya bisa ditaruh di jalan'); return; }
+    const vt = $('vtype');
+    const c = addCar(x, z, null, CAR_MIN, (vt && vt.value) || 'sedan');
+    if (!c) { msg('🚗 Tidak bisa menaruh mobil di sini (terlalu dekat mobil lain)'); return; }
+    if (!c.dx && !c.dz) {
+      cars.pop(); sc.remove(c.g); disp(c.g);
+      msg('🚗 Jalan buntu di sini: pilih jalan yang lurus atau bercabang');
     }
   } else edit([[x, y, z, cur, $('cb').value]]);
 }
@@ -11446,7 +11703,7 @@ function startAttack(type) {
   if (d.mp) {
     if (Combat.mp < d.mp) {
       msg('🔷 MP kurang (' + d.mp + ')');
-      beep(120, 0.1, 'square');
+      sfx('error');
       return;
     }
     Combat.mp -= d.mp;
@@ -11641,6 +11898,8 @@ function doDash(dir) {
     const nx = lim(p.x + mx * STEP),
       nz = lim(p.z + mz * STEP);
     let moved = false;
+    const bx0 = p.x,
+      bz0 = p.z; /* fix54 */
     if (canStep(Math.floor(nx + Math.sign(mx) * 0.25), Math.floor(p.z), p.y)) {
       p.x = nx;
       moved = true;
@@ -11650,6 +11909,8 @@ function doDash(dir) {
       moved = true;
     }
     if (!moved) break;
+    colApplyPlayer(p, bx0, bz0); /* fix54 */
+    if (Math.hypot(p.x - bx0, p.z - bz0) < 1e-4) break;
   }
   if (Math.hypot(p.x - sx, p.z - sz) < 0.05) return;
   p.y = hTop(Math.floor(p.x), Math.floor(p.z), p.y);
@@ -11951,6 +12212,7 @@ function enterPlay() {
   drv = null;
   _wasInWater = false;
   pSl = -1;
+  _pSlInit = false;
   coins = [...CO].filter(b => b.got).length;
   coinTot = CO.size;
   $('hud').style.display = '';
@@ -12068,9 +12330,10 @@ function updateModeUI() {
   ].forEach(i => {
     const e = $(i);
     if (e) e.style.display = play && !(GAME && i == 'bh2') ? 'none' : '';
+  });
+  /* ✂ Pemotong lantai (ikon gunting + slider) hanya untuk Kreator. Cukup jalan sekali per updateModeUI. */
   const wc = $('wcut');
   if (wc) wc.style.display = play ? 'none' : 'inline-flex';
-  });
   if (play) statEl.style.display = 'none';
   help();
   try {
@@ -12131,6 +12394,8 @@ function updPlayer(dt) {
   let mx = -sy * f + cy * r,
     mz = -cy * f - sy * r;
   const l = Math.hypot(mx, mz);
+  const _px0 = p.x,
+    _pz0 = p.z; /* fix54 */
   const spd = Combat.guard ? CONFIG.GUARD_SPEED : CONFIG.MOVE_SPEED;
   const lockMove = Combat.atk && (Combat.atk.type == 'pH' || Combat.atk.type == 'kH');
   if (l > 0 && !lockMove) {
@@ -12152,6 +12417,7 @@ function updPlayer(dt) {
   animPose(dt);
   p.x = lim(p.x);
   p.z = lim(p.z);
+  colApplyPlayer(p, _px0, _pz0); /* fix54: pohon/tiang/mobil dst. */
   vy -= CONFIG.GRAVITY * dt;
   p.y += vy * dt;
   if (vy > 0 && solidAt(Math.floor(p.x), Math.floor(p.y + 1.85), Math.floor(p.z))) {
@@ -12602,11 +12868,13 @@ function cleanTown(d) {
    Karena itu des() belum menyentuh apa pun saat berkas ditolak. ---- */
 function parseSaveJson(s) {
   let d;
-  try {
-    d = JSON.parse(s);
-  } catch {
-    throw new Error('bukan berkas JSON yang valid');
-  }
+  if (s && typeof s === 'object') d = s; /* fix41: objek yang sudah di-parse (INIT) — jangan parse ulang */
+  else
+    try {
+      d = JSON.parse(s);
+    } catch {
+      throw new Error('bukan berkas JSON yang valid');
+    }
   if (!d || typeof d != 'object' || !Array.isArray(d.b)) throw new Error('format tidak dikenali');
   if (d.v && d.v > CONFIG.SAVE_VER) throw new Error('save versi ' + d.v + ' tidak didukung');
   return d;
@@ -12723,9 +12991,44 @@ function desTown(tw) {
     EXITS.push(...tw.exits);
   }
 }
+/* fix42: hitung jumlah instance per key mesh dengan meniru routing put() (blokT, tipe tak dikenal → 'blok', cellIn/y,
+   INSTD/dec/IND/isDoor, key atlas, mesh pendamping lampjalan_h/g dan *_s). Hanya petunjuk — salah hitung tidak merusak. */
+function imHintBuild(blocks) {
+  const hm = new Map(),
+    add = (t, x, z) => {
+      const key = (ATLAS_BG.has(t) ? 'ATLAS|BG' : t) + '|' + Math.floor(x / CHS) + ',' + Math.floor(z / CHS);
+      hm.set(key, (hm.get(key) || 0) + 1);
+    };
+  for (const a of blocks) {
+    const x = a[0], y = a[1], z = a[2];
+    let t = blokT(a[3], a[4]);
+    if (!MD[t]) t = 'blok';
+    if (!cellIn(x, z) || y < 0 || y >= Y_MAX) continue;
+    const d = MD[t],
+      dI = INSTD.has(t);
+    if (!((dI || !d.o.dec) && !IND[t] && !isDoor(t))) continue;
+    add(t, x, z);
+    if (dI && t == 'lampjalan') {
+      add('lampjalan_h', x, z);
+      add('lampjalan_g', x, z);
+    }
+    if (t == 'marka' || t == 'markaz' || t == 'sepedam') add(t + '_s', x, z);
+  }
+  return hm;
+}
 function desBlocks(blocks) {
   unkReset();
-  blocks.forEach(a => put(...a));
+  try {
+    IMHINT = imHintBuild(blocks);
+  } catch (e) {
+    IMHINT = null;
+    dbg('imHint', e);
+  }
+  try {
+    blocks.forEach(a => put(...a));
+  } finally {
+    IMHINT = null;
+  }
   unkReport();
   centerFountains();
 }
@@ -12898,7 +13201,8 @@ function injectDiverseRoles() {
   /* Warga yang masih murni (tanpa role / role=='warga') */
   const warga = npcs.filter(n => !n.dead && !n.mon && (!n.c.role || n.c.role === 'warga'));
   /* Sisakan 4 warga biasa sebagai "penduduk umum" */
-  const maxReplace = Math.max(0, Math.min(warga.length - 4, pool.length));
+  const MAX_DIVERSE = 12;
+  const maxReplace = Math.max(0, Math.min(warga.length - 4, pool.length, MAX_DIVERSE));
   for (let i = 0; i < maxReplace; i++) {
     const n = warga[i],
       role = pool[i];
@@ -13562,7 +13866,9 @@ function setCar(c, dt) {
   c.z = Math.floor(c.pz);
   c.g.position.set(c.px, 0.1, c.pz);
   let t;
-  if (c.arc) {
+  if (c.arc && c.arc.psi !== undefined) {
+    t = c.arc.psi; /* fix50: arah hasil pengikut-lintasan */
+  } else if (c.arc) {
     t = Math.atan2(-Math.sin(c.arc.th) * c.arc.dir, Math.cos(c.arc.th) * c.arc.dir);
   } else {
     t = Math.atan2(c.dx, c.dz);
@@ -13682,6 +13988,7 @@ function arcPt(c, s) {
   return [A.cx + A.r * Math.cos(A.end) + A.d[0] * (s - L), A.cz + A.r * Math.sin(A.end) + A.d[1] * (s - L)];
 }
 function arcBlocked(c) {
+  if (c.arc.rt) return 0; /* fix48: logika ini khusus belok persimpangan; di cincin bundaran membuat dua mobil saling tunggu */
   const pts = [];
   for (let i = 0; i <= ARC_N; i++) pts.push(arcPt(c, i));
   /* Bagian lama: sesama mobil yang juga sedang berbelok (tidak diubah) */
@@ -13701,7 +14008,7 @@ function arcBlocked(c) {
   /* v-fix5: mobil LURUS lawan arah yang akan tiba di titik belok sebelum kita selesai → tunda. */
   const myTurnTime = ((Math.PI / 2) * c.arc.r) / (c.s * 0.8); /* perkiraan lama arc, dtk */
   for (const o of cars) {
-    if (o === c || isTurn(o) || o.dead) continue;
+    if (o === c || isTurn(o) || o.dead || (o.v || 0) < 0.3) continue; /* fix48: mobil lawan yang sedang berhenti (mis. lampu merah) tidak 'akan tiba' */
     /* harus berlawanan arah (bukan paralel/searah) */
     if (o.dx * c.dx + o.dz * c.dz > -0.5) continue;
     /* dekat dengan pusat arc? */
@@ -13993,24 +14300,28 @@ function updCar(c, dt) {
   c._rt = null;
   if (c.arc) {
     const A = c.arc;
-    c.arcWaitT = (c.arcWaitT || 0) + dt;
-    if (c.arcWaitT > 20) {
-      // deadlock timeout
-      c.arc = null;
-      c.arcWaitT = 0;
-      c.dx = -c.dx;
-      c.dz = -c.dz; // putar balik
-      return;
-    }
     const carBk = blkCar(c, 5.5, 1.7),
       pedBk = blkPed(c, 5.5, 1.7);
-    const arcBk = arcBlocked(c); // ← cek baru
-    const bk = carBk || pedBk || arcBk;
+    let arcBk = arcBlocked(c);
+    /* fix48: penghitung hanya jalan saat benar-benar terhalang, di-reset begitu bebas. Dulu menumpuk selama
+       semua belokan dan setelah 20 dtk memutar balik mobil yang lancar. Sekarang: lepas hambatan belok, tanpa putar balik. */
+    c.arcWaitT = carBk || arcBk ? (c.arcWaitT || 0) + dt : 0;
+    if (c.arcWaitT > 8) arcBk = 0;
     const gw = (c.wt = carBk || arcBk ? (c.wt || 0) + dt : 0) > 20;
     if (gw && c.wt > 23) c.wt = 0;
-    if (pedBk || arcBk || (carBk && !gw)) return;
-    if (A.rt) A.r += (A.rt - A.r) * Math.min(1, 1.5 * dt);
-    A.th += (A.dir * (c.v || c.s) * 0.8 * dt) / A.r;
+    const blocked = pedBk || arcBk || (carBk && !gw);
+    /* fix48: kecepatan di busur ikut dihaluskan (dulu beku/lepas mendadak): rem saat terhalang, gas saat bebas */
+    if (c.v === undefined) c.v = 0;
+    c.v += ((blocked ? 0 : c.s * 0.8) - c.v) * Math.min(1, dt * (blocked ? 5 : 3));
+    if (blocked && c.v < 0.01) {
+      c.v = 0;
+      return;
+    }
+    if (A.rt) {
+      ringStep(c, A, dt); /* fix50 */
+      return;
+    }
+    A.th += (A.dir * c.v * dt) / A.r;
     const done = (A.th - A.end) * A.dir >= 0;
     if (done) A.th = A.end;
     for (let _i = 0; _i < 20; _i++) {
@@ -14027,6 +14338,7 @@ function updCar(c, dt) {
     c.pz = A.cz + A.r * Math.sin(A.th);
     if (done) {
       c.arc = null;
+      c.arcWaitT = 0;
       c.dx = A.d[0];
       c.dz = A.d[1];
       c.inI = isI(Math.floor(c.px), Math.floor(c.pz)) ? 1 : 0;
@@ -14043,14 +14355,27 @@ function updCar(c, dt) {
   const cx = Math.floor(c.px),
     cz = Math.floor(c.pz);
   if (!isRoad(cx, cz)) return;
-  if (rbCheck(c)) return;
-  const ax = Math.floor(c.px + hx * 2.2),
+  const rbc = rbCheck(c);
+  if (rbc) {
+    if (rbc === 2) c.v = 0; /* fix48: berhenti di tepi → mulai lagi dari 0, bukan lompat ke kecepatan lama */
+    return;
+  }
+  const rbS = rbSlow(c),
+    ax = Math.floor(c.px + hx * 2.2),
     az = Math.floor(c.pz + hz * 2.2),
     inA = (x, z) => isIC(x, z) || isZC(x, z),
     lightStop = inA(ax, az) && !inA(cx, cz) && ctl2(ax, az) && (hx ? xs : zs) === 'R',
     carStop = blkCar(c, 6.0, 1.4),
     pedStop = blkPed(c, 6.0, 1.4),
-    stop = lightStop || carStop || pedStop;
+    stop = lightStop || carStop || pedStop || rbS;
+  let boxHold = 0;
+  if (lightStop) c._bhT = 0; /* fix49: tiap siklus lampu mulai hitung dari nol (dulu bisa basi dan katup langsung terbuka) */
+  else if (inA(ax, az) && !inA(cx, cz) && ctl2(ax, az)) {
+    if (boxBlocked(c)) {
+      c._bhT = (c._bhT || 0) + dt;
+      boxHold = c._bhT < 10 ? 1 : 0; /* fix49: katup pengaman 10 dtk */
+    } else c._bhT = 0;
+  } else if (inA(cx, cz)) c._bhT = 0;
   const blockReason = lightStop || pedStop;
   const gw = (c.wt = carStop && !blockReason ? (c.wt || 0) + dt : 0) > 20;
   if (gw && c.wt > 23) c.wt = 0;
@@ -14060,7 +14385,7 @@ function updCar(c, dt) {
     sfx('npchorn', c.px, c.pz);
   }
   if (c.wt < 1) c._honT = 0;
-  const canGo = !lightStop && !pedStop && (!carStop || gw);
+  const canGo = !lightStop && !pedStop && !rbS && !boxHold && (!carStop || gw);
   {
     const tgtV = canGo ? c.s : 0;
     const rate = canGo ? 3 : 5;
@@ -14075,7 +14400,7 @@ function updCar(c, dt) {
   const nx = Math.floor(c.px),
     nz = Math.floor(c.pz);
   if (nx != cx || nz != cz) pickDir(c, nx, nz);
-  if (!c.arc && (!stop || gw)) {
+  if (!c.arc && ((!stop && !boxHold) || gw)) {
     const L = laneC(c),
       m = Math.min(4, c.s * 0.25) * dt;
     if (L != null) {
@@ -14102,6 +14427,39 @@ function separateCars() {
           dz = b.pz - a.pz,
           d = Math.hypot(dx, dz);
         if (d >= CAR_MIN || d < 0.001) continue;
+        if (fa && fb) {
+          /* fix52: dulu dua mobil < CAR_MIN saling dorong ke segala arah. Lajur berlawanan hanya berjarak ~4 (< 4,5),
+             jadi mobil yang berpapasan/antre terdorong menyamping ke tepi jalan (z=±4,0) dan tersangkut di lajur salah.
+             Sekarang pasangan yang sejajar (searah atau berlawanan) dan beda lajur (jarak samping >= 2,2) tidak
+             tumpang tindih -> dilewati. Searah satu lajur: dorong hanya LONGITUDINAL. Berlawanan satu lajur dan
+             pasangan tegak lurus: dorongan lama (radial). */
+          const dot = a.dx * b.dx + a.dz * b.dz;
+          if (Math.abs(dot) > 0.5) {
+            const hx = a.dx,
+              hz = a.dz,
+              lat = Math.abs(dx * hz - dz * hx);
+            if (lat >= 2.2) continue;
+            if (dot > 0.5) {
+              const lon = dx * hx + dz * hz;
+              if (Math.abs(lon) >= CAR_MIN) continue;
+              const kk = (CAR_MIN - Math.abs(lon)) * 0.5,
+                sg = lon >= 0 ? 1 : -1;
+              let pa = kk,
+                pb = kk;
+              if (!stepOK(a, -hx * sg * pa, -hz * sg * pa)) {
+                pb += pa;
+                pa = 0;
+              }
+              if (!stepOK(b, hx * sg * pb, hz * sg * pb)) pb = 0;
+              a.px -= hx * sg * pa;
+              a.pz -= hz * sg * pa;
+              b.px += hx * sg * pb;
+              b.pz += hz * sg * pb;
+              moved = 1;
+              continue;
+            }
+          }
+        }
         const k = (CAR_MIN - d) * 0.5,
           ux = dx / d,
           uz = dz / d;
@@ -14138,6 +14496,94 @@ function rbOkC(R) {
   return v;
 }
 const inRB = (x, z) => RB.some(R => Math.hypot(x + 0.5 - R.cx, z + 0.5 - R.cz) <= R.ro + 0.5 && rbOk(R));
+/* fix50: mobil di cincin bundaran kini MENYETIR (pure pursuit: arah mobil berputar menuju titik di depan lintasan)
+   alih-alih ditempatkan di titik lingkaran dengan arah = garis singgung. Dulu: masuk dan keluar cincin berarah
+   tegak lurus terhadap cincin -> arah mobil berputar 90 derajat seketika, dan titik keluar salah sehingga mobil
+   mendarat di trotoar. Sekarang masuk, menyusuri cincin, dan keluar ke lajur lengan tujuan dengan lengkung halus. */
+function ringStep(c, A, dt) {
+  const T = 2 * Math.PI,
+    Lk = 2.6,
+    bx = A.d[0],
+    bz = A.d[1];
+  A.age += dt;
+  const thC = Math.atan2(c.pz - A.cz, c.px - A.cx),
+    rem = (((thC - A.ea) % T) + T) % T;
+  if (!A.exiting && rem < 0.75) A.exiting = 1;
+  let tx, tz;
+  if (A.exiting) {
+    const tc = (c.px - A.qx) * bx + (c.pz - A.qz) * bz,
+      tt = Math.max(tc + Lk, A.rt * 0.9);
+    tx = A.qx + bx * tt;
+    tz = A.qz + bz * tt;
+  } else {
+    const a2 = thC + A.dir * (Lk / A.rt);
+    tx = A.cx + A.rt * Math.cos(a2);
+    tz = A.cz + A.rt * Math.sin(a2);
+  }
+  const want = Math.atan2(tx - c.px, tz - c.pz),
+    dps = Math.atan2(Math.sin(want - A.psi), Math.cos(want - A.psi)),
+    wm = 3.2 * dt;
+  A.psi += Math.max(-wm, Math.min(wm, dps));
+  const nx = c.px + Math.sin(A.psi) * c.v * dt,
+    nz = c.pz + Math.cos(A.psi) * c.v * dt;
+  if (isRoad(Math.floor(nx), Math.floor(nz))) {
+    c.px = nx;
+    c.pz = nz;
+    A.off = 0;
+  } else if ((A.off = (A.off || 0) + dt) > 1.5) {
+    /* pengaman: tertahan di tepi jalan -> tarik ke radius cincin */
+    const ux = c.px - A.cx,
+      uz = c.pz - A.cz,
+      m = Math.hypot(ux, uz) || 1;
+    c.px = A.cx + (ux / m) * A.rt;
+    c.pz = A.cz + (uz / m) * A.rt;
+    A.off = 0;
+  }
+  A.th = Math.atan2(c.pz - A.cz, c.px - A.cx);
+  A.r = Math.hypot(c.px - A.cx, c.pz - A.cz);
+  let done = 0;
+  if (A.exiting) {
+    const tc2 = (c.px - A.cx) * bx + (c.pz - A.cz) * bz,
+      lat = Math.abs((c.px - A.qx) * -bz + (c.pz - A.qz) * bx);
+    if ((tc2 >= A.ro - 0.8 && lat < 1.2) || tc2 > A.ro + 2.5) done = 1;
+  }
+  if (A.age > 45) done = 1; /* pengaman */
+  if (done) {
+    c.arc = null;
+    c.arcWaitT = 0;
+    c.dx = bx;
+    c.dz = bz;
+    c.inI = isI(Math.floor(c.px), Math.floor(c.pz)) ? 1 : 0;
+  }
+  setCar(c, dt);
+}
+/* fix48: hanya mengalah pada mobil cincin yang MENUJU titik masuk (hulu, dalam ~6 satuan busur), bukan semua mobil
+   dalam jarak 5,5 termasuk yang sudah lewat. Arah cincin: th menurun (dir -1). */
+function rbYield(c, R, th) {
+  const T = 2 * Math.PI;
+  for (const o of cars) {
+    if (o === c || !o.arc || !o.arc.rt || o.arc.cx !== R.cx || o.arc.cz !== R.cz) continue;
+    const d = ((((o.arc.th - th + Math.PI) % T) + T) % T) - Math.PI;
+    if (d > -0.35 && d < 8 / R.rm) return 1; /* fix49: jendela hulu 8 satuan (mobil dari kiri) + 0,35 rad lewat di depan */
+  }
+  return 0;
+}
+/* fix48: mulai melambat 3,5 satuan sebelum tepi cincin agar berhenti halus, bukan membeku di tepi */
+function rbSlow(c) {
+  if (!c.dx && !c.dz) return 0;
+  if (isZC(Math.floor(c.px), Math.floor(c.pz))) return 0;
+  for (const R of RB) {
+    if (!rbOk(R)) continue;
+    const ux = c.px - R.cx,
+      uz = c.pz - R.cz,
+      dd = Math.hypot(ux, uz);
+    if (dd > R.ro + 3.5 || dd < R.ri - 0.3) continue;
+    if (ux * c.dx + uz * c.dz > -0.5) continue;
+    if (Math.abs(-ux * c.dz + uz * c.dx) < 0.05) continue;
+    if (rbYield(c, R, Math.atan2(uz, ux))) return 1;
+  }
+  return 0;
+}
 function rbCheck(c) {
   if (!c.dx && !c.dz) return 0;
   if (isZC(Math.floor(c.px), Math.floor(c.pz))) return 0; // ← BARU: jangan menikung di zebra cross
@@ -14152,7 +14598,7 @@ function rbCheck(c) {
     if (u > -0.5) continue;
     const v = -ux * c.dz + uz * c.dx;
     if (Math.abs(v) < 0.05) continue;
-    if (cars.some(o => o !== c && o.arc && o.arc.rt && Math.hypot(o.px - c.px, o.pz - c.pz) < 5.5)) return 2;
+    if (rbYield(c, R, Math.atan2(uz, ux))) return 2;
     if (!R.arms) R.arms = [];
     const O = R.arms.filter(a => a[0] !== -c.dx || a[1] !== -c.dz);
     let b;
@@ -14167,7 +14613,25 @@ function rbCheck(c) {
     const th = Math.atan2(uz, ux);
     const T = 2 * Math.PI;
     const sw2 = (((th - Math.atan2(b[1], b[0]) - ph) % T) + T) % T;
-    c.arc = {cx: R.cx, cz: R.cz, r: r0, rt: R.rm, th, end: th - sw2, dir: -1, d: b}; // ← rt:R.rm
+    /* fix50: lajur keluar (garis lajur lengan tujuan) untuk pengikut-lintasan; lihat ringStep */
+    const lnE = laneC({px: R.cx + b[0] * (R.ro + 2), pz: R.cz + b[1] * (R.ro + 2), dx: b[0], dz: b[1]}),
+      lnC = lnE != null ? lnE : b[0] ? R.cz : R.cx;
+    c.arc = {
+      cx: R.cx,
+      cz: R.cz,
+      r: r0,
+      rt: R.rm,
+      ro: R.ro,
+      th,
+      end: th - sw2,
+      dir: -1,
+      d: b,
+      ea: Math.atan2(b[1], b[0]),
+      qx: b[0] ? R.cx : lnC,
+      qz: b[0] ? lnC : R.cz,
+      psi: c.a !== undefined ? c.a : Math.atan2(c.dx, c.dz),
+      age: 0
+    }; // ← rt:R.rm
     c.reversed = 0;
     c.crossing = 0;
     return 1;
@@ -14196,6 +14660,49 @@ function blkCar(c, D, Wd) {
 }
 
 let roadNpcs = [];
+/* fix49: walau lampu hijau, jangan masuk persimpangan bila (a) antrean berhenti di lajur depan sampai 5 satuan
+   melewati sisi keluar, atau (b) ada pejalan kaki/pemain di zona (zebra masuk + kotak + zebra keluar). Ditahan
+   paling lama 10 dtk (lihat updCar) agar tidak deadlock. Aturan "tunggu mobil silang keluar dari kotak" sengaja
+   TIDAK dipakai: di simulasi justru membuat saling tahan dan memperburuk macet. */
+function boxBlocked(c) {
+  const hx = c.dx,
+    hz = c.dz;
+  let ex = Math.floor(c.px + hx * 2.2),
+    ez = Math.floor(c.pz + hz * 2.2),
+    k = 0;
+  while (k++ < 16 && (isIC(ex, ez) || isZC(ex, ez))) {
+    ex += hx;
+    ez += hz;
+  }
+  const endF = (ex + 0.5 - c.px) * hx + (ez + 0.5 - c.pz) * hz,
+    lim = endF + 5;
+  for (const o of cars) {
+    if (o === c || o.dead || o.park) continue;
+    const rx = o.px - c.px,
+      rz = o.pz - c.pz,
+      f = rx * hx + rz * hz,
+      lat = Math.abs(rx * hz - rz * hx);
+    if (f <= 0 || f > lim) continue;
+    const [ox, oz] = hv(o),
+      dot = ox * hx + oz * hz;
+    if (!o.arc && dot > 0.5 && lat < 1.7 && (o.v || 0) < 0.4) return 1; /* antrean di lajur saya */
+  }
+  for (const n of roadNpcs) {
+    const p = n.g.position,
+      rx = p.x - c.px,
+      rz = p.z - c.pz,
+      f = rx * hx + rz * hz;
+    if (f > -0.5 && f < lim && Math.abs(rx * hz - rz * hx) < 2.6) return 1;
+  }
+  if (play && P && !drv && !Combat.dead) {
+    const p = P.g.position,
+      rx = p.x - c.px,
+      rz = p.z - c.pz,
+      f = rx * hx + rz * hz;
+    if (f > -0.5 && f < lim && Math.abs(rx * hz - rz * hx) < 2.6) return 1;
+  }
+  return 0;
+}
 function blkPed(c, D, Wd) {
   const [hx, hz] = hv(c);
   for (const n of roadNpcs) {
@@ -17245,7 +17752,177 @@ function turnToward(g, ang, k) {
   let df = ((ang - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   g.rotation.y += df * Math.min(1, k);
 }
+
+/* fix54-BEGIN ============================================================
+   TABRAKAN DEKORASI & MOBIL (pemain, NPC, monster)
+   Sebelumnya semua dekorasi memakai flag ns (non-solid) dan mobil bukan blok dunia, sehingga pemain/NPC
+   menembus pohon, tiang, bangku, mobil, dst. Di sini ada lapisan collider terpisah (flag ns TIDAK diubah, jadi
+   tidak ada efek samping ke hTop/headroom/A*): lingkaran/kotak kecil per tipe dekorasi + kotak miring (OBB) per mobil.
+   Dipakai oleh: updPlayer & dash (colApplyPlayer), stepNPC (pembungkus; juga dipakai monster/polisi).
+   semak/bunga/taman SENGAJA tidak punya collider (boleh ditembus). ============================================ */
+function dcBase(b) {
+  if (b.oy !== undefined) return b.y + b.oy;
+  const bl = H.get(b.x + ',' + (b.y - 1) + ',' + b.z);
+  return b.y + (bl && bl.h < 1 ? bl.h - 1 : 0);
+}
+function dcolAdd(b) {
+  if (!DC_DEF[b.t]) return;
+  const k = b.x + ',' + b.z;
+  let L = DCOL.get(k);
+  if (!L) DCOL.set(k, (L = []));
+  if (!L.includes(b)) L.push(b);
+}
+function dcolDel(b) {
+  if (!DC_DEF[b.t]) return;
+  const k = b.x + ',' + b.z,
+    L = DCOL.get(k);
+  if (!L) return;
+  const i = L.indexOf(b);
+  if (i >= 0) L.splice(i, 1);
+  if (!L.length) DCOL.delete(k);
+}
+/* sel berisi dekorasi keras yang harus dihindari NPC (bangku/halte dikecualikan: dipakai NPC untuk duduk/berteduh) */
+function dcolCell(x, z) {
+  const L = DCOL.get(x + ',' + z);
+  if (!L) return false;
+  for (const b of L) if (!DC_NPC_SKIP.has(b.t)) return true;
+  return false;
+}
+/* Dorong titik (x,z) berradius r keluar dari semua collider. Mengembalikan [x,z] baru, atau null bila tak ada tumpang tindih.
+   y = tinggi kaki. npc=true: lewati bangku/halte. tgt = tugas NPC {x,z}: dekorasi di sel tujuan diabaikan. */
+function colResolve(x, z, y, r, npc, tgt) {
+  let rx = x,
+    rz = z,
+    hit = false;
+  for (let it = 0; it < 3; it++) {
+    let mv = false;
+    const cx0 = Math.floor(rx),
+      cz0 = Math.floor(rz);
+    for (let i = -1; i <= 1; i++)
+      for (let j = -1; j <= 1; j++) {
+        const L = DCOL.get(cx0 + i + ',' + (cz0 + j));
+        if (!L) continue;
+        for (const b of L) {
+          if (npc && DC_NPC_SKIP.has(b.t)) continue;
+          if (tgt && Math.abs(tgt.x - (b.x + 0.5)) < 0.9 && Math.abs(tgt.z - (b.z + 0.5)) < 0.9) continue;
+          const base = dcBase(b);
+          for (const d of DC_DEF[b.t]) {
+            const circle = d[0] === 'c',
+              top = base + (circle ? d[4] : d[5]);
+            if (y >= top - 0.05 || y + 1.7 <= base) continue;
+            const dx = rx - (b.x + 0.5 + d[1]),
+              dz = rz - (b.z + 0.5 + d[2]);
+            if (circle) {
+              const rr = d[3] + r,
+                q = dx * dx + dz * dz;
+              if (q < rr * rr) {
+                const m = Math.sqrt(q);
+                if (m < 1e-4) rx += rr;
+                else {
+                  rx += (dx / m) * (rr - m);
+                  rz += (dz / m) * (rr - m);
+                }
+                mv = true;
+              }
+            } else {
+              const hx = d[3],
+                hz = d[4],
+                ax = dx - Math.max(-hx, Math.min(hx, dx)),
+                az = dz - Math.max(-hz, Math.min(hz, dz)),
+                q = ax * ax + az * az;
+              if (q < r * r) {
+                if (q > 1e-8) {
+                  const m = Math.sqrt(q);
+                  rx += (ax / m) * (r - m);
+                  rz += (az / m) * (r - m);
+                } else {
+                  const px = hx + r - Math.abs(dx),
+                    pz = hz + r - Math.abs(dz);
+                  if (px < pz) rx += dx < 0 ? -px : px;
+                  else rz += dz < 0 ? -pz : pz;
+                }
+                mv = true;
+              }
+            }
+          }
+        }
+      }
+    for (const c of cars) {
+      if (c.drv || c.dead || !c.g) continue;
+      const cp = c.g.position;
+      if (y >= cp.y + 1.5 || Math.abs(rx - cp.x) > 3.6 || Math.abs(rz - cp.z) > 3.6) continue;
+      const a = c.g.rotation.y,
+        sa = Math.sin(a),
+        ca = Math.cos(a),
+        hl = (VEH_L[c.type] || 3.4) / 2 + 0.04,
+        hw = (VEH_W[c.type] || 1.5) / 2 + 0.04,
+        dx = rx - cp.x,
+        dz = rz - cp.z,
+        f = dx * sa + dz * ca,
+        s = dx * ca - dz * sa,
+        df = f - Math.max(-hl, Math.min(hl, f)),
+        ds = s - Math.max(-hw, Math.min(hw, s)),
+        q = df * df + ds * ds;
+      if (q < r * r) {
+        let f2 = f,
+          s2 = s;
+        if (q > 1e-8) {
+          const m = Math.sqrt(q);
+          f2 = f + (df / m) * (r - m);
+          s2 = s + (ds / m) * (r - m);
+        } else {
+          const pf = hl + r - Math.abs(f),
+            ps = hw + r - Math.abs(s);
+          if (pf < ps) f2 = f + (f < 0 ? -pf : pf);
+          else s2 = s + (s < 0 ? -ps : ps);
+        }
+        rx = cp.x + f2 * sa + s2 * ca;
+        rz = cp.z + f2 * ca - s2 * sa;
+        mv = true;
+      }
+    }
+    if (!mv) break;
+    hit = true;
+  }
+  return hit ? [rx, rz] : null;
+}
+/* Pemain: terapkan dorongan collider; bila hasilnya menabrak dinding/tinggi (canStep gagal) tahan di posisi frame sebelumnya. */
+function colApplyPlayer(p, x0, z0) {
+  const q = colResolve(p.x, p.z, p.y, 0.25, false, null);
+  if (!q) return;
+  const fx = Math.floor(q[0]),
+    fz = Math.floor(q[1]);
+  if ((fx === Math.floor(p.x) && fz === Math.floor(p.z)) || canStep(fx, fz, p.y)) {
+    p.x = q[0];
+    p.z = q[1];
+  } else {
+    p.x = x0;
+    p.z = z0;
+  }
+}
+/* NPC/monster/polisi: stepNPC dibungkus. Bila dorongan menaruh NPC di sel yang tak bisa dipijak, langkah dibatalkan (false → hitung macet). */
 function stepNPC(p, mx, mz) {
+  const x0 = p.x,
+    z0 = p.z,
+    tgt = COL_T;
+  COL_T = null;
+  if (!stepNPC0(p, mx, mz)) return false;
+  const q = colResolve(p.x, p.z, p.y, 0.22, true, tgt);
+  if (!q) return true;
+  const fx = Math.floor(q[0]),
+    fz = Math.floor(q[1]);
+  if ((fx === Math.floor(p.x) && fz === Math.floor(p.z)) || stepY(fx, fz, p.y) != null) {
+    p.x = q[0];
+    p.z = q[1];
+    return true;
+  }
+  p.x = x0;
+  p.z = z0;
+  return false;
+}
+/* fix54-END */
+
+function stepNPC0(p, mx, mz) {
   const cx = Math.floor(p.x),
     cz = Math.floor(p.z),
     cy = p.y;
@@ -17296,7 +17973,7 @@ function followPath(n, dt, spd) {
     if ((nx !== cx || nz !== cz) && ZEBRA.has(floorT(nx, nz))) {
       const ndx = nx - cx,
         ndz = nz - cz;
-      const blocked = Math.abs(ndx) > Math.abs(ndz) ? zs === 'G' : xs === 'G';
+      const blocked = Math.abs(ndx) > Math.abs(ndz) ? zs !== 'R' : xs !== 'R'; /* fix49: kuning juga menahan (mobil masih boleh lewat) */
       if (blocked) {
         n.stk = 0; /* jangan dianggap macet */
         n.ph += dt * 2;
@@ -17310,6 +17987,7 @@ function followPath(n, dt, spd) {
   const x0 = p.x,
     z0 = p.z;
   STEP_AV = !!n._av;
+  COL_T = n.task || null; /* fix54 */
   stepNPC(p, dx * st, dz * st);
   const mv = Math.hypot(p.x - x0, p.z - z0);
   n.stk = mv < st * 0.35 ? (n.stk || 0) + dt : 0;
@@ -17785,7 +18463,7 @@ function groundNear(cx, cz, n) {
         if (Math.max(Math.abs(i), Math.abs(j)) !== r) continue;
         const x = cx + i + 0.5,
           z = cz + j + 0.5;
-        if (wgAt(x, z) !== 2 || buildingAt(x, z, 0)) continue;
+        if (wgAt(x, z) !== 2 || buildingAt(x, z, 0) || dcolCell(Math.floor(x), Math.floor(z))) continue; /* fix54 */
         const d = Math.hypot(x - p.x, z - p.z);
         if (d < bd) {
           bd = d;
@@ -17800,7 +18478,7 @@ function randGround(x, z, R) {
       r = 2.5 + Math.random() * R,
       X = x + Math.sin(a) * r,
       Z = z + Math.cos(a) * r;
-    if (!cellIn(Math.floor(X), Math.floor(Z), 1) || wgAt(X, Z) !== 2 || buildingAt(X, Z, 0)) continue;
+    if (!cellIn(Math.floor(X), Math.floor(Z), 1) || wgAt(X, Z) !== 2 || buildingAt(X, Z, 0) || dcolCell(Math.floor(X), Math.floor(Z))) continue; /* fix54 */
     return [X, Z];
   }
   return null;
@@ -18434,11 +19112,16 @@ function carSide(c, n) {
   const p = n.g.position;
   let best = null,
     bd = 1e9;
+  const ca = c.g.rotation.y,
+    sa = Math.sin(ca),
+    cc = Math.cos(ca),
+    hl = (VEH_L[c.type] || 3.4) / 2 + 0.8,
+    hw = (VEH_W[c.type] || 1.5) / 2 + 0.8; /* fix54: di luar badan mobil + jarak NPC */
   for (const [dx, dz] of [
-    [2.3, 0],
-    [-2.3, 0],
-    [0, 2.6],
-    [0, -2.6]
+    [cc * hw, -sa * hw],
+    [-cc * hw, sa * hw],
+    [sa * hl, cc * hl],
+    [-sa * hl, -cc * hl]
   ]) {
     const x = c.px + dx,
       z = c.pz + dz;
@@ -19311,7 +19994,7 @@ function npcStepSfx(n) {
   const dx = p.x - P.g.position.x,
     dz = p.z - P.g.position.z;
   if (dx * dx + dz * dz > 324) return; /* 18² = 324 */
-  const t = floorT(Math.floor(p.x), Math.floor(p.z));
+  const t = feetT(Math.floor(p.x), Math.floor(p.z), p.y);
   let s = SURF(t);
   if (buildingAt(p.x, p.z, p.y) && s !== 'rug') s = 'in';
   else if ((WX.cur === 'salju' || WX.cur === 'bsalju') && WX.intensity > 0.4 && s !== 'water' && s !== 'rug')
@@ -19773,6 +20456,54 @@ function onCycleChange() {
     if (!n._bound) bindOne(n);
   }
 }
+
+/* fix55-BEGIN ============================================================
+   NPC MENYINGKIR DARI PEMAIN (lembut). Pemain tidak pernah terhalang NPC; NPC yang terlalu dekat (< 0,62) digeser keluar
+   dengan kecepatan terbatas, ditambah komponen menyamping searah gerak NPC supaya NPC berjalan MENGITARI pemain, bukan
+   menempel. Tidak mendorong NPC yang: tumbang/mati/panik/sembunyi, dikejar polisi, monster, terkena hit, duduk di bangku,
+   atau sedang duduk/tidur dalam tugas. Perpindahan lewat stepNPC (patuh dinding, collider dekorasi & mobil). */
+function npcYield(dt) {
+  if (!play || !P || drv || sit || Combat.dead) return;
+  const pp = P.g.position,
+    R = 0.62,
+    lim = Math.max(CONFIG.MOVE_SPEED || 5, 4.5) * 1.2 * dt;
+  for (const n of npcs) {
+    if (n.dead || n.down || n.safe || n.chase || n.mon || n.panic || n.recovering > 0 || n.hitstun > 0) continue;
+    if (n.c && n.c.beh === 'duduk') continue;
+    const T = n.task;
+    if (T && T.st === 'do' && T.pose && T.pose !== 'stand') continue;
+    const g = n.g,
+      p = g.position;
+    if (!g.visible || Math.abs(p.y - pp.y) > 1.2) continue;
+    const dx = p.x - pp.x,
+      dz = p.z - pp.z,
+      d = Math.hypot(dx, dz);
+    if (d >= R) continue;
+    const ux = d > 1e-3 ? dx / d : Math.sin(g.rotation.y),
+      uz = d > 1e-3 ? dz / d : Math.cos(g.rotation.y);
+    let tx = -uz,
+      tz = ux;
+    if (tx * Math.sin(g.rotation.y) + tz * Math.cos(g.rotation.y) < 0) {
+      tx = -tx;
+      tz = -tz;
+    }
+    const st = Math.min(R - d + 0.02, lim),
+      wl = Math.hypot(ux + 0.7 * tx, uz + 0.7 * tz),
+      x0 = p.x,
+      z0 = p.z;
+    let moved = stepNPC(p, ((ux + 0.7 * tx) / wl) * st, ((uz + 0.7 * tz) / wl) * st);
+    if (!moved) moved = stepNPC(p, ux * st, uz * st);
+    if (!moved) moved = stepNPC(p, tx * st, tz * st);
+    if (moved && Math.hypot(p.x - x0, p.z - z0) > 0.004) {
+      const fy = findFloorY(Math.floor(p.x), Math.floor(p.z), p.y);
+      if (fy != null) p.y = fy;
+      n.ph += dt * 6;
+      swing(g, n.ph);
+    }
+  }
+}
+/* fix55-END */
+
 function npcFrame(dt) {
   CYC.t += dt;
   if (CYC.t >= NPC_CYCLE.SEC) {
@@ -19801,6 +20532,11 @@ function npcFrame(dt) {
       n.path = null;
       n.wait = 2;
     }
+  }
+  try {
+    npcYield(dt); /* fix55 */
+  } catch (e) {
+    reportErr(e);
   }
   roadNpcs.length = 0;
   for (const n of npcs) if (!n.dead && wgAt(n.g.position.x, n.g.position.z) === 9) roadNpcs.push(n);
@@ -20015,14 +20751,18 @@ function uScan() {
     if (!e) uCand.set(k, (e = {x: b.x, z: b.z, ys: []}));
     e.ys.push(b.y);
   }
-  const top = new Map(),
-    seen = new Set();
-  for (const [k, e] of uCand) top.set(k, Math.max(...e.ys)); /* mode Kreator: hanya atap teratas tiap kolom */
-  for (const [k, y1] of top) {
-    if (seen.has(k)) continue;
-    const e = uCand.get(k),
-      cells = uFill(e.x, e.z, c => top.get(c) === y1, 4000, seen);
-    if (cells.length >= 4 && uWalled(cells, y1) >= 0.5) uAll.push({cells, y1});
+  const seenByLayer = new Map();
+  for (const [k, e] of uCand) {
+    for (const y1 of e.ys) {
+      let seen = seenByLayer.get(y1);
+      if (!seen) seenByLayer.set(y1, (seen = new Set()));
+      if (seen.has(k)) continue;
+      const cells = uFill(e.x, e.z, c => {
+        const ce = uCand.get(c);
+        return !!ce && ce.ys.includes(y1);
+      }, 4000, seen);
+      if (cells.length >= 4 && uWalled(cells, y1) >= 0.5) uAll.push({cells, y1});
+    }
   }
   _uCost = performance.now() - uLast;
 }
@@ -20031,7 +20771,9 @@ function uScan() {
    kota besar (±55 ms di 400×400) ±1,65 dtk, sehingga bencana (tornado/ledakan → del() terus-menerus) tak memicu hentakan tiap ±0,5 dtk.
    Pindai paksa (!uVer atau ganti kota) tetap seketika. */
 function uSync() {
-  const gap = play ? Math.min(3000, Math.max(400, _uCost * 30)) : 400;
+  const gap = play
+    ? Math.min(3000, Math.max(400, _uCost * 30))
+    : Math.min(2000, Math.max(150, _uCost * 10));
   if (!uVer || uGen !== cityGen || (uDirty && performance.now() - uLast > gap)) uScan();
   return uVer;
 }
@@ -20081,6 +20823,7 @@ function uHideList(cells, y1, rad) {
   return out;
 }
 function hideBlk(b) {
+  if (b.hid) return;
   if (b.im) {
     b.im.setMatrixAt(b.i, ZERO_M);
           if (b.subs) for (const q of b.subs) { q.im.setMatrixAt(q.i, ZERO_M); imMark(q.im, q.i); }
@@ -21559,7 +22302,7 @@ function updFireAudio(dt) {
     }
     if (!f.aud) fireAudioStart(f);
     if (!f.aud) continue;
-    const gain = Math.pow(1 - d / R, 1.5) * 0.28 * out;
+    const gain = Math.pow(Math.max(0, 1 - d / R), 1.5) * 0.28 * out; /* fix44: clamp, d>R sebelumnya NaN */
     if (Math.abs(gain - f.aud.g.gain.value) > 0.003) lv(f.aud.g.gain, gain, sdt);
     f.aud.crT -= sdt;
     if (f.aud.crT <= 0) {
@@ -22479,7 +23222,7 @@ setCity(128);
     try {
       const pk = JSON.parse(tx);
       if (pk && pk.T && Array.isArray(pk.T.b) && pk.T.b.length) {
-        des(tx, true);
+        des(pk, true); /* fix41: pakai hasil parse yang sama, tidak parse ±260 KB dua kali */
         ok = true;
       }
     } catch (e) {
@@ -22606,6 +23349,7 @@ const PROF = {on: 0, last: 0, fr: [], lg: [], rd: []};
       const spin = performance.now() / 1000 * 2.5;
       for (const b of CO) {
         if (b.got) continue;
+        if (b.im && !b.im.visible) continue; /* fix41: chunk di luar frustum — lewati (spin berbasis waktu absolut, aman) */
         if (b.im) dSetYaw(b.im, b.i, b.x, b.y, b.z, b.oy, spin);
         else if (b.m) b.m.rotation.y = spin;
       }

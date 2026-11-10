@@ -50,6 +50,10 @@
      v99zzzzzzu: KATALOG-DAN-ALAT-BANTU dipecah jadi 8 sub-region (katalog, tekstur, bukaan, state, duduk, tidur, mengemudi); komentar saja, kode identik (detail: CHANGELOG.md)
      v99zzzzzzv: SFX-SUARA dipecah jadi 5 sub-region (dasar, daftar efek, ambient bangun/update, langkah); komentar saja, kode identik (detail: CHANGELOG.md)
      v99zzzzzzw: LALU-LINTAS-INTI dipecah jadi 6 region saudara di bawah LALU-LINTAS (jalan, mobil, belokan, update, bundaran, halangan); komentar saja, kode identik (detail: CHANGELOG.md)
+     v99zzzzzzx: KONTRAK semua region diregenerasi buat_kontrak.js (96 basi, termasuk 6 region lalu lintas baru); rujukan LALU-LINTAS-INTI diperbarui; komentar saja (detail: CHANGELOG.md)
+     v99zzzzzzy: HP: minimap tak lagi menimpa kontrol; toast/ucapan di atas zona kontrol; laci sembunyikan HUD; katalog sembunyikan joystick; tutorial muat (detail: CHANGELOG.md)
+     v99zzzzzzz: HP: kompas landscape ke baris atas, toast kreator di bawah minimap, ucapan/toast berbagi slot di layar pendek, line-height HUD eksplisit (detail: CHANGELOG.md)
+     v99zzzzzzza: EDITOR-ISI-AREA-DAN-INPUT dipecah jadi sub-region PUT-HAPUS, PILIH-GESER, ALAT-DAN-PANEL, INPUT-GLOBAL; kode tak berubah (detail: CHANGELOG.md)
    ATURAN TAG BARU: perubahan = 'vNNx: ...'; perbaikan bug = 'vNNx: ...' (x = huruf tambalan berikutnya, jangan loncat). Jangan membuat label tanpa
    versi seperti 'BUG FIX n'. Setelah menambah tag, tambahkan satu baris di kamus ini. Tag adalah komentar: jangan dipakai untuk logika. Komentar di kode hanya alasan (tanpa tag versi/FIX); riwayat ke CHANGELOG.md.
    Catatan Ekspor Game: komentar HTML dan komentar satu baris penuh dibuang saat ekspor; komentar di ujung baris kode ikut terbawa.
@@ -136,7 +140,7 @@ body.touch #stat{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 #wxp .wg button{padding:5px 2px;font-size:11px;white-space:nowrap}
 #wxp .wg button.on{background:var(--ac);color:#1b1f2a;font-weight:bold}
 #wxp .wrow{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;flex-wrap:wrap}
-body.mob #wxp{box-sizing:border-box;position:fixed;left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(58px + var(--st));min-width:0;max-width:none;max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);z-index:13}
+body.mob #wxp{box-sizing:border-box;position:fixed;left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(58px + var(--st));min-width:0;max-width:none;max-height:var(--drw);z-index:13}
 #wx:disabled,#cal:disabled{opacity:1;cursor:default}
 #wx,#cal{white-space:nowrap}
 .hic{display:inline-block;filter:hue-rotate(125deg) saturate(1.15)}
@@ -156,6 +160,8 @@ button .sep{display:inline-block;width:1px;height:1.1em;margin:0 9px;background:
 #compass .cmp-lbl.w{left:5px;top:50%;transform:translateY(-50%)}
 /* ===== LAYAR-HP: tata letak HP portrait + landscape (kelas body.mob dipasang JS, lihat region LAYAR-HP) ===== */
 :root{--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+body.mob{--ctl:219px;--col:150px;--drw:calc(100vh - 66px - var(--st) - var(--sb))}
+@supports (height:100dvh){body.mob{--drw:calc(100dvh - 66px - var(--st) - var(--sb))}}
 button,select,input[type=range],input[type=color]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #joy,#tb,#tb2,#mfab{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #joy{box-sizing:border-box}
@@ -165,13 +171,13 @@ body.mob #mfab{display:flex;position:fixed;z-index:12;gap:6px;left:calc(8px + va
 body.mob #mfab button{width:42px;height:42px;padding:0;font-size:18px;border-radius:12px;background:var(--pn);box-shadow:0 2px 8px #0006}
 body.mob #mfab button.on{border-color:var(--ac);background:#4a3f22}
 body.mob input,body.mob select{font-size:16px}
-body.mob #top{display:none;left:calc(8px + var(--sl));top:calc(58px + var(--st));max-width:min(440px,calc(100vw - 16px - var(--sl) - var(--sr)));max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);overflow:auto;z-index:11;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.mob #top{display:none;left:calc(8px + var(--sl));top:calc(58px + var(--st));max-width:min(440px,calc(100vw - 16px - var(--sl) - var(--sr)));max-height:var(--drw);overflow:auto;z-index:11;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 body.mob.mtop #top{display:flex}
 body.mob #top,body.mob #side,body.mob #cat,body.mob #calp{box-sizing:border-box}
 body.mob #top #help{display:none}
 body.mob #top button,body.mob #top select{min-height:38px}
-body.mob #calp{position:fixed;left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(58px + var(--st));min-width:0;max-width:none;max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);overflow:auto;z-index:13}
-body.mob #side{display:none;right:calc(8px + var(--sr));top:calc(58px + var(--st));width:min(250px,calc(100vw - 16px));max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);z-index:11;overscroll-behavior:contain}
+body.mob #calp{position:fixed;left:calc(8px + var(--sl));right:calc(8px + var(--sr));top:calc(58px + var(--st));min-width:0;max-width:none;max-height:var(--drw);overflow:auto;z-index:13}
+body.mob #side{display:none;right:calc(8px + var(--sr));top:calc(58px + var(--st));width:min(250px,calc(100vw - 16px));max-height:var(--drw);z-index:11;overscroll-behavior:contain}
 body.mob.mside #side{display:grid}
 body.mob #side select,body.mob #side input:not([type]){width:112px;min-height:34px}
 body.mob #side select[multiple]{width:120px;height:96px}
@@ -186,7 +192,9 @@ body.mob #bar button{flex:0 0 auto;white-space:nowrap;min-height:42px;padding:6p
 body.mob #msg{top:calc(58px + var(--st));max-width:calc(100vw - 24px);text-align:center;z-index:14}
 body.mob .dlgc{top:50%!important;max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
 body.mob .dlgs{top:calc(58px + var(--st))!important;max-width:calc(100vw - 16px)!important;max-height:calc(100vh - 90px)!important;max-height:calc(100dvh - 90px)!important}
-body.mob #tut{max-height:calc(100vh - 24px)!important;max-height:calc(100dvh - 24px)!important}
+body.mob #tut{width:calc(100vw - 16px - var(--sl) - var(--sr))!important;top:calc(58px + var(--st))!important;transform:translateX(-50%)!important;max-height:calc(100vh - 66px - var(--st) - var(--sb))!important;max-height:calc(100dvh - 66px - var(--st) - var(--sb))!important;box-sizing:border-box;padding:10px 12px;font-size:13px;line-height:1.4}
+body.mob #tut p{margin:6px 0}
+body.mob #tut #tgo{position:sticky;bottom:0;width:100%;min-height:44px;margin-top:4px}
 body.mob #mright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;position:fixed;z-index:5;right:calc(8px + var(--sr));top:calc(8px + var(--st));pointer-events:none;max-width:calc(100vw - 120px - var(--sl) - var(--sr))}
 body.mob #mright>*{position:relative;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;margin:0;max-width:100%;box-sizing:border-box;pointer-events:none}
 body.mob #mright>#hud{font-size:13px!important;padding:5px 8px;line-height:1.35}
@@ -196,10 +204,10 @@ body.mob #mright>#gpHud{pointer-events:auto;width:136px;font-size:10px;line-heig
 body.mob #gpHud .gb{height:12px;margin-top:3px}
 body.mob #gpHud .gb span{font:bold 9px/12px system-ui}
 body.mob #gpTg{margin-top:4px;padding:3px;font-size:10px;min-height:0!important}
-body.mob #stat,body.mob.touch #stat{left:calc(8px + var(--sl));top:calc(64px + var(--st));bottom:auto;width:150px;padding:5px 7px}
+body.mob #stat,body.mob.touch #stat{left:calc(8px + var(--sl));top:calc(64px + var(--st));bottom:auto;width:var(--col);box-sizing:border-box;padding:5px 7px}
 body.mob #stat .lv{margin-bottom:3px}
 body.mob #stat .row{margin-top:3px}
-body.mob #say{bottom:calc(224px + var(--sb))!important;max-width:calc(100vw - 24px)!important}
+body.mob #say{bottom:calc(var(--ctl) + 56px + var(--sb))!important;width:max-content;max-width:calc(100vw - 16px - var(--sl) - var(--sr))!important;z-index:9}
 body.mob #joy{left:calc(16px + var(--sl))!important;bottom:calc(20px + var(--sb))!important;transform:scale(.86);transform-origin:left bottom;background:#262c3b99}
 body.mob #tb2{right:calc(8px + var(--sr));bottom:calc(20px + var(--sb));gap:5px;grid-template-columns:repeat(2,44px);padding:0;background:transparent}
 body.mob #tb2 button{width:44px;height:44px;padding:0;font-size:20px;background:#38405acc;border-radius:12px}
@@ -213,13 +221,34 @@ body.mob:not(.mplay) #joy{display:block!important;bottom:calc(72px + var(--sb))!
 #mfly{display:none}
 body.mob.mcfp:not(.mplay) #mfly{display:flex;position:fixed;z-index:6;flex-direction:column;gap:6px;right:calc(8px + var(--sr));bottom:calc(72px + var(--sb))}
 body.mob #mfly button{width:46px;height:46px;padding:0;font-size:18px;border-radius:12px;background:#38405acc}
+/* Toast (#msg) di HP main: di atas zona kontrol, tidak menimpa HUD. Banner gelombang tidak boleh melebar keluar layar. */
+body.mob.mplay #msg{top:auto;bottom:calc(var(--ctl) + var(--sb));width:max-content;max-width:calc(100vw - 16px - var(--sl) - var(--sr));font-size:13px;line-height:1.25;max-height:50px;overflow:auto}
+body.mob:not(.mplay) #msg{top:calc(200px + var(--st));width:max-content}
+@media (orientation:portrait) and (max-height:600px){
+body.mob #say{bottom:calc(var(--ctl) + 8px + var(--sb))!important}
+body.mob.msay #msg{display:none!important}
+}
+body.mob #gpb{white-space:normal;width:max-content;max-width:calc(100vw - 24px);font-size:clamp(20px,6vmin,30px);top:36%}
+/* Tinggi panel HUD tidak boleh bergantung pada line-height:normal tiap font (Windows lebih tinggi dari Linux). */
+body.mob :is(#stat,#hud,.mwant,#say,#msg,#gpHud,#mmwrap),body.mob :is(#stat,#hud,.mwant,#say,#msg,#gpHud,#mmwrap) *{line-height:1.25}
+/* Laci (menu, panel warna, kalender, cuaca) dan katalog menutup HUD dan kontrol yang ada di bawahnya. */
+body.mob.mtop :is(#bar,#stat,#mright,#mmwrap,#tb,#tb2,#joy,#mfly,#say,#gpb),body.mob.mside :is(#bar,#stat,#mright,#mmwrap,#tb,#tb2,#joy,#mfly,#say,#gpb){display:none!important}
+body.mob.mcat :is(#joy,#mfly){display:none!important}
+/* Popover kalender/cuaca: opak, dan sisa isi menu di bawahnya disembunyikan (teks menu tidak tembus). */
+body.mob #wxp,body.mob #calp{background:#262c3b}
+body.mob.mpop #top>:not(#calw):not(#wxw){display:none}
 @media (orientation:landscape){
-body.mob #top{max-height:calc(100vh - 70px);max-height:calc(100dvh - 70px);max-width:min(560px,calc(100vw - 16px - var(--sl) - var(--sr)))}
-body.mob #side,body.mob #calp{max-height:calc(100vh - 70px);max-height:calc(100dvh - 70px)}
+body.mob{--ctl:150px}
+body.mob.mplay #msg{bottom:auto;top:calc(8px + var(--st));width:max-content;max-width:calc(100vw - 2*(var(--col) + 16px) - var(--sl) - var(--sr))}
+body.mob:not(.mplay) #msg{top:calc(8px + var(--st));max-width:calc(100vw - 2*(var(--col) + 16px) - var(--sl) - var(--sr))}
+body.mob:not(.mplay) #mright>#compass{left:auto!important;right:calc(8px + var(--sr))!important;top:calc(149px + var(--st))!important;transform-origin:top right}
+body.mob #top{max-height:var(--drw);max-width:min(560px,calc(100vw - 16px - var(--sl) - var(--sr)))}
+body.mob #side,body.mob #calp{max-height:var(--drw)}
 body.mob #cat{right:auto;width:320px;max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px)}
-body.mob #say{bottom:calc(150px + var(--sb))!important;max-width:46vw!important}
+body.mob #say{bottom:calc(var(--ctl) + var(--sb))!important;width:max-content;max-width:calc(100vw - 2*(var(--col) + 16px) - var(--sl) - var(--sr))!important}
 body.mob #mright>#compass{position:fixed;zoom:1;transform:scale(.72)!important;transform-origin:top left;left:calc(8px + var(--sl))!important;top:calc(152px + var(--st))!important}
-body.mob #joy{transform:none;left:calc(18px + var(--sl))!important;bottom:calc(16px + var(--sb))!important}
+body.mob.mplay #mright>#compass{left:calc(106px + var(--sl))!important;top:calc(8px + var(--st))!important;transform:scale(.62)!important}
+body.mob #joy{transform:scale(.86);left:calc(18px + var(--sl))!important;bottom:calc(16px + var(--sb))!important}
 body.mob #tb2{bottom:calc(16px + var(--sb));grid-template-columns:repeat(4,44px)}
 body.mob #tb{right:calc(8px + 191px + 8px + var(--sr))!important;bottom:calc(16px + var(--sb))!important;width:130px}
 body.mob #tb #bj{flex:0 0 130px;width:130px}
@@ -467,13 +496,21 @@ body.mob #tb #bj{flex:0 0 130px;width:130px}
                                   (Float32Array S×S tinggi blok non-ns teratas per kolom), ROOFS, roofBuild,
                                   roofAt, roofCol, roofPut. roofAt dipakai lintas-region oleh updLeaves, updPrecip,
                                   updHail, updFrost, torDamage; roofCol dipanggil del & swingDoor; roofPut dipanggil
-                                  put. roofDirty/roofAct/_wkD/_wk3/_fv/_ch* tetap di parent.
+                                  put.
+   EDITOR-PUT-HAPUS               (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT) put, del, delKeepFloor, blokT, frz,
+                                  chgLog/chgHit, fvis*; state _wkD/_wk3/_fv/_fvF/_ch*, roofDirty/roofAct.
+   EDITOR-PILIH-GESER             (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT) alat Geser: gsSel/gsMulti, panel gsp,
+                                  gsPick, gsMove, gsRotate.
+   EDITOR-ALAT-DAN-PANEL          (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT) tool/cur/fillOn, selTool, panel samping,
+                                  tombol bar, rotCur, keydown R.
    EDITOR-PICK                    (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT) Raycast + pointer handler: ray
                                   (Raycaster), cv (canvas), rbox (ray-AABB lokal), vpick (voxel DDA 3D), unitCands (pra-filter
                                   bola pembatas NPC/mobil), pick (main: blok+NPC+mobil+tanah), hover (update ghost preview 70ms throttle via lh), act
                                   (eksekusi klik), dn, mv + 5 handler canvas (cv.onpointerdown/move/up/cancel/wheel).
                                   mv ditulis & dibaca pinch (KONTROL-SENTUH). F & ghost di-modify. Keyboard handler
-                                  editor (undo/redo, hotkey 1-4, R rotate) & releaseInput tetap di parent.
+                                  editor dan releaseInput ada di EDITOR-INPUT-GLOBAL.
+   EDITOR-INPUT-GLOBAL            (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT) keydown/keyup global, releaseInput,
+                                  resize ter-throttle (applyResize).
    COMBAT                         Damage pemain/NPC, XP, bunga api, kerusakan blok & mobil.
    PERAN-DASAR-MISI-TOKO-POLISI   WAL, ROLES dasar (warga, misi, pedagang, pekerja, dokter, polisi), misi, toko, polisi.
    JURUS-SERANGAN-DASH            Efek gerakan jurus, serangan, dash, proyektil.
@@ -733,7 +770,7 @@ body.mob #tb #bj{flex:0 0 130px;width:130px}
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : —
-   Dipakai oleh     : EKSPOR-GAME (3)↓, LABEL-GEDUNG-DAN-TOMBOL (2)↓, EDITOR-ISI-AREA-DAN-INPUT (1)↓,
+   Dipakai oleh     : EKSPOR-GAME (3)↓, LABEL-GEDUNG-DAN-TOMBOL (2)↓, EDITOR-INPUT-GLOBAL (1)↓,
                       NPC-SERANG-DAN-POSE (1)↓, LAYAR-HP (1)↓, INIT (1)↓  */
 const GAME = !!window.BLOKIA_GAME; /* true hanya di HTML hasil ekspor game (flag ditanam saat ekspor) */
 const SRC0 = GAME ? '' : '<!DOCTYPE html>' + document.documentElement.outerHTML;
@@ -761,11 +798,11 @@ if (typeof THREE === 'undefined') {
                       _chIdxFT, _chBaseFT
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : EDITOR-ISI-AREA-DAN-INPUT (4)↓, MATERIAL-CAHAYA-KENDARAAN (2)↓, KAMERA (1)↓,
+   Bergantung pada  : EDITOR-PUT-HAPUS (4)↓, MATERIAL-CAHAYA-KENDARAAN (2)↓, KAMERA (1)↓,
                       CHUNK-BLOK-DAN-UKURAN-KOTA (1)↓
-   Dipakai oleh     : SIMPAN-MUAT (17)↓, CUACA (16)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (15)↓,
-                      EDITOR-ISI-AREA-DAN-INPUT (15)↓, CUACA-TORNADO (14)↓, COMBAT (14)↓, JURUS-SERANGAN-DASH
-                      (13)↓, SFX-SUARA (12)↓, EDITOR-PICK (12)↓, LABEL-GEDUNG-DAN-TOMBOL (12)↓ … (+66)  */
+   Dipakai oleh     : SIMPAN-MUAT (17)↓, CUACA (16)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (15)↓, CUACA-TORNADO (14)↓,
+                      COMBAT (14)↓, JURUS-SERANGAN-DASH (13)↓, EDITOR-PICK (12)↓, LABEL-GEDUNG-DAN-TOMBOL (12)↓,
+                      INIT (12)↓, NPC-BANTU-PEMAIN (11)↓ … (+92)  */
 /* ============================================================
    KATALOG STATE GLOBAL — variabel level atas yang dapat berubah (let/var) dan objek yang dimodifikasi lintas region.
    Dibuat dari analisis AST (v99, 2026-10-20). Per butir: nama = nilai awal — arti  ✎ region LAIN yang menulisnya.
@@ -929,8 +966,9 @@ if (typeof THREE === 'undefined') {
    [PANEL-UI-KALENDER]
    calKey = '' — cache panel kalender: kunci
    calLbl = '' — cache panel kalender: label tombol
-   [LALU-LINTAS-INTI]
+   [LALU-LINTAS-JALAN]
    LC_MEMO_V = -1 — nilai _fvF saat cache LC_MEMO (hasil laneC) terakhir dikosongkan
+   [LALU-LINTAS-HALANGAN]
    CID = 0 — pencacah id mobil; dinaikkan lewat ++CID di addCar, hasilnya dipakai sebagai c.id (blkCar, tornado)
    roadNpcs = [] — NPC yang berdiri di sel jalan (wgAt = 9); diisi ulang tiap frame oleh npcFrame
         (NPC-FRAME-DAN-POLISI-KEJAR) lewat .length = 0 + .push, dibaca blkPed (mobil berhenti untuk pejalan)
@@ -1357,11 +1395,11 @@ const disp = o =>
    State (var)      : sliceY, uDirty, uVer, uGen, uIn, uLast, uCand, uAll, camAvoid, camCl
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (4), NPC-BINFO (3)↓, KATALOG-DAN-ALAT-BANTU (2)↓, NPC-WALK3D (2)↓,
+   Bergantung pada  : DASAR-DUNIA (4), NPC-BINFO (3)↓, STATE-DAN-LAMPU-LALIN (2)↓, NPC-WALK3D (2)↓,
                       MODEL-KENDARAAN (1)↓, INTERIOR-ATAP (1)↓
    Dipakai oleh     : INTERIOR-ATAP (13)↓, PEMAIN-GERAK-MODE (11)↓, NPC-SERANG-DAN-POSE (8)↓, EDITOR-PICK (7)↓,
-                      COMBAT (7)↓, KATALOG-DAN-ALAT-BANTU (6)↓, SFX-SUARA (5)↓, LALU-LINTAS-INTI (5)↓,
-                      CUACA-TORNADO (4)↓, CUACA-LANJUTAN (4)↓ … (+39)  */
+                      COMBAT (7)↓, TIDUR-BANGUN (5)↓, SFX-AMBIENT-UPDATE (5)↓, LALU-LINTAS-MOBIL (5)↓,
+                      CUACA-TORNADO (4)↓, CUACA-LANJUTAN (4)↓ … (+54)  */
 let yaw = 0.8,
   pitch = 0.7,
   dist = 26,
@@ -1514,19 +1552,13 @@ function updCam(dt) {
    ➜ Tambah jenis blok: lihat CAT.
    ============================================================ */
 /* KONTRAK
-   Fungsi           : (30) mkRoofTex, mkTex, isDoor, doorTexture, winTexes, dmat, doorIdx, winMat, mfor,
-                      lightTick … (+20)
-   Konstanta/lain   : (21) CAT, MD, D, BANDT, FROT, rotId, DM, MM, IND, LTS … (+11)
-   State (let)      : U, R, F, RB, fp, coins, coinTot, AC, mute, st, sit, sitDy, sitS, slp, drv, lh, mus, xs,
-                      zs, slpS, slpT, slpY, slpAuto
-   Menulis let milik: KAMERA: onG, pitch, vy, yaw; EDITOR-ISI-AREA-DAN-INPUT: _fv
-   Ubah objek       : DASAR-DUNIA: DC_DEF; KAMERA: P
-   Bergantung pada  : DASAR-DUNIA (11), KAMERA (6), NPC-BANTU-PEMAIN (4)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (3)↓,
-                      COMBAT (3)↓, NPC-TABRAKAN-GERAK (3)↓, HUD-PESAN-NAMA (2)↓, MATERIAL-CAHAYA-KENDARAAN (2)↓,
-                      EDITOR-ISI-AREA-DAN-INPUT (2)↓, LALU-LINTAS-INTI (2)↓ … (+4)
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (20)↓, COMBAT (13)↓, NPC-SERANG-DAN-POSE (9)↓, PEMAIN-GERAK-MODE
-                      (8)↓, SIMPAN-MUAT (7)↓, LALU-LINTAS-INTI (7)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (6)↓, NPC-TUGAS
-                      (6)↓, AUDIO-MUSIK (5)↓, SFX-SUARA (5)↓ … (+31)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : —
+   Dipakai oleh     : —  */
 //#region KATALOG-BLOK
 /* ============================================================
    KATALOG-BLOK — Katalog jenis blok (sub-region di dalam KATALOG-DAN-ALAT-BANTU): state U, R, F, RB, CAT (daftar
@@ -1534,7 +1566,15 @@ function updCam(dt) {
    depan model = +z) dan loop penurun varian putar id_1/_2/_3 ke DC_DEF dan MD (rotId).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (6) CAT, MD, D, BANDT, FROT, rotId
+   State (let)      : U, R, F, RB
+   Menulis let milik: —
+   Ubah objek       : DASAR-DUNIA: DC_DEF
+   Bergantung pada  : DASAR-DUNIA (2)
+   Dipakai oleh     : SIMPAN-MUAT (4)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (3)↓, EDITOR-PILIH-GESER (3)↓,
+                      EDITOR-ALAT-DAN-PANEL (3)↓, PANEL-UI-KALENDER (3)↓, KARAKTER-HELPERS (2)↓, UNDO-REDO (2)↓,
+                      EDITOR-ISI-AREA-DAN-INPUT (2)↓, EDITOR-PICK (2)↓, COMBAT (2)↓ … (+11)  */
 let U = [],
   R = [],
   F = null,
@@ -1763,7 +1803,13 @@ FROT.forEach(id => {
    mkTex (tekstur blok dari warna dan pola).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) mkRoofTex, mkTex
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : BUKAAN-DAN-MATERIAL (2)↓
+   Dipakai oleh     : BUKAAN-DAN-MATERIAL (1)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (1)↓, PANEL-UI-KALENDER (1)↓  */
 function mkRoofTex(base, pat) {
   const N = 64,
     c = document.createElement('canvas');
@@ -1905,7 +1951,15 @@ function mkTex(base, pat) {
    isDoor, doorTexture, winTexes, DM, dmat, doorIdx, winMat, serta MM dan mfor (material per jenis blok).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) isDoor, doorTexture, winTexes, dmat, doorIdx, winMat, mfor
+   Konstanta/lain   : (2) DM, MM
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : MATERIAL-CAHAYA-KENDARAAN (2)↓, DASAR-DUNIA (1), KATALOG-BLOK (1), TEKSTUR-BLOK (1)
+   Dipakai oleh     : EDITOR-PUT-HAPUS (4)↓, TEKSTUR-BLOK (2), CHUNK-BLOK-DAN-UKURAN-KOTA (1)↓, SFX-DAFTAR-EFEK
+                      (1)↓, MATERIAL-CAHAYA-KENDARAAN (1)↓, DEKORASI-MODEL (1)↓, DEKORASI-FURNITUR (1)↓,
+                      KARAKTER-HELPERS (1)↓, NPC-BANTU-PEMAIN (1)↓, CUACA (1)↓ … (+7)  */
 /* ---------- BUKAAN: pintu bervariasi + jendela berbingkai ---------- */
 function isDoor(t) {
   return t === 'pintu' || (typeof t === 'string' && t.startsWith('pintu_'));
@@ -2077,7 +2131,15 @@ function mfor(id) {
    material lampu LM, fase xs/zs, LPH, dan lightTick.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (1) lightTick
+   Konstanta/lain   : (7) IND, LTS, DOORS, ODOORS, DANIM, LM, LPH
+   State (let)      : fp, coins, coinTot, AC, mute, st, sit, sitDy, sitS, slp, drv, lh, mus, xs, zs
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : —
+   Dipakai oleh     : NPC-SERANG-DAN-POSE (8)↓, TIDUR-BANGUN (6)↓, DUDUK (5)↓, EDITOR-PUT-HAPUS (5)↓, COMBAT
+                      (5)↓, HUD-PESAN-NAMA (4)↓, PEMAIN-GERAK-MODE (4)↓, AUDIO-MUSIK (3)↓, SFX-AMBIENT-UPDATE
+                      (3)↓, LALU-LINTAS-MOBIL (3)↓ … (+25)  */
 let fp = false,
   coins = 0,
   coinTot = 0,
@@ -2124,7 +2186,15 @@ function lightTick() {
    _sitCam, sitCamPos, toggleSit.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) sitPose, benchSeatY, npcSitY, findSeat, seatExit, sitCamPos, toggleSit
+   Konstanta/lain   : (1) _sitCam
+   State (let)      : —
+   Menulis let milik: KAMERA: vy; STATE-DAN-LAMPU-LALIN: sit, sitDy, sitS
+   Ubah objek       : —
+   Bergantung pada  : STATE-DAN-LAMPU-LALIN (5), NPC-BANTU-PEMAIN (4)↓, DASAR-DUNIA (3), KAMERA (3),
+                      KASUR-DAN-POSE-TIDUR (2)↓, TIDUR-BANGUN (1)↓, HUD-PESAN-NAMA (1)↓, NPC-WALK2D (1)↓
+   Dipakai oleh     : NPC-TUGAS (2)↓, NPC-WANDER (2)↓, TIDUR-BANGUN (1)↓, AUDIO-MUSIK (1)↓, EDITOR-INPUT-GLOBAL
+                      (1)↓, COMBAT (1)↓, PEMAIN-GERAK-MODE (1)↓, NPC-TUGAS-JALAN (1)↓  */
 function sitPose(g, on) {
   const u = g.userData;
   u.lL.rotation.x = u.lR.rotation.x = on ? -1.45 : 0;
@@ -2230,7 +2300,16 @@ function toggleSit() {
    state slpS, slpT, slpY, slpAuto.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (8) oyFor, startCell, refreshAbove, bedBlk, bedLayout, lieOnBed, sleepSprites, sleepPose
+   Konstanta/lain   : (5) BEDALIAS, bedT, bedY, bBase, bTop
+   State (let)      : slpS, slpT, slpY, slpAuto
+   Menulis let milik: EDITOR-PUT-HAPUS: _fv
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (3), CHUNK-BLOK-DAN-UKURAN-KOTA (3)↓, EDITOR-PUT-HAPUS (2)↓, KAMERA (1),
+                      KATALOG-BLOK (1)
+   Dipakai oleh     : TIDUR-BANGUN (10)↓, NPC-TUGAS (4)↓, NPC-BANTU-PEMAIN (3)↓, COMBAT (3)↓, DUDUK (2),
+                      EDITOR-PUT-HAPUS (2)↓, NPC-RUTINITAS-PAGI (2)↓, SFX-LANGKAH (1)↓, EDITOR-PILIH-GESER (1)↓,
+                      NPC-SERANG-DAN-POSE (1)↓ … (+7)  */
 const BEDALIAS = {kasurrs: 'kasur', bantalrs: 'bantal'};
 const bedT = t => {
   if (!t) return t;
@@ -2380,7 +2459,16 @@ let slpS = null,
    sleepBreath, admitPatient (pemain dirawat di ranjang Rumah Sakit).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (4) toggleSleep, wakeUp, sleepBreath, admitPatient
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: KAMERA: onG, pitch, vy; STATE-DAN-LAMPU-LALIN: fp, sit, sitDy, sitS, slp;
+                      KASUR-DAN-POSE-TIDUR: slpAuto, slpS, slpT, slpY
+   Ubah objek       : KAMERA: P
+   Bergantung pada  : KASUR-DAN-POSE-TIDUR (10), STATE-DAN-LAMPU-LALIN (6), KAMERA (5), NPC-TABRAKAN-GERAK (3)↓,
+                      DASAR-DUNIA (2), DUDUK (1), HUD-PESAN-NAMA (1)↓, NPC-BANTU-PEMAIN (1)↓, NPC-WALK2D (1)↓,
+                      NPC-BINFO (1)↓
+   Dipakai oleh     : COMBAT (2)↓, DUDUK (1), AUDIO-MUSIK (1)↓, EDITOR-INPUT-GLOBAL (1)↓, PEMAIN-GERAK-MODE (1)↓  */
 function toggleSleep() {
   if (!P || drv || Combat.dead) return;
   if (slp) {
@@ -2532,7 +2620,14 @@ function admitPatient(hosp) {
    PEMAIN-GERAK-MODE saat pemain mengemudi (drv aktif).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (1) drive
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: KAMERA: yaw
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (4), COMBAT (3)↓, KAMERA (2), LALU-LINTAS-MOBIL (2)↓, STATE-DAN-LAMPU-LALIN
+                      (1), KONTROL-SENTUH (1)↓, SFX-DASAR (1)↓, HUD-PESAN-NAMA (1)↓, NPC-BANTU-PEMAIN (1)↓
+   Dipakai oleh     : PEMAIN-GERAK-MODE (1)↓  */
 function drive(dt) {
   const c = drv,
     g = c.g,
@@ -2599,11 +2694,11 @@ function drive(dt) {
    Fungsi           : (1) musTick
    Konstanta/lain   : (3) getAC, unlockAudio, PN
    State (let)      : AC_FAIL
-   Menulis let milik: KATALOG-DAN-ALAT-BANTU: AC, mus
+   Menulis let milik: STATE-DAN-LAMPU-LALIN: AC, mus
    Ubah objek       : —
-   Bergantung pada  : KATALOG-DAN-ALAT-BANTU (5), DASAR-DUNIA (3), SFX-SUARA (2)↓, KAMERA (1), LALU-LINTAS-INTI
-                      (1)↓
-   Dipakai oleh     : SFX-SUARA (2)↓  */
+   Bergantung pada  : DASAR-DUNIA (3), STATE-DAN-LAMPU-LALIN (3), SFX-DASAR (2)↓, KAMERA (1), DUDUK (1),
+                      TIDUR-BANGUN (1), LALU-LINTAS-MOBIL (1)↓
+   Dipakai oleh     : SFX-DASAR (2)↓, SFX-AMBIENT-BANGUN (1)↓  */
 let AC_FAIL = false;
 const getAC = () => {
   if (AC) return AC;
@@ -2671,13 +2766,14 @@ $('bz').onclick = toggleSleep;
                       (+15)
    Konstanta/lain   : (46) CO, NI, NB, IM, CH, CC, IMW, MX, MP, MS … (+36)
    State (let)      : IMHINT, imCullOn, _vegSeason, szPend
-   Menulis let milik: DASAR-DUNIA: S, grid, ground; KATALOG-DAN-ALAT-BANTU: R, U
+   Menulis let milik: DASAR-DUNIA: S, grid, ground; KATALOG-BLOK: R, U
    Ubah objek       : DASAR-DUNIA: cam, grid, sc; INIT: PROF
-   Bergantung pada  : DASAR-DUNIA (15), KATALOG-DAN-ALAT-BANTU (6), KARAKTER-HELPERS (4)↓, INIT (3)↓,
-                      EDITOR-ISI-AREA-DAN-INPUT (2)↓, CUACA (1)↓, SIMPAN-MUAT (1)↓
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (18)↓, EDITOR-PICK (7)↓, INIT (7)↓, SIMPAN-MUAT (4)↓,
-                      INTERIOR-ATAP (4)↓, KATALOG-DAN-ALAT-BANTU (3), HUD-PESAN-NAMA (3)↓, KARAKTER-HELPERS
-                      (3)↓, CUACA-TORNADO (2)↓, PERAN-DASAR-MISI-TOKO-POLISI (2)↓ … (+7)  */
+   Bergantung pada  : DASAR-DUNIA (15), KARAKTER-HELPERS (4)↓, KATALOG-BLOK (3), INIT (3)↓, EDITOR-PUT-HAPUS
+                      (2)↓, TEKSTUR-BLOK (1), BUKAAN-DAN-MATERIAL (1), STATE-DAN-LAMPU-LALIN (1), CUACA (1)↓,
+                      SIMPAN-MUAT (1)↓
+   Dipakai oleh     : EDITOR-PUT-HAPUS (17)↓, EDITOR-PICK (7)↓, INIT (7)↓, SIMPAN-MUAT (4)↓, INTERIOR-ATAP (4)↓,
+                      KASUR-DAN-POSE-TIDUR (3), HUD-PESAN-NAMA (3)↓, KARAKTER-HELPERS (3)↓, CUACA-TORNADO (2)↓,
+                      PERAN-DASAR-MISI-TOKO-POLISI (2)↓ … (+8)  */
 const CO = new Set(),
   NI = new Set(),
   NB = new Set(),
@@ -3373,9 +3469,9 @@ $('sz').onchange = e => {
    Menulis let milik: KAMERA: dist; EDITOR-PICK: mv
    Ubah objek       : DASAR-DUNIA: Combat
    Bergantung pada  : DASAR-DUNIA (5), KAMERA (3), JURUS-SERANGAN-DASH (2)↓, HUD-PESAN-NAMA (1)↓, EDITOR-PICK
-                      (1)↓, LALU-LINTAS-INTI (1)↓
-   Dipakai oleh     : EDITOR-PICK (3)↓, LABEL-GEDUNG-DAN-TOMBOL (2)↓, KATALOG-DAN-ALAT-BANTU (1), SFX-SUARA
-                      (1)↓, NPC-SERANG-DAN-POSE (1)↓, PEMAIN-GERAK-MODE (1)↓, LAYAR-HP (1)↓  */
+                      (1)↓, LALU-LINTAS-MOBIL (1)↓
+   Dipakai oleh     : EDITOR-PICK (3)↓, LABEL-GEDUNG-DAN-TOMBOL (2)↓, MENGEMUDI (1), SFX-AMBIENT-UPDATE (1)↓,
+                      NPC-SERANG-DAN-POSE (1)↓, PEMAIN-GERAK-MODE (1)↓, LAYAR-HP (1)↓  */
 const PT = new Map();
 let pd = 0;
 function pinch(e) {
@@ -3507,19 +3603,13 @@ if (!lsGet('kkt')) $('tut').style.display = 'block';
    ➜ Tambah efek suara: lihat SFX / SURF.
    ============================================================ */
 /* KONTRAK
-   Fungsi           : (18) voiceAdd, voiceKill, voiceKillAll, sfxInit, beep, nz, sfx, trafInvalidate,
-                      trafBuildDist, trafDistAt … (+8)
-   Konstanta/lain   : (12) AMB_SFX, SL, SG, VOICES, SFX, SURF, lv, AMB_STEP, ambSet, FNT_VOL … (+2)
-   State (let)      : MG, MGV, NBUF, nV, SV, SBUS, SFXG, SFXV, AMBG, AMBV, MUSG, MUSV, AMB, eng, stT, pSl,
-                      _pSlInit, _wasInWater, TRAF_DIST, TRAF_VER, TRAF_S, TRAF_DIRTY, _ambAcc
-   Menulis let milik: AUDIO-MUSIK: AC_FAIL
+   Fungsi           : (0) —
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (12), KAMERA (5), KATALOG-DAN-ALAT-BANTU (5), CUACA (3)↓, AUDIO-MUSIK (2),
-                      KONTROL-SENTUH (1), DEKORASI (1)↓, CUACA-TORNADO (1)↓, EFEK-AIR (1)↓, MODEL-KENDARAAN (1)↓
-                      … (+3)
-   Dipakai oleh     : LABEL-GEDUNG-DAN-TOMBOL (9)↓, SIM-API (7)↓, NPC-SERANG-DAN-POSE (5)↓, CUACA-HUJAN-ES (3)↓,
-                      NPC-PILIH-TUGAS (3)↓, AUDIO-MUSIK (2), HUD-PESAN-NAMA (2)↓, COMBAT (2)↓,
-                      PERAN-DASAR-MISI-TOKO-POLISI (2)↓, PEMAIN-GERAK-MODE (2)↓ … (+22)  */
+   Bergantung pada  : —
+   Dipakai oleh     : —  */
 //#region SFX-DASAR
 /* ============================================================
    SFX-DASAR — Mesin efek suara (sub-region di dalam SFX-SUARA): state mixer (MG, MGV, NBUF, nV, SV, SBUS, SFXG,
@@ -3530,7 +3620,16 @@ if (!lsGet('kkt')) $('tut').style.display = 'block';
    permukaan untuk bunyi langkah).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) voiceAdd, voiceKill, voiceKillAll, sfxInit, beep, nz, sfx
+   Konstanta/lain   : (6) AMB_SFX, SL, SG, VOICES, SFX, SURF
+   State (let)      : MG, MGV, NBUF, nV, SV, SBUS, SFXG, SFXV, AMBG, AMBV, MUSG, MUSV
+   Menulis let milik: AUDIO-MUSIK: AC_FAIL
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (5), KAMERA (3), STATE-DAN-LAMPU-LALIN (2), AUDIO-MUSIK (2), CUACA-TORNADO
+                      (1)↓, LABEL-GEDUNG-DAN-TOMBOL (1)↓
+   Dipakai oleh     : LABEL-GEDUNG-DAN-TOMBOL (9)↓, SFX-AMBIENT-BANGUN (7)↓, SFX-DAFTAR-EFEK (6)↓, SIM-API (5)↓,
+                      SFX-AMBIENT-UPDATE (4)↓, CUACA-HUJAN-ES (3)↓, AUDIO-MUSIK (2), SFX-LANGKAH (2)↓,
+                      HUD-PESAN-NAMA (2)↓, PERAN-DASAR-MISI-TOKO-POLISI (2)↓ … (+26)  */
 let MG = null,
   MGV = 0.8,
   NBUF = null,
@@ -3817,7 +3916,13 @@ const SURF = t => {
    baru: tambah di SFX dan SG.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: SFX-DASAR: SBUS, SV
+   Ubah objek       : —
+   Bergantung pada  : SFX-DASAR (6), BUKAAN-DAN-MATERIAL (1)
+   Dipakai oleh     : —  */
 Object.assign(SFX, {
   step: s => {
     const r = 0.8 + Math.random() * 0.4,
@@ -4120,7 +4225,14 @@ Object.assign(SG, {
    dan suara di konsol).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (6) trafInvalidate, trafBuildDist, trafDistAt, engTeardown, ambInit, ambTeardown
+   Konstanta/lain   : (0) —
+   State (let)      : AMB, eng, stT, pSl, _pSlInit, _wasInWater, TRAF_DIST, TRAF_VER, TRAF_S, TRAF_DIRTY
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : SFX-DASAR (7), DASAR-DUNIA (4), STATE-DAN-LAMPU-LALIN (1), AUDIO-MUSIK (1), DEKORASI (1)↓
+   Dipakai oleh     : SFX-AMBIENT-UPDATE (8)↓, NPC-SERANG-DAN-POSE (5)↓, SFX-LANGKAH (1)↓, COMBAT (1)↓, SIM-API
+                      (1)↓  */
 let AMB = null,
   eng = null,
   stT = 0,
@@ -4347,7 +4459,15 @@ window.AUDIO_INFO = function () {
    detik), updEng (mesin mobil), FNT_VOL, FNT_RANGE, FNT_LO (suara air mancur), dan updAmbSlow (semua ambient lain).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (3) updAmb, updEng, updAmbSlow
+   Konstanta/lain   : (6) lv, AMB_STEP, ambSet, FNT_VOL, FNT_RANGE, FNT_LO
+   State (let)      : _ambAcc
+   Menulis let milik: SFX-DASAR: SBUS; SFX-AMBIENT-BANGUN: _pSlInit, _wasInWater, eng, pSl
+   Ubah objek       : SFX-AMBIENT-BANGUN: eng
+   Bergantung pada  : SFX-AMBIENT-BANGUN (8), KAMERA (5), SFX-DASAR (4), DASAR-DUNIA (3), STATE-DAN-LAMPU-LALIN
+                      (3), CUACA (3)↓, KONTROL-SENTUH (1), CUACA-TORNADO (1)↓, EFEK-AIR (1)↓, MODEL-KENDARAAN
+                      (1)↓ … (+2)
+   Dipakai oleh     : SIM-API (1)↓, INIT (1)↓  */
 const lv = (p, v, dt) => {
   if (p.value === v) return;
   p.value += (v - p.value) * Math.min(1, dt * 2);
@@ -4573,7 +4693,14 @@ function updAmbSlow(dt) {
    juga dipakai npcStepSfx di NPC-WANDER) dan stepSfx (dipanggil updPlayer).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) feetT, stepSfx
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: SFX-AMBIENT-BANGUN: stT
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (3), KAMERA (3), SFX-DASAR (2), KASUR-DAN-POSE-TIDUR (1), SFX-AMBIENT-BANGUN
+                      (1), CUACA (1)↓
+   Dipakai oleh     : PEMAIN-GERAK-MODE (1)↓, NPC-WANDER (1)↓  */
 /* tipe blok yang benar-benar diinjak. Lantai (y=0) di bawah jembatan bisa 'air', padahal kaki berpijak di papan/kayu. */
 function feetT(fx, fz, py) {
   if (py < 0.9) {
@@ -4609,15 +4736,14 @@ function stepSfx() {
    Fungsi           : (9) say, hudU, nameTag, hideCoin, coinTandai, coinPulih, coinRespawn, coinCheck, useE
    Konstanta/lain   : (4) KOIN_IKON, NT_MAT, _KZERO, KOIN_PUTARAN_BAYAR
    State (let)      : coinResp, coinBase, coinRound, coinSaved
-   Menulis let milik: KATALOG-DAN-ALAT-BANTU: coins, st
+   Menulis let milik: STATE-DAN-LAMPU-LALIN: coins, st
    Ubah objek       : PERAN-DASAR-MISI-TOKO-POLISI: WAL
-   Bergantung pada  : PERAN-DASAR-MISI-TOKO-POLISI (5)↓, KATALOG-DAN-ALAT-BANTU (4), DASAR-DUNIA (3),
-                      CHUNK-BLOK-DAN-UKURAN-KOTA (3), KAMERA (2), SFX-SUARA (2), COMBAT (2)↓, TERNAK-GERBANG
+   Bergantung pada  : PERAN-DASAR-MISI-TOKO-POLISI (5)↓, STATE-DAN-LAMPU-LALIN (4), DASAR-DUNIA (3),
+                      CHUNK-BLOK-DAN-UKURAN-KOTA (3), KAMERA (2), SFX-DASAR (2), COMBAT (2)↓, TERNAK-GERBANG
                       (1)↓, INTERIOR-ATAP (1)↓
-   Dipakai oleh     : NPC-SERANG-DAN-POSE (6)↓, MINIMAP-DAN-SIMPAN (3)↓, KATALOG-DAN-ALAT-BANTU (2),
-                      PERAN-DASAR-MISI-TOKO-POLISI (2)↓, KONTROL-SENTUH (1), KARAKTER-MAKE-CHAR (1)↓,
-                      TERNAK-GERBANG (1)↓, EDITOR-ISI-AREA-DAN-INPUT (1)↓, COMBAT (1)↓, PEMAIN-GERAK-MODE (1)↓ …
-                      (+5)  */
+   Dipakai oleh     : NPC-SERANG-DAN-POSE (6)↓, MINIMAP-DAN-SIMPAN (3)↓, PERAN-DASAR-MISI-TOKO-POLISI (2)↓,
+                      DUDUK (1), TIDUR-BANGUN (1), MENGEMUDI (1), KONTROL-SENTUH (1), KARAKTER-MAKE-CHAR (1)↓,
+                      TERNAK-GERBANG (1)↓, EDITOR-INPUT-GLOBAL (1)↓ … (+7)  */
 function say(t) {
   const s = $('say');
   s.textContent = t;
@@ -4829,9 +4955,9 @@ function useE() {
    State (let)      : NIGHT_LEVEL
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : KATALOG-DAN-ALAT-BANTU (1)
-   Dipakai oleh     : CUACA (5)↓, MODEL-KENDARAAN-BUILD (3)↓, DASAR-DUNIA (2), KATALOG-DAN-ALAT-BANTU (2),
-                      DEKORASI (2)↓, KARAKTER-HELPERS (2)↓, EFEK-AIR (1)↓, LALU-LINTAS-INTI (1)↓,
+   Bergantung pada  : BUKAAN-DAN-MATERIAL (1)
+   Dipakai oleh     : CUACA (5)↓, MODEL-KENDARAAN-BUILD (3)↓, DASAR-DUNIA (2), BUKAAN-DAN-MATERIAL (2),
+                      DEKORASI-MODEL (2)↓, KARAKTER-HELPERS (2)↓, EFEK-AIR (1)↓, LALU-LINTAS-MOBIL (1)↓,
                       NPC-LAMPU-RUMAH (1)↓  */
 const GL = new THREE.MeshBasicMaterial({
     color: 0xffe9a0,
@@ -4930,18 +5056,15 @@ winGlow(mfor('kaca'));
    DEKORASI-HELPER, DEKORASI-MODEL (DEC), DEKORASI-FURNITUR; sisa di induk: ZEBRA, ROAD, isRoad, isZ.
    ============================================================ */
 /* KONTRAK
-   Fungsi           : (18) fishParts, makeFish, makeDuck, fishDec, frzFish, fishFree, lsLegs, lsMesh, lsParts,
-                      lsDec … (+8)
-   Konstanta/lain   : (41) FISH_T, FISHES, FISH_DOCK, FISH_PZ, FISH_KOI, FISH_MAS, FISH_KAW, FISH_DEF, LS_T,
-                      LS_SRC … (+31)
+   Fungsi           : (0) —
+   Konstanta/lain   : (4) ZEBRA, ROAD, isRoad, isZ
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (4), KATALOG-DAN-ALAT-BANTU (3), KARAKTER-HELPERS (3)↓,
-                      MATERIAL-CAHAYA-KENDARAAN (2)
-   Dipakai oleh     : CUACA (8)↓, EDITOR-ISI-AREA-DAN-INPUT (7)↓, TERNAK-GERBANG (4)↓, EFEK-AIR (3)↓, COMBAT
-                      (3)↓, NPC-TABRAKAN-GERAK (3)↓, CUACA-TORNADO (2)↓, LALU-LINTAS-INTI (2)↓, NPC-WALK2D (2)↓,
-                      NPC-JOBS (2)↓ … (+11)  */
+   Bergantung pada  : DASAR-DUNIA (2)
+   Dipakai oleh     : LALU-LINTAS-JALAN (2)↓, SFX-AMBIENT-BANGUN (1), NPC-BANTU-PEMAIN (1)↓, UNDO-REDO (1)↓,
+                      EDITOR-PICK (1)↓, COMBAT (1)↓, SIMPAN-MUAT (1)↓, PENEMPATAN-MOBIL (1)↓,
+                      LALU-LINTAS-BELOKAN (1)↓, LALU-LINTAS-UPDATE (1)↓ … (+5)  */
 //#region DEKORASI-HEWAN
 /* ============================================================
    DEKORASI-HEWAN — Hewan dan ikan sebagai dekorasi (sub-region di dalam DEKORASI): tabel ikan/bebek (FISH_T,
@@ -4951,7 +5074,17 @@ winGlow(mfor('kaca'));
    DEKORASI-FURNITUR.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (11) fishParts, makeFish, makeDuck, fishDec, frzFish, fishFree, lsLegs, lsMesh, lsParts,
+                      lsDec … (+1)
+   Konstanta/lain   : (15) FISH_T, FISHES, FISH_DOCK, FISH_PZ, FISH_KOI, FISH_MAS, FISH_KAW, FISH_DEF, LS_T,
+                      LS_SRC … (+5)
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : KARAKTER-HELPERS (2)↓
+   Dipakai oleh     : EDITOR-PUT-HAPUS (6)↓, TERNAK-GERBANG (4)↓, DEKORASI-MODEL (3)↓, DEKORASI-FURNITUR (3)↓,
+                      CUACA-TORNADO (2)↓, EFEK-AIR (2)↓, COMBAT (2)↓, NPC-TABRAKAN-RESOLVE (2)↓,
+                      NPC-JOBS-TANI-TERNAK (2)↓, NPC-WALK2D (1)↓  */
 const FISH_T = new Set(['ikankoi', 'ikankoix', 'ikanmas', 'kawananikan', 'bebek']) ,
   FISHES = new Set() ,
   FISH_DOCK = false ,
@@ -5166,7 +5299,15 @@ function ayamDec(R) {
    softGlow, SG_LAMP, SG_WATER, sgMesh) dan wmat. Dipakai DEC (DEKORASI-MODEL) dan furnitur (DEKORASI-FURNITUR).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) flrTop, flrStem, flrLeaf, flrHead, fncModel, lmbAdd, fruitOn
+   Konstanta/lain   : (18) tbox, bnLeaves, pasCrate, pasFruit, FLR_PT, FNT_W, FNT_W2, FNT_L, FNT_S, FNT_LC …
+                      (+8)
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : KARAKTER-HELPERS (1)↓
+   Dipakai oleh     : DEKORASI-MODEL (20)↓, CUACA (8)↓, DEKORASI-FURNITUR (2)↓, EFEK-AIR (1)↓, LEBAH-TERBANG
+                      (1)↓  */
 const tbox = (w, h, d, c, x, y, z, rx, ry, rz) => {
     const m = box(w, h, d, c, x, y, z);
     m.rotation.order = 'YXZ';
@@ -5324,7 +5465,15 @@ const FNT_W = new THREE.MeshLambertMaterial({color: '#3b8fd9', emissive: 0x2a8fd
    pernyataan: tidak bisa dipecah tanpa mengubah kode. Furnitur ditambahkan ke DEC di DEKORASI-FURNITUR.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (1) DEC
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : DEKORASI-HELPER: FLR_PT
+   Bergantung pada  : DEKORASI-HELPER (20), DEKORASI-HEWAN (3), DASAR-DUNIA (2), MATERIAL-CAHAYA-KENDARAAN (2),
+                      KARAKTER-HELPERS (2)↓, BUKAAN-DAN-MATERIAL (1), STATE-DAN-LAMPU-LALIN (1)
+   Dipakai oleh     : DEKORASI-FURNITUR (1)↓, KARAKTER-HELPERS (1)↓, EDITOR-PUT-HAPUS (1)↓,
+                      LABEL-GEDUNG-DAN-TOMBOL (1)↓  */
 const DEC = {
   lalin: () => {
     const g = new THREE.Group();
@@ -6130,7 +6279,14 @@ const DEC = {
    loop varian putar FROT (id_1/_2/_3 dari DEC[id]) dan loop turunan LS_T (lsDec untuk hewan ternak).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (3) FBOOK, bedBase, rsBase
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : DEKORASI-HEWAN: LS_SRC; DEKORASI-MODEL: DEC
+   Bergantung pada  : DEKORASI-HEWAN (3), DEKORASI-HELPER (2), KARAKTER-HELPERS (2)↓, DASAR-DUNIA (1),
+                      KATALOG-BLOK (1), BUKAAN-DAN-MATERIAL (1), DEKORASI-MODEL (1)
+   Dipakai oleh     : —  */
 /* ---------- FURNITUR: model 3D (depan = +z, alas di y=0). Varian putar id_1/_2/_3 dibuat dari FROT. ---------- */
 const FBOOK = ['#c0392b', '#2e6b9e', '#2e9e5b', '#c9a227', '#7b3fbf', '#d9772b', '#e8e4dc'];
 const bedBase = g => {
@@ -7263,11 +7419,12 @@ Object.assign(ITEMS, {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : CHUNK-BLOK-DAN-UKURAN-KOTA: DHB
-   Bergantung pada  : DASAR-DUNIA (4), KATALOG-DAN-ALAT-BANTU (3), CHUNK-BLOK-DAN-UKURAN-KOTA (3),
-                      MATERIAL-CAHAYA-KENDARAAN (2), DEKORASI (1)
-   Dipakai oleh     : KARAKTER-MAKE-CHAR (7)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (4), EDITOR-ISI-AREA-DAN-INPUT (4)↓,
-                      MODEL-KENDARAAN-BUILD (4)↓, DEKORASI (3), KARAKTER-AKSESORI-MONSTER (3), LEBAH-TERBANG
-                      (3)↓, KARAKTER-MONSTER-KUSTOM (2)↓, TERNAK-GERBANG (2)↓, KARAKTER-DASAR (1) … (+5)  */
+   Bergantung pada  : DASAR-DUNIA (4), CHUNK-BLOK-DAN-UKURAN-KOTA (3), KATALOG-BLOK (2),
+                      MATERIAL-CAHAYA-KENDARAAN (2), BUKAAN-DAN-MATERIAL (1), DEKORASI-MODEL (1)
+   Dipakai oleh     : KARAKTER-MAKE-CHAR (7)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (4), EDITOR-PUT-HAPUS (4)↓,
+                      MODEL-KENDARAAN-BUILD (4)↓, KARAKTER-AKSESORI-MONSTER (3), LEBAH-TERBANG (3)↓,
+                      DEKORASI-HEWAN (2), DEKORASI-MODEL (2), DEKORASI-FURNITUR (2), KARAKTER-MONSTER-KUSTOM
+                      (2)↓ … (+8)  */
 const OUTFIT = {
   rok: (g, c) => g.add(box(0.6, 0.3, 0.36, c.pants, 0, 0.55, 0)),
   sarung: g =>
@@ -9497,12 +9654,12 @@ function makeWeapon(w) {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (11), KATALOG-DAN-ALAT-BANTU (4), NPC-WALK3D (4)↓, KAMERA (1), DEKORASI (1),
-                      KARAKTER-MAKE-CHAR (1), NPC-SERANG-DAN-POSE (1)↓, PERAN-UTIL (1)↓, PERAN-DROPDOWN (1)↓,
-                      NPC-TABRAKAN-GERAK (1)↓
-   Dipakai oleh     : KATALOG-DAN-ALAT-BANTU (4), NPC-TABRAKAN-GERAK (4)↓, NPC-BINFO (4)↓, NPC-TUGAS (4)↓,
-                      NPC-SERANG-DAN-POSE (3)↓, PEMAIN-GERAK-MODE (3)↓, NPC-PATHFINDING (3)↓, NPC-RUTINITAS-PAGI
-                      (3)↓, GP-TEKNIK-DASAR (3)↓, CUACA-TORNADO (2)↓ … (+25)  */
+   Bergantung pada  : DASAR-DUNIA (11), NPC-WALK3D (4)↓, KASUR-DAN-POSE-TIDUR (3), KAMERA (1),
+                      BUKAAN-DAN-MATERIAL (1), DEKORASI (1), KARAKTER-MAKE-CHAR (1), NPC-SERANG-DAN-POSE (1)↓,
+                      PERAN-UTIL (1)↓, PERAN-DROPDOWN (1)↓ … (+1)
+   Dipakai oleh     : DUDUK (4), NPC-BINFO (4)↓, NPC-TUGAS-JALAN (4)↓, NPC-SERANG-DAN-POSE (3)↓,
+                      PEMAIN-GERAK-MODE (3)↓, NPC-PATHFINDING (3)↓, NPC-GERAK-JALUR (3)↓, NPC-RUTINITAS-PAGI
+                      (3)↓, GP-TEKNIK-DASAR (3)↓, CUACA-TORNADO (2)↓ … (+30)  */
 const swing = (g, s) => {
   const u = g.userData,
     a = Math.sin(s) * 0.8;
@@ -9875,14 +10032,14 @@ function newT(n) {
    State (let)      : tv, au, wxS
    Menulis let milik: DASAR-DUNIA: fogQ, heatQ; MATERIAL-CAHAYA-KENDARAAN: NIGHT_LEVEL
    Ubah objek       : DASAR-DUNIA: cam, fogEl, heatEl, hemi, sc, sun; MATERIAL-CAHAYA-KENDARAAN: BEAM_M, GL,
-                      WINU; DEKORASI: FNT_W, FNT_W2, SG_LAMP, SG_WATER; KARAKTER-HELPERS: VCM_JAMUR;
+                      WINU; DEKORASI-HELPER: FNT_W, FNT_W2, SG_LAMP, SG_WATER; KARAKTER-HELPERS: VCM_JAMUR;
                       CUACA-HUJAN-ES: hail, hailMat
-   Bergantung pada  : DASAR-DUNIA (16), DEKORASI (8), MATERIAL-CAHAYA-KENDARAAN (5), CUACA-LANJUTAN (3)↓,
-                      CUACA-KALENDER (2)↓, CUACA-HUJAN-ES (2)↓, KATALOG-DAN-ALAT-BANTU (1),
-                      CHUNK-BLOK-DAN-UKURAN-KOTA (1), SFX-SUARA (1), KARAKTER-HELPERS (1) … (+4)
+   Bergantung pada  : DASAR-DUNIA (16), DEKORASI-HELPER (8), MATERIAL-CAHAYA-KENDARAAN (5), CUACA-LANJUTAN (3)↓,
+                      CUACA-KALENDER (2)↓, CUACA-HUJAN-ES (2)↓, BUKAAN-DAN-MATERIAL (1),
+                      CHUNK-BLOK-DAN-UKURAN-KOTA (1), SFX-DASAR (1), KARAKTER-HELPERS (1) … (+4)
    Dipakai oleh     : CUACA-LANJUTAN (33)↓, CUACA-AURORA (6)↓, CUACA-METEOR (5)↓, INIT (5)↓, CUACA-KALENDER
-                      (4)↓, PANEL-UI-KALENDER (4)↓, SFX-SUARA (3), CUACA-DAUN (3)↓, CUACA-PELANGI (3)↓,
-                      TERNAK-GERBANG (3)↓ … (+10)
+                      (4)↓, PANEL-UI-KALENDER (4)↓, SFX-AMBIENT-UPDATE (3), CUACA-DAUN (3)↓, CUACA-PELANGI (3)↓,
+                      TERNAK-GERBANG (3)↓ … (+11)
    Catatan          : Sub-region dalam CUACA (dibuat bertahap): CUACA-KALENDER (gregDay, gregDate, hDate,
                       calInfo, moonPhase, setDay, addMonths, jumpToSeason; MONTHS..CAL, moonIdx; _ck, _cv),
                       CUACA-EMBUN (updFrost, frO), CUACA-HUJAN-ES (updHail), CUACA-DAUN (updLeaves, leafO),
@@ -10811,11 +10968,12 @@ function updLightning(dt) {
    State (let)      : torHas
    Menulis let milik: KAMERA: vy; NPC-TUGAS: pathBud
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (14), COMBAT (7)↓, KAMERA (4), KATALOG-DAN-ALAT-BANTU (3), NPC-SISTEM (3)↓,
-                      NPC-TUGAS (3)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (2), DEKORASI (2), NPC-BANTU-PEMAIN (2),
-                      NPC-PATHFINDING (2)↓ … (+12)
-   Dipakai oleh     : SIMULASI-KOTA (4)↓, CUACA-LANJUTAN (3)↓, LALU-LINTAS-INTI (3)↓, NPC-PILIH-TUGAS (3)↓,
-                      EDITOR-ISI-AREA-DAN-INPUT (2)↓, INIT (2)↓, SFX-SUARA (1), CUACA (1), NPC-PERBAIKAN (1)↓  */
+   Bergantung pada  : DASAR-DUNIA (14), COMBAT (7)↓, KAMERA (4), NPC-SISTEM (3)↓, CHUNK-BLOK-DAN-UKURAN-KOTA
+                      (2), DEKORASI-HEWAN (2), NPC-BANTU-PEMAIN (2), NPC-PATHFINDING (2)↓, NPC-TUGAS (2)↓,
+                      SIMULASI-KOTA (2)↓ … (+15)
+   Dipakai oleh     : SIMULASI-KOTA (4)↓, CUACA-LANJUTAN (3)↓, LALU-LINTAS-UPDATE (3)↓, NPC-WANDER (3)↓,
+                      EDITOR-PUT-HAPUS (2)↓, INIT (2)↓, SFX-DASAR (1), SFX-AMBIENT-UPDATE (1), CUACA (1),
+                      NPC-PERBAIKAN (1)↓  */
 const TLV = [
   {nm: 'Pusaran debu', R: 1.3, H: 7, Rf: 0, F: 0, sp: 2, sway: 0.04, cap: 0, pw: 0, pd: 0, nd: 0, cd: 0},
   {nm: 'Angin ringan', R: 2, H: 12, Rf: 10, F: 3.5, sp: 3, sway: 0.12, cap: 0, pw: 0, pd: 0, nd: 0, cd: 0},
@@ -11780,9 +11938,9 @@ function updGround(dt, d) {
    Fungsi           : (1) updHail
    Konstanta/lain   : (8) HAIL_B, HAIL_N, hailGeo, hailPos, hailV, hailB, hailMat, hail
    State (let)      : —
-   Menulis let milik: SFX-SUARA: SBUS
+   Menulis let milik: SFX-DASAR: SBUS
    Ubah objek       : —
-   Bergantung pada  : SFX-SUARA (3), DASAR-DUNIA (2), CUACA (2), CUACA-LANJUTAN (2)↓, EDITOR-ATAP (1)↓
+   Bergantung pada  : SFX-DASAR (3), DASAR-DUNIA (2), CUACA (2), CUACA-LANJUTAN (2)↓, EDITOR-ATAP (1)↓
    Dipakai oleh     : CUACA (2), CUACA-DAUN (1), INIT (1)↓  */
 const HAIL_B = 700 /* jumlah dasar; HAIL_N = kapasitas buffer */,
   HAIL_N = 2400,
@@ -12143,10 +12301,10 @@ let wxS = '';
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (3), DEKORASI (3), KAMERA (2), CUACA (2), KATALOG-DAN-ALAT-BANTU (1),
-                      CHUNK-BLOK-DAN-UKURAN-KOTA (1), SFX-SUARA (1), MATERIAL-CAHAYA-KENDARAAN (1),
-                      CUACA-LANJUTAN (1)↓, EDITOR-ATAP (1)↓
-   Dipakai oleh     : INIT (2)↓, SFX-SUARA (1)  */
+   Bergantung pada  : DASAR-DUNIA (3), KAMERA (2), DEKORASI-HEWAN (2), CUACA (2), KATALOG-BLOK (1),
+                      CHUNK-BLOK-DAN-UKURAN-KOTA (1), SFX-DASAR (1), MATERIAL-CAHAYA-KENDARAAN (1),
+                      DEKORASI-HELPER (1), CUACA-LANJUTAN (1)↓ … (+1)
+   Dipakai oleh     : INIT (2)↓, SFX-AMBIENT-UPDATE (1)  */
 const FP = 48,
   FGR = 12,
   fMat = new THREE.PointsMaterial({color: 0xcfeeff, size: 0.14, transparent: true, opacity: 0.9, depthWrite: false}),
@@ -12540,11 +12698,11 @@ function updFish(dt) {
    Konstanta/lain   : (7) GATE_LEN, LSH, LS_DI, LS_DJ, LSW, LSM, LS_PRS
    State (let)      : —
    Menulis let milik: —
-   Ubah objek       : DEKORASI: KDG
-   Bergantung pada  : DASAR-DUNIA (4), DEKORASI (4), CUACA (3), KAMERA (2), KARAKTER-HELPERS (2),
-                      KATALOG-DAN-ALAT-BANTU (1), SFX-SUARA (1), HUD-PESAN-NAMA (1), MODEL-KENDARAAN (1)↓,
+   Ubah objek       : DEKORASI-HEWAN: KDG
+   Bergantung pada  : DASAR-DUNIA (4), DEKORASI-HEWAN (4), CUACA (3), KAMERA (2), KARAKTER-HELPERS (2),
+                      KATALOG-BLOK (1), SFX-DASAR (1), HUD-PESAN-NAMA (1), MODEL-KENDARAAN (1)↓,
                       NPC-TABRAKAN-GERAK (1)↓ … (+1)
-   Dipakai oleh     : HUD-PESAN-NAMA (1), CUACA-TORNADO (1), NPC-JOBS (1)↓, INIT (1)↓  */
+   Dipakai oleh     : HUD-PESAN-NAMA (1), CUACA-TORNADO (1), NPC-JOBS-TANI-TERNAK (1)↓, INIT (1)↓  */
 /* Data gerbang: TOWN.gate = [[gx, z0, z1, ex, pz0?, pz1?], ...]. gx = sel x gerbang (bukaan z0..z1 inklusif, lebar 4); kandang = x gx+1..ex, baris z0..z1 (atau pz0..pz1 bila ada; v99zk).
    Gerbang = dua daun (engsel di tiang, buka ke luar/barat 90 derajat). Awalnya TERTUTUP. Tertutup: kotak 1 papan; terbuka: dua kotak tipis (daun). */
 const GATE_LEN = 1.88;
@@ -13241,7 +13399,7 @@ function updTernak(dt) {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (3), KARAKTER-HELPERS (3), CUACA (3), KAMERA (2), DEKORASI (1)
+   Bergantung pada  : DASAR-DUNIA (3), KARAKTER-HELPERS (3), CUACA (3), KAMERA (2), DEKORASI-HELPER (1)
    Dipakai oleh     : INIT (1)↓  */
 /* Lebah bukan dekorasi di data: sistem ini memindai H untuk sel 'sarangmadu' (ber-instance: b.im, tanpa b.m, tidak masuk NB). Tiap sarang = BEE.N lebah (state mesin: 0 terbang ke target, 1 melayang,
    2 hinggap di papan pendarat, 3 di dalam sarang/tersembunyi, 4 hinggap di bunga; go 4 = terbang ke bunga, titik dari FLR_PT). Siang cerah mereka keluar; malam (tv di luar 0,27..0,77), hujan, badai, es, dan puting beliung mereka pulang
@@ -13685,8 +13843,8 @@ function updKilau() {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : CUACA: SKYEV, SPL, WX, blizzGeo, rainGeo, snowGeo, snowMat, windGeo; CUACA-TORNADO: TOR
-   Bergantung pada  : CUACA (33), DASAR-DUNIA (4), KAMERA (4), CUACA-TORNADO (3), KATALOG-DAN-ALAT-BANTU (1),
-                      SFX-SUARA (1), EDITOR-ATAP (1)↓, PERAN-DASAR-MISI-TOKO-POLISI (1)↓
+   Bergantung pada  : CUACA (33), DASAR-DUNIA (4), KAMERA (4), CUACA-TORNADO (3), STATE-DAN-LAMPU-LALIN (1),
+                      SFX-DASAR (1), EDITOR-ATAP (1)↓, PERAN-DASAR-MISI-TOKO-POLISI (1)↓
    Dipakai oleh     : CUACA (3), CUACA-HUJAN-ES (2), INIT (2)↓, EFEK-AIR (1)  */
 function updClouds(dt) {
   const w = 1 + WX.wind * 6,
@@ -13968,11 +14126,12 @@ wxpBuild();
    Fungsi           : (4) zebraAuto, edit, undo, redo
    Konstanta/lain   : (2) snap, ap
    State (let)      : —
-   Menulis let milik: KATALOG-DAN-ALAT-BANTU: R
+   Menulis let milik: KATALOG-BLOK: R
    Ubah objek       : —
-   Bergantung pada  : EDITOR-ISI-AREA-DAN-INPUT (3)↓, KATALOG-DAN-ALAT-BANTU (2), DASAR-DUNIA (1), KAMERA (1),
-                      SFX-SUARA (1), DEKORASI (1)
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (3)↓, PANEL-UI-KALENDER (2)↓, EDITOR-PICK (1)↓  */
+   Bergantung pada  : KATALOG-BLOK (2), EDITOR-PUT-HAPUS (2)↓, DASAR-DUNIA (1), KAMERA (1), SFX-DASAR (1),
+                      DEKORASI (1), EDITOR-PILIH-GESER (1)↓
+   Dipakai oleh     : EDITOR-INPUT-GLOBAL (2)↓, PANEL-UI-KALENDER (2)↓, EDITOR-ISI-AREA-DAN-INPUT (1)↓,
+                      EDITOR-PILIH-GESER (1)↓, EDITOR-PICK (1)↓  */
 const snap = k => {
   const b = H.get(k);
   return b ? [b.x, b.y, b.z, b.t, b.c] : null;
@@ -14023,20 +14182,16 @@ function redo() {
    EDITOR-ISI-AREA-DAN-INPUT — Isi area, atap, put/del, alat, raycast/pick, input mouse & keyboard.
    ============================================================ */
 /* KONTRAK
-   Fungsi           : (30) reg, fillMove, commitFill, togFill, chgLog, chgHit, del, fvisWants, fvisGet, fvisDrop
-                      … (+20)
-   Konstanta/lain   : (21) CHG_MAX, GS_MAX, gsGeo, gsMat, gsHL, gsDec, gsSfx, gsKey, gsBedDir, gsPanel … (+11)
-   State (let)      : gsSel, gsMulti, tool, cur, fillOn, rec, ctab, sideShown, rsT, rsW, rsH
-   State (var)      : _wkD, _wk3, roofDirty, roofAct, _fv, _fvF, _chX, _chZ, _chBase, _chHook
-   Menulis let milik: KAMERA: uDirty; NPC-SISTEM: _prkV
-   Ubah objek       : DASAR-DUNIA: Combat, K, cam, ghost; KATALOG-DAN-ALAT-BANTU: F, MD; JURUS-SERANGAN-DASH:
-                      lastTapDir
-   Bergantung pada  : KATALOG-DAN-ALAT-BANTU (20), CHUNK-BLOK-DAN-UKURAN-KOTA (18), DASAR-DUNIA (15), DEKORASI
-                      (7), KAMERA (4), KARAKTER-HELPERS (4), EDITOR-ATAP (4)↓, UNDO-REDO (3), NPC-BANTU-PEMAIN
-                      (2), CUACA-TORNADO (2) … (+14)
-   Dipakai oleh     : EDITOR-PICK (6)↓, NPC-BINFO (5)↓, DASAR-DUNIA (4), COMBAT (4)↓, SIMPAN-MUAT (4)↓,
-                      PANEL-UI-KALENDER (4)↓, LALU-LINTAS-INTI (4)↓, UNDO-REDO (3), NPC-SERANG-DAN-POSE (3)↓,
-                      INTERIOR-ATAP (3)↓ … (+11)  */
+   Fungsi           : (4) reg, fillMove, commitFill, togFill
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: EDITOR-ALAT-DAN-PANEL: fillOn
+   Ubah objek       : DASAR-DUNIA: ghost; KATALOG-BLOK: F
+   Bergantung pada  : DASAR-DUNIA (4), KATALOG-BLOK (2), EDITOR-ALAT-DAN-PANEL (2)↓, UNDO-REDO (1), EDITOR-PICK
+                      (1)↓
+   Dipakai oleh     : EDITOR-PICK (2)↓, EDITOR-ALAT-DAN-PANEL (1)↓, EDITOR-INPUT-GLOBAL (1)↓
+   Catatan          : Berisi sub-region (urut kode): EDITOR-ATAP, EDITOR-PUT-HAPUS, EDITOR-PILIH-GESER, EDITOR-ALAT-DAN-PANEL,
+                      EDITOR-PICK, EDITOR-INPUT-GLOBAL. Kepala induk ini hanya memuat isi-area: reg, fillMove, commitFill, togFill.  */
 function reg() {
   const a = F.a,
     b = F.b,
@@ -14089,7 +14244,7 @@ function togFill() {
    1 kolom — dipanggil del() di EDITOR & swingDoor() di INTERIOR-ATAP), roofPut (update 1 kolom dari blok
    baru — dipanggil put() di EDITOR). Dipakai lintas-region oleh updLeaves (CUACA-DAUN), updPrecip
    (CUACA-LANJUTAN), updHail (CUACA-HUJAN-ES), updFrost (CUACA-EMBUN), torDamage (CUACA-TORNADO).
-   roofDirty/roofAct TETAP di parent (sinyal ke INTERIOR-ATAP.updRoofs); _wkD/_wk3/_fv/_ch* TETAP di parent.
+   roofDirty/roofAct (sinyal ke INTERIOR-ATAP.updRoofs) dan _wkD/_wk3/_fv/_ch* milik EDITOR-PUT-HAPUS.
    ============================================================ */
 /* KONTRAK
    Fungsi           : (4) roofBuild, roofAt, roofCol, roofPut
@@ -14098,14 +14253,10 @@ function togFill() {
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : DASAR-DUNIA (4)
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (4), CUACA-TORNADO (1), CUACA-DAUN (1), CUACA-HUJAN-ES (1),
-                      CUACA-EMBUN (1), EFEK-AIR (1), CUACA-LANJUTAN (1), SIMPAN-MUAT (1)↓, INTERIOR-ATAP (1)↓
-   Catatan          : Sub-region dalam EDITOR: EDITOR-ATAP (roofBuild, roofAt, roofCol, roofPut, ROOF, ROOFS —
-                      cache tinggi atap; roofAt dipakai lintas-region oleh cuaca & tornado), EDITOR-PICK (ray,
-                      cv, rbox, vpick, unitCands, pick, hover, act, dn, mv + 5 handler pointer cv.onpointerdown/move/
-                      up/cancel/wheel — raycast, ghost preview, eksekusi klik, drag kamera, zoom). roofDirty/
-                      roofAct/_wkD/_wk3/_fv/_ch* tetap di parent. Handlers keyboard editor (undo/redo,
-                      hotkey 1-4, dll.) & releaseInput tetap di parent.  */
+   Dipakai oleh     : EDITOR-PUT-HAPUS (4)↓, CUACA-TORNADO (1), CUACA-DAUN (1), CUACA-HUJAN-ES (1), CUACA-EMBUN
+                      (1), EFEK-AIR (1), CUACA-LANJUTAN (1), SIMPAN-MUAT (1)↓, INTERIOR-ATAP (1)↓
+   Catatan          : Sub-region dalam EDITOR: lihat PETA-FILE (EDITOR-ATAP, EDITOR-PUT-HAPUS, EDITOR-PILIH-GESER, EDITOR-ALAT-DAN-PANEL,
+                      EDITOR-PICK, EDITOR-INPUT-GLOBAL). roofAt dipakai lintas-region oleh cuaca & tornado.  */
 let ROOF = null,
   ROOFS = 0;
 function roofBuild() {
@@ -14144,6 +14295,29 @@ function roofPut(b) {
 }
 //#endregion EDITOR-ATAP
 
+//#region EDITOR-PUT-HAPUS
+/* ============================================================
+   EDITOR-PUT-HAPUS — Taruh/hapus blok (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT): put (taruh
+   blok/dekorasi + daftar DOORS/SWAY, roofPut), del dan delKeepFloor (hapus + roofCol), blokT, frz (bekukan
+   matriks objek statis), chgLog/chgHit (log perubahan kolom; _chHook untuk cache lain),
+   fvisWants/Get/Drop/Clear (cache ubin lantai). Memiliki state bersama put/del: _wkD/_wk3 (kolom berubah),
+   roofDirty/roofAct (sinyal ke INTERIOR-ATAP.updRoofs), _fv/_fvF (versi perubahan),
+   _chX/_chZ/_chBase/_chHook, CHG_MAX.
+   ============================================================ */
+/* KONTRAK
+   Fungsi           : (11) chgLog, chgHit, del, fvisWants, fvisGet, fvisDrop, fvisClear, delKeepFloor, blokT,
+                      frz … (+1)
+   Konstanta/lain   : (1) CHG_MAX
+   State (let)      : —
+   State (var)      : _wkD, _wk3, roofDirty, roofAct, _fv, _fvF, _chX, _chZ, _chBase, _chHook
+   Menulis let milik: KAMERA: uDirty; NPC-SISTEM: _prkV
+   Ubah objek       : KATALOG-BLOK: MD
+   Bergantung pada  : CHUNK-BLOK-DAN-UKURAN-KOTA (17), DASAR-DUNIA (9), DEKORASI-HEWAN (6),
+                      STATE-DAN-LAMPU-LALIN (5), BUKAAN-DAN-MATERIAL (4), KARAKTER-HELPERS (4), EDITOR-ATAP (4),
+                      KAMERA (2), KASUR-DAN-POSE-TIDUR (2), NPC-BANTU-PEMAIN (2) … (+6)
+   Dipakai oleh     : NPC-BINFO (5)↓, DASAR-DUNIA (4), COMBAT (4)↓, SIMPAN-MUAT (4)↓, LALU-LINTAS-JALAN (4)↓,
+                      INTERIOR-ATAP (3)↓, SIM-PORTAL (3)↓, KASUR-DAN-POSE-TIDUR (2), CHUNK-BLOK-DAN-UKURAN-KOTA
+                      (2), UNDO-REDO (2) … (+7)  */
 var _wkD = new Set(),
   _wk3 = new Set(),
   roofDirty = false,
@@ -14423,7 +14597,26 @@ function put(x, y, z, t, c) {
   if (isDoor(t)) DOORS.add(bb);
   if (SWAY.has(t)) SWAY_SET.add(bb);
 }
+//#endregion EDITOR-PUT-HAPUS
 
+//#region EDITOR-PILIH-GESER
+/* ============================================================
+   EDITOR-PILIH-GESER — Alat Geser (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT): pilihan objek
+   gsSel/gsMulti (maks GS_MAX), sorotan wireframe gsHL, panel #gsp (gsPanel), gsGroup/gsAll/gsMark (kelompok
+   objek bertaut, mis. kasur), gsRefresh, gsPick (klik pilih), gsStep/gsMove (geser), gsRotName/gsRotate
+   (putar; dipicu tombol R saat tool geser).
+   ============================================================ */
+/* KONTRAK
+   Fungsi           : (10) gsHLget, gsGroup, gsAll, gsMark, gsRefresh, gsPick, gsStep, gsMove, gsRotName,
+                      gsRotate
+   Konstanta/lain   : (14) GS_MAX, gsGeo, gsMat, gsHL, gsDec, gsSfx, gsKey, gsBedDir, gsPanel, gsName … (+4)
+   State (let)      : gsSel, gsMulti
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (5), KATALOG-BLOK (3), KAMERA (2), EDITOR-ALAT-DAN-PANEL (2)↓,
+                      KASUR-DAN-POSE-TIDUR (1), UNDO-REDO (1), EDITOR-PICK (1)↓
+   Dipakai oleh     : EDITOR-ALAT-DAN-PANEL (4)↓, EDITOR-INPUT-GLOBAL (2)↓, UNDO-REDO (1), EDITOR-PICK (1)↓,
+                      NPC-SERANG-DAN-POSE (1)↓  */
 let gsSel = []; /* daftar kunci 'x,y,z' objek terpilih (v99zu) */
 let gsMulti = false; /* mode "Pilih banyak" (tombol di panel; di desktop cukup Shift/Ctrl+klik) */
 const GS_MAX = 200;
@@ -14751,7 +14944,27 @@ function gsRotate(st) {
       (skipped ? ' · ' + skipped + ' dilewati (tidak berarah)' : '')
   );
 }
+//#endregion EDITOR-PILIH-GESER
 
+//#region EDITOR-ALAT-DAN-PANEL
+/* ============================================================
+   EDITOR-ALAT-DAN-PANEL — Bilah alat editor (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT): state
+   tool/cur/fillOn/rec/ctab, TL/TB dan selTool, panel samping (sideShown, updSideVis, updCatVis, sideToggle,
+   sideClose), tombol bcat/bside/bfill/bcfp/brot, tombol tutup sideX/catX, rotCur (putar blok terpilih) dan
+   handler keydown R.
+   ============================================================ */
+/* KONTRAK
+   Fungsi           : (4) selTool, updSideVis, updCatVis, rotCur
+   Konstanta/lain   : (5) TL, TB, sideToggle, sideClose, DIRN
+   State (let)      : tool, cur, fillOn, rec, ctab, sideShown
+   Menulis let milik: EDITOR-PILIH-GESER: gsMulti, gsSel
+   Ubah objek       : —
+   Bergantung pada  : EDITOR-PILIH-GESER (4), KATALOG-BLOK (3), DASAR-DUNIA (2), KAMERA (1),
+                      EDITOR-ISI-AREA-DAN-INPUT (1), PEMAIN-GERAK-MODE (1)↓, PANEL-UI-KALENDER (1)↓, LAYAR-HP
+                      (1)↓
+   Dipakai oleh     : PANEL-UI-KALENDER (4)↓, EDITOR-PICK (3)↓, EDITOR-ISI-AREA-DAN-INPUT (2),
+                      EDITOR-PILIH-GESER (2), EDITOR-INPUT-GLOBAL (2)↓, NPC-SERANG-DAN-POSE (2)↓, INIT (2)↓,
+                      MODEL-KENDARAAN (1)↓  */
 let tool = 'blok',
   cur = 'bata',
   fillOn = false,
@@ -14893,6 +15106,7 @@ addEventListener('keydown', e => {
     else rotCur();
   }
 });
+//#endregion EDITOR-ALAT-DAN-PANEL
 
 //#region EDITOR-PICK
 /* ============================================================
@@ -14904,18 +15118,19 @@ addEventListener('keydown', e => {
    cv.onpointerdown (mulai drag/fill/pick), cv.onpointermove (drag kamera / fillMove / hover), cv.onpointerup
    = cv.onpointercancel (commit fill / act / clear), cv.onwheel (zoom orbit atau kecepatan terbang cfp).
    Menulis mv yang dibaca & di-set pinch (KONTROL-SENTUH). Tidak ada panggilan luar — hanya dari event
-   pointer canvas & keydown R yang memicu rotCur (parent).
+   pointer canvas & keydown R yang memicu rotCur (EDITOR-ALAT-DAN-PANEL).
    ============================================================ */
 /* KONTRAK
    Fungsi           : (8) rbox, vpSkip, vpick, unitCands, pick, visFit, hover, act
    Konstanta/lain   : (3) ray, VBX, cv
    State (let)      : dn, mv
-   Menulis let milik: KAMERA: cfSp, dist, pitch, yaw; KATALOG-DAN-ALAT-BANTU: F, lh; KONTROL-SENTUH: pd
+   Menulis let milik: KAMERA: cfSp, dist, pitch, yaw; KATALOG-BLOK: F; STATE-DAN-LAMPU-LALIN: lh;
+                      KONTROL-SENTUH: pd
    Ubah objek       : DASAR-DUNIA: ghost
-   Bergantung pada  : DASAR-DUNIA (12), KAMERA (7), CHUNK-BLOK-DAN-UKURAN-KOTA (7), EDITOR-ISI-AREA-DAN-INPUT
-                      (6), KATALOG-DAN-ALAT-BANTU (4), KONTROL-SENTUH (3), NPC-BANTU-PEMAIN (2),
-                      LALU-LINTAS-INTI (2)↓, DEKORASI (1), KARAKTER-HELPERS (1) … (+1)
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (2), KONTROL-SENTUH (1), INIT (1)↓  */
+   Bergantung pada  : DASAR-DUNIA (12), KAMERA (7), CHUNK-BLOK-DAN-UKURAN-KOTA (7), KONTROL-SENTUH (3),
+                      EDITOR-ALAT-DAN-PANEL (3), KATALOG-BLOK (2), STATE-DAN-LAMPU-LALIN (2), NPC-BANTU-PEMAIN
+                      (2), EDITOR-ISI-AREA-DAN-INPUT (2), DEKORASI (1) … (+5)
+   Dipakai oleh     : KONTROL-SENTUH (1), EDITOR-ISI-AREA-DAN-INPUT (1), EDITOR-PILIH-GESER (1), INIT (1)↓  */
 const ray = new THREE.Raycaster();
 function rbox(O, D, x, y, z, h) {
   let tn = -1e30,
@@ -15301,6 +15516,22 @@ cv.onwheel = e => {
 };
 //#endregion EDITOR-PICK
 
+//#region EDITOR-INPUT-GLOBAL
+/* ============================================================
+   EDITOR-INPUT-GLOBAL — Input global (sub-region di dalam EDITOR-ISI-AREA-DAN-INPUT): keydown (undo/redo,
+   hotkey alat, tombol main), keyup, releaseInput (blur/visibilitychange), change/click global, resize ter-
+   throttle (rsT, rsW, rsH, applyResize).
+   ============================================================ */
+/* KONTRAK
+   Fungsi           : (1) applyResize
+   Konstanta/lain   : (1) releaseInput
+   State (let)      : rsT, rsW, rsH
+   Menulis let milik: EDITOR-PILIH-GESER: gsSel
+   Ubah objek       : DASAR-DUNIA: Combat, K, cam; JURUS-SERANGAN-DASH: lastTapDir
+   Bergantung pada  : DASAR-DUNIA (4), STATE-DAN-LAMPU-LALIN (2), UNDO-REDO (2), EDITOR-PILIH-GESER (2),
+                      EDITOR-ALAT-DAN-PANEL (2), LALU-LINTAS-MOBIL (2)↓, PEMBUKA (1), KAMERA (1), DUDUK (1),
+                      TIDUR-BANGUN (1) … (+8)
+   Dipakai oleh     : —  */
 addEventListener('keydown', e => {
   if (e.target.tagName == 'INPUT' && e.target.type != 'color') return;
   const k = e.key.toLowerCase();
@@ -15371,6 +15602,7 @@ function applyResize() {
 addEventListener('resize', () => {
   if (!rsT) rsT = setTimeout(applyResize, 100);
 });
+//#endregion EDITOR-INPUT-GLOBAL
 
 //#endregion EDITOR-ISI-AREA-DAN-INPUT
 //#region COMBAT
@@ -15382,15 +15614,15 @@ addEventListener('resize', () => {
                       npcTakeDmg, hitSpark, updSparks … (+20)
    Konstanta/lain   : (14) dmgMul, sparkMat, sparks, sparkPool, DESTR, REP, WRK, WK, CAR_HP, BRK_MAP … (+4)
    State (let)      : statKey, shake, comboN, comboT, WRECK_ICO_MAT, CAR_ICO_MAT
-   Menulis let milik: KAMERA: camDist, onG, vy; KATALOG-DAN-ALAT-BANTU: drv, sit, sitDy, sitS, slp, slpAuto,
-                      slpS; SFX-SUARA: _wasInWater
+   Menulis let milik: KAMERA: camDist, onG, vy; STATE-DAN-LAMPU-LALIN: drv, sit, sitDy, sitS, slp;
+                      KASUR-DAN-POSE-TIDUR: slpAuto, slpS; SFX-AMBIENT-BANGUN: _wasInWater
    Ubah objek       : DASAR-DUNIA: Combat, PL; KAMERA: P
-   Bergantung pada  : DASAR-DUNIA (14), KATALOG-DAN-ALAT-BANTU (13), KAMERA (7), EDITOR-ISI-AREA-DAN-INPUT (4),
-                      LALU-LINTAS-INTI (4)↓, DEKORASI (3), SFX-SUARA (2), NPC-BANTU-PEMAIN (2),
-                      PERAN-DASAR-MISI-TOKO-POLISI (2)↓, HUD-PESAN-NAMA (1) … (+6)
+   Bergantung pada  : DASAR-DUNIA (14), KAMERA (7), STATE-DAN-LAMPU-LALIN (5), EDITOR-PUT-HAPUS (4),
+                      KASUR-DAN-POSE-TIDUR (3), KATALOG-BLOK (2), TIDUR-BANGUN (2), DEKORASI-HEWAN (2),
+                      NPC-BANTU-PEMAIN (2), PERAN-DASAR-MISI-TOKO-POLISI (2)↓ … (+14)
    Dipakai oleh     : NPC-SERANG-DAN-POSE (8)↓, CUACA-TORNADO (7), INIT (7)↓, GP-MONSTER (6)↓,
-                      JURUS-SERANGAN-DASH (5)↓, NPC-JOBS (5)↓, SIM-PORTAL (5)↓, GP-AI-PARRY (4)↓, GP-GELOMBANG
-                      (4)↓, KATALOG-DAN-ALAT-BANTU (3) … (+14)  */
+                      JURUS-SERANGAN-DASH (5)↓, SIM-PORTAL (5)↓, NPC-JOBS-MEKANIK (4)↓, GP-AI-PARRY (4)↓,
+                      GP-GELOMBANG (4)↓, MENGEMUDI (3) … (+16)  */
 function damagePlayer(n) {
   if (Combat.invuln > 0 || Combat.dead) return;
   if (slp) wakeUp();
@@ -16135,7 +16367,7 @@ function updCarSmoke(dt) {
    State (let)      : shopN, docT, wStars
    Menulis let milik: —
    Ubah objek       : DASAR-DUNIA: CONFIG, Combat
-   Bergantung pada  : DASAR-DUNIA (7), COMBAT (3), KAMERA (2), CHUNK-BLOK-DAN-UKURAN-KOTA (2), SFX-SUARA (2),
+   Bergantung pada  : DASAR-DUNIA (7), COMBAT (3), KAMERA (2), CHUNK-BLOK-DAN-UKURAN-KOTA (2), SFX-DASAR (2),
                       HUD-PESAN-NAMA (2), PERAN-DROPDOWN (2)↓, NPC-BANTU-PEMAIN (1), NPC-FRAME-DAN-POLISI-KEJAR
                       (1)↓
    Dipakai oleh     : GP-GELOMBANG (6)↓, HUD-PESAN-NAMA (5), SIMPAN-MUAT (3)↓, GP-MONSTER (3)↓, COMBAT (2),
@@ -16546,11 +16778,11 @@ function updPolice(dt) {
    State (let)      : _stripe
    Menulis let milik: —
    Ubah objek       : DASAR-DUNIA: Combat; KAMERA: P
-   Bergantung pada  : DASAR-DUNIA (13), COMBAT (5), KAMERA (3), KATALOG-DAN-ALAT-BANTU (2), NPC-BANTU-PEMAIN
-                      (2), NPC-TABRAKAN-GERAK (2)↓, SFX-SUARA (1)
+   Bergantung pada  : DASAR-DUNIA (13), COMBAT (5), KAMERA (3), STATE-DAN-LAMPU-LALIN (2), NPC-BANTU-PEMAIN (2),
+                      SFX-DASAR (1), NPC-TABRAKAN-GERAK (1)↓, NPC-TABRAKAN-RESOLVE (1)↓
    Dipakai oleh     : NPC-SERANG-DAN-POSE (3)↓, GP-TEKNIK-DASAR (3)↓, GP-TEKNIK-MONSTER (3)↓, GP-AI-PARRY (3)↓,
                       SIM-PORTAL (3)↓, INIT (3)↓, KONTROL-SENTUH (2), GAMEPLAY-PLUS (2)↓, GP-MONSTER (2)↓,
-                      EDITOR-ISI-AREA-DAN-INPUT (1) … (+4)  */
+                      EDITOR-INPUT-GLOBAL (1) … (+4)  */
 const FX = [],
   GEO_FXS = new THREE.SphereGeometry(0.5, 10, 8),
   GEO_FXR = new THREE.TorusGeometry(0.5, 0.05, 8, 28),
@@ -17051,16 +17283,16 @@ addEventListener('blur', () => {
    Konstanta/lain   : (1) ez
    State (let)      : poseLean
    Menulis let milik: DASAR-DUNIA: SNAP; KAMERA: P, camDist, cfp, cfpWas, dist, pitch, play, vy;
-                      KATALOG-DAN-ALAT-BANTU: coinTot, coins, drv, fp, sit, sitDy, sitS, slp, slpS; SFX-SUARA:
-                      _pSlInit, _wasInWater, pSl; HUD-PESAN-NAMA: coinBase, coinResp, coinRound; COMBAT: comboN,
-                      comboT, statKey
+                      STATE-DAN-LAMPU-LALIN: coinTot, coins, drv, fp, sit, sitDy, sitS, slp;
+                      KASUR-DAN-POSE-TIDUR: slpS; SFX-AMBIENT-BANGUN: _pSlInit, _wasInWater, pSl;
+                      HUD-PESAN-NAMA: coinBase, coinResp, coinRound; COMBAT: comboN, comboT, statKey
    Ubah objek       : DASAR-DUNIA: Combat, ghost, grid; KAMERA: P; COMBAT: sparks; JURUS-SERANGAN-DASH:
                       dashTrail, projectiles; LABEL-GEDUNG-DAN-TOMBOL: statEl
-   Bergantung pada  : DASAR-DUNIA (11), KATALOG-DAN-ALAT-BANTU (9), KAMERA (8), COMBAT (8), HUD-PESAN-NAMA (6),
-                      SFX-SUARA (5), NPC-BANTU-PEMAIN (3), EDITOR-ISI-AREA-DAN-INPUT (3), JURUS-SERANGAN-DASH
-                      (3), CHUNK-BLOK-DAN-UKURAN-KOTA (2) … (+11)
+   Bergantung pada  : DASAR-DUNIA (11), KAMERA (8), STATE-DAN-LAMPU-LALIN (8), COMBAT (8), HUD-PESAN-NAMA (6),
+                      SFX-AMBIENT-BANGUN (5), NPC-BANTU-PEMAIN (3), JURUS-SERANGAN-DASH (3),
+                      CHUNK-BLOK-DAN-UKURAN-KOTA (2), EDITOR-ALAT-DAN-PANEL (2) … (+13)
    Dipakai oleh     : MINIMAP-DAN-SIMPAN (3)↓, INIT (3)↓, PEMAIN-GERAK-MODE (2)↓, NPC-BANTU-PEMAIN (1),
-                      EDITOR-ISI-AREA-DAN-INPUT (1), SIMPAN-MUAT (1)↓, EKSPOR-GAME (1)↓, GP-MONSTER (1)↓  */
+                      EDITOR-INPUT-GLOBAL (1), SIMPAN-MUAT (1)↓, EKSPOR-GAME (1)↓, GP-MONSTER (1)↓  */
 function npcAI(n, dt) {
   if (n.dead) return;
   if (n.hitstun > 0) {
@@ -17452,13 +17684,13 @@ function help() {
    Fungsi           : (8) updPlayer, panLimit, rotKeys, pan, clampCpos, flyCam, enterCFP, setCFP
    Konstanta/lain   : (4) panAxis, ROT_YAW, ROT_PITCH, togCFP
    State (let)      : —
-   Menulis let milik: KAMERA: cfp, dist, onG, pitch, vy, yaw; KATALOG-DAN-ALAT-BANTU: slpY; NPC-TABRAKAN-GERAK:
+   Menulis let milik: KAMERA: cfp, dist, onG, pitch, vy, yaw; KASUR-DAN-POSE-TIDUR: slpY; NPC-TABRAKAN-GERAK:
                       RIDE
    Ubah objek       : DASAR-DUNIA: Combat; KAMERA: P, cpos, tgt
-   Bergantung pada  : KAMERA (11), DASAR-DUNIA (10), KATALOG-DAN-ALAT-BANTU (8), NPC-TABRAKAN-GERAK (7)↓,
-                      NPC-BANTU-PEMAIN (3), SFX-SUARA (2), NPC-SERANG-DAN-POSE (2), KONTROL-SENTUH (1),
-                      HUD-PESAN-NAMA (1), JURUS-SERANGAN-DASH (1)
-   Dipakai oleh     : INIT (3)↓, EDITOR-ISI-AREA-DAN-INPUT (1), NPC-SERANG-DAN-POSE (1)  */
+   Bergantung pada  : KAMERA (11), DASAR-DUNIA (10), NPC-TABRAKAN-GERAK (6)↓, STATE-DAN-LAMPU-LALIN (4),
+                      NPC-BANTU-PEMAIN (3), NPC-SERANG-DAN-POSE (2), DUDUK (1), KASUR-DAN-POSE-TIDUR (1),
+                      TIDUR-BANGUN (1), MENGEMUDI (1) … (+6)
+   Dipakai oleh     : INIT (3)↓, EDITOR-ALAT-DAN-PANEL (1), EDITOR-INPUT-GLOBAL (1), NPC-SERANG-DAN-POSE (1)  */
 function updPlayer(dt) {
   const wantJump = Combat.jumpPressed;
   Combat.jumpPressed = false;
@@ -17723,14 +17955,13 @@ $('rnd').onclick = () => {
    Konstanta/lain   : (10) ser, isInt, isNum, hex6, oneOf, cleanRB, TOWN_K, _FEM_NAMES, _MALE_NAMES,
                       _guessGender
    State (let)      : —
-   Menulis let milik: DASAR-DUNIA: SNAP, cityGen; KATALOG-DAN-ALAT-BANTU: R, RB, U, drv;
+   Menulis let milik: DASAR-DUNIA: SNAP, cityGen; KATALOG-BLOK: R, RB, U; STATE-DAN-LAMPU-LALIN: drv;
                       CHUNK-BLOK-DAN-UKURAN-KOTA: IMHINT; CUACA: tv; EDITOR-ATAP: ROOF; MODEL-KENDARAAN: TOWN
-   Ubah objek       : DASAR-DUNIA: PL; KAMERA: P; KATALOG-DAN-ALAT-BANTU: drv; COMBAT: REP;
+   Ubah objek       : DASAR-DUNIA: PL; KAMERA: P; STATE-DAN-LAMPU-LALIN: drv; COMBAT: REP;
                       PERAN-DASAR-MISI-TOKO-POLISI: WAL; JALUR-KELUAR-AIR-MANCUR: EXITS; NPC-JADWAL-BINDING: CYC
-   Bergantung pada  : DASAR-DUNIA (17), KATALOG-DAN-ALAT-BANTU (7), CUACA-KALENDER (5),
-                      CHUNK-BLOK-DAN-UKURAN-KOTA (4), EDITOR-ISI-AREA-DAN-INPUT (4), NPC-JADWAL-BINDING (4)↓,
-                      COMBAT (3), PERAN-DASAR-MISI-TOKO-POLISI (3), LALU-LINTAS-INTI (3)↓,
-                      LABEL-GEDUNG-DAN-TOMBOL (3)↓ … (+18)
+   Bergantung pada  : DASAR-DUNIA (17), CUACA-KALENDER (5), KATALOG-BLOK (4), CHUNK-BLOK-DAN-UKURAN-KOTA (4),
+                      EDITOR-PUT-HAPUS (4), NPC-JADWAL-BINDING (4)↓, COMBAT (3), PERAN-DASAR-MISI-TOKO-POLISI
+                      (3), LABEL-GEDUNG-DAN-TOMBOL (3)↓, KAMERA (2) … (+21)
    Dipakai oleh     : INIT (3)↓, MINIMAP-DAN-SIMPAN (2)↓, CHUNK-BLOK-DAN-UKURAN-KOTA (1), NPC-SERANG-DAN-POSE
                       (1), LABEL-GEDUNG-DAN-TOMBOL (1)↓, EKSPOR-GAME (1)↓  */
 function dropDrive() {
@@ -18530,8 +18761,8 @@ function autoPlaceNpc(n) {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (5), LALU-LINTAS-INTI (2)↓, DEKORASI (1), NPC-BANTU-PEMAIN (1), NPC-WALK2D
-                      (1)↓
+   Bergantung pada  : DASAR-DUNIA (5), DEKORASI (1), NPC-BANTU-PEMAIN (1), LALU-LINTAS-JALAN (1)↓,
+                      LALU-LINTAS-MOBIL (1)↓, NPC-WALK2D (1)↓
    Dipakai oleh     : SIMPAN-MUAT (1), PARKIR-DINAMIS (1)↓  */
 function carBlocked(c) {
   const x = Math.floor(c.px),
@@ -18616,11 +18847,11 @@ function fixCars() {
    Fungsi           : (4) pickM, renderCat, renderCalPanel, updCalUI
    Konstanta/lain   : (0) —
    State (let)      : calKey, calLbl
-   Menulis let milik: CUACA: au, tv; EDITOR-ISI-AREA-DAN-INPUT: ctab, cur, rec
+   Menulis let milik: CUACA: au, tv; EDITOR-ALAT-DAN-PANEL: ctab, cur, rec
    Ubah objek       : —
-   Bergantung pada  : CUACA-KALENDER (17), KATALOG-DAN-ALAT-BANTU (4), CUACA (4), EDITOR-ISI-AREA-DAN-INPUT (4),
-                      UNDO-REDO (2), DASAR-DUNIA (1), KAMERA (1), PERAN-DASAR-MISI-TOKO-POLISI (1)
-   Dipakai oleh     : INIT (2)↓, EDITOR-ISI-AREA-DAN-INPUT (1)  */
+   Bergantung pada  : CUACA-KALENDER (17), CUACA (4), EDITOR-ALAT-DAN-PANEL (4), KATALOG-BLOK (3), UNDO-REDO
+                      (2), DASAR-DUNIA (1), KAMERA (1), TEKSTUR-BLOK (1), PERAN-DASAR-MISI-TOKO-POLISI (1)
+   Dipakai oleh     : INIT (2)↓, EDITOR-ALAT-DAN-PANEL (1)  */
 //#creator-begin
 $('un').onclick=undo;$('re').onclick=redo;
 //#creator-end
@@ -18827,10 +19058,9 @@ document.addEventListener('pointerdown', e => {
    Ubah objek       : —
    Bergantung pada  : —
    Dipakai oleh     : —
-   Catatan          : Fix dokumentasi: KONTRAK sebelumnya hanya mencantumkan `CID`, padahal sebenarnya ada
-                      3 let (LC_MEMO_V, CID, roadNpcs) — sekarang sudah konsisten dengan KATALOG STATE GLOBAL.
-                      2 sub-region: LALU-LINTAS-INTI (inti mobil/AI/spawn) + PARKIR-DINAMIS (parkir dinamis,
-                      sudah ada sejak awal).  */
+   Catatan          : Region induk tanpa kode sendiri: kodenya ada di 7 sub-region (JALAN, MOBIL, BELOKAN, UPDATE,
+                      BUNDARAN, HALANGAN, lalu PARKIR-DINAMIS). 3 let sesuai KATALOG STATE GLOBAL: LC_MEMO_V (JALAN),
+                      CID dan roadNpcs (HALANGAN).  */
 
 //#region LALU-LINTAS-JALAN
 /* ============================================================
@@ -18841,7 +19071,16 @@ document.addEventListener('pointerdown', e => {
    untuk arah tertentu; null bila bukan jalan atau lebar > 10). isI dipakai juga COMBAT (tryCar) dan PARKIR-DINAMIS.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) rd, rn, run, isIC, isZC, lcSet, laneC
+   Konstanta/lain   : (8) CAR_MIN, CAR_SPAWN_GAP, isI, _isIC, _isZC, ctl2, LC_MEMO, LC_MEMO_MAX
+   State (let)      : LC_MEMO_V, _chIdxLC, _chBaseLC
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : EDITOR-PUT-HAPUS (4), DEKORASI (2), DASAR-DUNIA (1), STATE-DAN-LAMPU-LALIN (1),
+                      LALU-LINTAS-BUNDARAN (1)↓
+   Dipakai oleh     : LALU-LINTAS-UPDATE (6)↓, LALU-LINTAS-BELOKAN (4)↓, LALU-LINTAS-BUNDARAN (4)↓,
+                      LALU-LINTAS-MOBIL (3)↓, LALU-LINTAS-HALANGAN (3)↓, PARKIR-DINAMIS (3)↓, EDITOR-PICK (1),
+                      COMBAT (1), SIMPAN-MUAT (1), PENEMPATAN-MOBIL (1)  */
 const CAR_MIN = 4.5,
   CAR_SPAWN_GAP = 5.5;
 function rd(a) {
@@ -18990,7 +19229,17 @@ function laneC(c) {
    tombol bv/bf AUDIO-MUSIK). addCar memakai CID yang dideklarasikan di LALU-LINTAS-HALANGAN.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (7) spinWheels, setBrake, setCar, addCar, releaseCar, togFP, useF
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: KAMERA: pitch, vy, yaw; STATE-DAN-LAMPU-LALIN: drv, fp; LALU-LINTAS-HALANGAN: CID
+   Ubah objek       : —
+   Bergantung pada  : KAMERA (5), DASAR-DUNIA (3), STATE-DAN-LAMPU-LALIN (3), LALU-LINTAS-JALAN (3), SFX-DASAR
+                      (2), HUD-PESAN-NAMA (1), MATERIAL-CAHAYA-KENDARAAN (1), NPC-BANTU-PEMAIN (1),
+                      LALU-LINTAS-BELOKAN (1)↓, LALU-LINTAS-HALANGAN (1)↓ … (+2)
+   Dipakai oleh     : MENGEMUDI (2), EDITOR-INPUT-GLOBAL (2), SIMPAN-MUAT (2), PARKIR-DINAMIS (2)↓, AUDIO-MUSIK
+                      (1), KONTROL-SENTUH (1), EDITOR-PICK (1), COMBAT (1), NPC-SERANG-DAN-POSE (1),
+                      PENEMPATAN-MOBIL (1) … (+4)  */
 function spinWheels(c, dt) {
   const ws = c.g.userData.wheels;
   if (!ws || dt <= 0) return;
@@ -19128,7 +19377,14 @@ function useF() {
    (menghadapkan mobil ke jalan).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (5) arcPt, arcBlocked, startTurn, pickDir, faceRoadCar
+   Konstanta/lain   : (3) ARC_N, ARC_R, isTurn
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : LALU-LINTAS-JALAN (4), DASAR-DUNIA (1), KATALOG-BLOK (1), DEKORASI (1),
+                      LALU-LINTAS-BUNDARAN (1)↓
+   Dipakai oleh     : LALU-LINTAS-UPDATE (3)↓, LALU-LINTAS-MOBIL (1), PARKIR-DINAMIS (1)↓  */
 const ARC_N = 14,
   ARC_R = 2.4;
 const isTurn = c => c.arc && !c.arc.rt;
@@ -19313,7 +19569,15 @@ function faceRoadCar(c) {
    dan separateCars (memisahkan mobil yang bertumpuk; dipanggil INIT tiap frame).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) updCar, separateCars
+   Konstanta/lain   : (1) stepOK
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : LALU-LINTAS-JALAN (6), CUACA-TORNADO (3), LALU-LINTAS-BELOKAN (3), LALU-LINTAS-BUNDARAN
+                      (3)↓, LALU-LINTAS-HALANGAN (3)↓, STATE-DAN-LAMPU-LALIN (2), DASAR-DUNIA (1), SFX-DASAR
+                      (1), DEKORASI (1), NPC-BANTU-PEMAIN (1) … (+4)
+   Dipakai oleh     : INIT (2)↓  */
 function updCar(c, dt) {
   if (c.drv) return;
   if (!monThreat()) c._mgT = 0;
@@ -19677,7 +19941,15 @@ function separateCars() {
    dan rbCheck (boleh masuk atau tidak).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (5) rbOkC, ringStep, rbYield, rbSlow, rbCheck
+   Konstanta/lain   : (3) rbOk, _rbOkC, inRB
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : LALU-LINTAS-JALAN (4), DASAR-DUNIA (2), KATALOG-BLOK (1), DEKORASI (1), EDITOR-PUT-HAPUS
+                      (1), LALU-LINTAS-MOBIL (1)
+   Dipakai oleh     : LALU-LINTAS-UPDATE (3), LALU-LINTAS-JALAN (1), LALU-LINTAS-BELOKAN (1),
+                      JALUR-KELUAR-AIR-MANCUR (1)↓, MINIMAP-DAN-SIMPAN (1)↓  */
 const rbOk = R => floorT(Math.floor(R.cx), Math.floor(R.cz)) == 'pulau';
 const _rbOkC = {map: new WeakMap(), fv: -1};
 function rbOkC(R) {
@@ -19845,7 +20117,14 @@ function rbCheck(c) {
    punya arah; dipanggil COMBAT).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (4) blkCar, boxBlocked, blkPed, tryCar
+   Konstanta/lain   : (1) hv
+   State (let)      : CID, roadNpcs
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (4), LALU-LINTAS-JALAN (3), KAMERA (2), STATE-DAN-LAMPU-LALIN (1),
+                      LALU-LINTAS-MOBIL (1)
+   Dipakai oleh     : LALU-LINTAS-UPDATE (3), COMBAT (2), LALU-LINTAS-MOBIL (1), NPC-FRAME-DAN-POLISI-KEJAR (1)↓  */
 let CID = 0;
 const hv = c => (c.drv ? [Math.sin(c.h), Math.cos(c.h)] : c.arc ? [Math.sin(c.a), Math.cos(c.a)] : [c.dx, c.dz]);
 
@@ -19952,10 +20231,10 @@ function tryCar(x, z) {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : LALU-LINTAS-INTI (6), DASAR-DUNIA (3), COMBAT (3), NPC-JADWAL-BINDING (3)↓, KAMERA (2),
-                      NPC-SISTEM (2)↓, DEKORASI (1), NPC-BANTU-PEMAIN (1), PENEMPATAN-MOBIL (1), NPC-TUGAS (1)↓
-                      … (+1)
-   Dipakai oleh     : INIT (2)↓, LALU-LINTAS-INTI (1), NPC-JOBS (1)↓  */
+   Bergantung pada  : DASAR-DUNIA (3), COMBAT (3), LALU-LINTAS-JALAN (3), NPC-JADWAL-BINDING (3)↓, KAMERA (2),
+                      LALU-LINTAS-MOBIL (2), NPC-SISTEM (2)↓, DEKORASI (1), NPC-BANTU-PEMAIN (1),
+                      PENEMPATAN-MOBIL (1) … (+3)
+   Dipakai oleh     : INIT (2)↓, LALU-LINTAS-UPDATE (1), NPC-JOBS (1)↓, NPC-JOBS-MEKANIK (1)↓  */
 const PKL = {
   enabled: true,
   stalls: [],
@@ -20270,7 +20549,7 @@ pkInit();
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (1), KATALOG-DAN-ALAT-BANTU (1), LALU-LINTAS-INTI (1)
+   Bergantung pada  : DASAR-DUNIA (1), KATALOG-BLOK (1), LALU-LINTAS-BUNDARAN (1)
    Dipakai oleh     : SIMPAN-MUAT (2)  */
 const EXITS = [];
 function centerFountains() {
@@ -20295,10 +20574,10 @@ function centerFountains() {
    State (let)      : TOWN, lblOn
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (1), EDITOR-ISI-AREA-DAN-INPUT (1), MODEL-KENDARAAN-DATA (1)↓
-   Dipakai oleh     : LABEL-GEDUNG-DAN-TOMBOL (3)↓, SIMPAN-MUAT (2), KAMERA (1), SFX-SUARA (1), CUACA-TORNADO
-                      (1), TERNAK-GERBANG (1), COMBAT (1), NPC-JADWAL-BINDING (1)↓, NPC-TABRAKAN-GERAK (1)↓,
-                      NPC-BINFO (1)↓ … (+7)
+   Bergantung pada  : DASAR-DUNIA (1), EDITOR-ALAT-DAN-PANEL (1), MODEL-KENDARAAN-DATA (1)↓
+   Dipakai oleh     : LABEL-GEDUNG-DAN-TOMBOL (3)↓, SIMPAN-MUAT (2), KAMERA (1), SFX-AMBIENT-UPDATE (1),
+                      CUACA-TORNADO (1), TERNAK-GERBANG (1), COMBAT (1), NPC-JADWAL-BINDING (1)↓,
+                      NPC-PINTU-OTOMATIS (1)↓, NPC-BINFO (1)↓ … (+10)
    Catatan          : 2 sub-region: MODEL-KENDARAAN-DATA (VEH, VEH_L, VEH_W, VEH_BODY — tabel data),
                       MODEL-KENDARAAN-BUILD (addVehWheels, addVehLamps, buildVeh — pembangun mesh). LBL
                       (const array), TOWN (let), lblOn (let) tetap di parent. Blok vtype select tetap di
@@ -20321,8 +20600,9 @@ let TOWN = null,
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : —
-   Dipakai oleh     : MODEL-KENDARAAN-BUILD (3)↓, NPC-TABRAKAN-GERAK (3)↓, NPC-JOBS (2)↓, SIMPAN-MUAT (1),
-                      LALU-LINTAS-INTI (1), MODEL-KENDARAAN (1), LABEL-GEDUNG-DAN-TOMBOL (1)↓  */
+   Dipakai oleh     : MODEL-KENDARAAN-BUILD (3)↓, NPC-TABRAKAN-GERAK (3)↓, NPC-TABRAKAN-RESOLVE (2)↓, NPC-JOBS
+                      (2)↓, SIMPAN-MUAT (1), LALU-LINTAS-MOBIL (1), MODEL-KENDARAAN (1), LABEL-GEDUNG-DAN-TOMBOL
+                      (1)↓  */
 const VEH = {
   sedan: 'Sedan',
   suv: 'SUV',
@@ -20553,7 +20833,7 @@ VEH_BODY.maint = VEH_BODY.pu1; /* satu fungsi; beda warna & aksesori ditentukan 
    Ubah objek       : —
    Bergantung pada  : KARAKTER-HELPERS (4), MATERIAL-CAHAYA-KENDARAAN (3), MODEL-KENDARAAN-DATA (3), DASAR-DUNIA
                       (1)
-   Dipakai oleh     : LALU-LINTAS-INTI (1)  */
+   Dipakai oleh     : LALU-LINTAS-MOBIL (1)  */
 let VH_WHEEL = null;
 function vhWheelGeo() {
   if (VH_WHEEL) return VH_WHEEL;
@@ -22163,13 +22443,13 @@ const WKB = {
    Fungsi           : (7) signLbl, wLbl, tFace, showStat, setMute, tanamHtml, setVol
    Konstanta/lain   : (3) statEl, tBtn, mkL
    State (let)      : —
-   Menulis let milik: KAMERA: camAvoid, camCl, sliceY; KATALOG-DAN-ALAT-BANTU: mute; SFX-SUARA: AMBV, MGV, MUSV,
+   Menulis let milik: KAMERA: camAvoid, camCl, sliceY; STATE-DAN-LAMPU-LALIN: mute; SFX-DASAR: AMBV, MGV, MUSV,
                       SFXV; MODEL-KENDARAAN: lblOn
-   Ubah objek       : SFX-SUARA: AMBG, MG, MUSG, SFXG; DEKORASI: DEC
-   Bergantung pada  : DASAR-DUNIA (12), SFX-SUARA (9), KAMERA (4), KATALOG-DAN-ALAT-BANTU (3), MODEL-KENDARAAN
-                      (3), INTERIOR-ATAP (3)↓, PEMBUKA (2), KONTROL-SENTUH (2), DEKORASI (1), KARAKTER-HELPERS
-                      (1) … (+3)
-   Dipakai oleh     : SIMPAN-MUAT (3), SFX-SUARA (1), EDITOR-ISI-AREA-DAN-INPUT (1), NPC-SERANG-DAN-POSE (1),
+   Ubah objek       : SFX-DASAR: AMBG, MG, MUSG, SFXG; DEKORASI-MODEL: DEC
+   Bergantung pada  : DASAR-DUNIA (12), SFX-DASAR (9), KAMERA (4), STATE-DAN-LAMPU-LALIN (3), MODEL-KENDARAAN
+                      (3), INTERIOR-ATAP (3)↓, PEMBUKA (2), KONTROL-SENTUH (2), DEKORASI-MODEL (1),
+                      KARAKTER-HELPERS (1) … (+3)
+   Dipakai oleh     : SIMPAN-MUAT (3), SFX-DASAR (1), EDITOR-INPUT-GLOBAL (1), NPC-SERANG-DAN-POSE (1),
                       NPC-FRAME-DAN-POLISI-KEJAR (1)↓, EKSPOR-GAME (1)↓, LAYAR-HP (1)↓  */
 function signLbl(cx, cy, cz, dir, t, w) {
   const c = document.createElement('canvas');
@@ -22575,9 +22855,9 @@ DEC.lalinselatan = mkL(0, 1);
    Ubah objek       : —
    Bergantung pada  : NPC-BINFO (6)↓, DASAR-DUNIA (5), CUACA (2), NPC-WALK2D (2)↓, KAMERA (1), NPC-BANTU-PEMAIN
                       (1), NPC-TABRAKAN-GERAK (1)↓, NPC-TUGAS (1)↓, INTERIOR-ATAP (1)↓
-   Dipakai oleh     : NPC-JOBS (12)↓, NPC-PILIH-TUGAS (12)↓, CUACA-TORNADO (3), NPC-PERBAIKAN (3)↓, NPC-TUGAS
-                      (3)↓, NPC-PAYUNG (3)↓, EDITOR-ISI-AREA-DAN-INPUT (2), PARKIR-DINAMIS (2),
-                      NPC-JADWAL-BINDING (2)↓, NPC-RUTINITAS-PAGI (2)↓ … (+1)
+   Dipakai oleh     : NPC-JOBS (11)↓, NPC-JOBS-LAPANGAN (11)↓, NPC-PILIH-TUGAS (10)↓, NPC-JOBS-JASA-KOTA (8)↓,
+                      NPC-JOBS-TANI-TERNAK (5)↓, NPC-AKTIVITAS-WARGA (5)↓, CUACA-TORNADO (3), NPC-PERBAIKAN
+                      (3)↓, NPC-TUGAS-JALAN (3)↓, NPC-JOBS-MEKANIK (3)↓ … (+6)
    Catatan          : Sub-region di dalam NPC-SISTEM (dibuat bertahap): NPC-DIAGNOSTIK (v99c diagnostik),
                       NPC-PAYUNG (v97 payung), NPC-LAMPU-RUMAH (v97 lampu redup saat tidur),
                       NPC-RUTINITAS-PAGI (v97 morningTask + isAvoidFurn), NPC-WALK2D (wgCell, ensureWG,
@@ -22619,9 +22899,9 @@ const rnd = (a, b) => a + Math.random() * (b - a),
    Ubah objek       : —
    Bergantung pada  : DASAR-DUNIA (3), NPC-SISTEM (2), KAMERA (1), COMBAT (1), MODEL-KENDARAAN (1),
                       PERAN-DROPDOWN (1), NPC-PERBAIKAN (1)↓, INTERIOR-ATAP (1)↓
-   Dipakai oleh     : NPC-PILIH-TUGAS (10)↓, NPC-FRAME-DAN-POLISI-KEJAR (6)↓, SIMPAN-MUAT (4), PARKIR-DINAMIS
-                      (3), NPC-TUGAS (2)↓, NPC-JOBS (2)↓, INIT (2)↓, SFX-SUARA (1), CUACA-TORNADO (1),
-                      LABEL-GEDUNG-DAN-TOMBOL (1) … (+2)  */
+   Dipakai oleh     : NPC-PILIH-TUGAS (6)↓, NPC-FRAME-DAN-POLISI-KEJAR (6)↓, SIMPAN-MUAT (4), NPC-WANDER (4)↓,
+                      PARKIR-DINAMIS (3), INIT (2)↓, SFX-AMBIENT-UPDATE (1), CUACA-TORNADO (1),
+                      LABEL-GEDUNG-DAN-TOMBOL (1), NPC-TUGAS (1)↓ … (+5)  */
 const NPC_CYCLE = {
   SEC: 360,
   START: 1,
@@ -22979,11 +23259,11 @@ function bindTownNPCs() {
    State (let)      : WG, WN
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (4), DEKORASI (2), NPC-BANTU-PEMAIN (2), KATALOG-DAN-ALAT-BANTU (1),
-                      EDITOR-ISI-AREA-DAN-INPUT (1)
-   Dipakai oleh     : NPC-PATHFINDING (4)↓, NPC-PILIH-TUGAS (3)↓, KATALOG-DAN-ALAT-BANTU (2), NPC-SISTEM (2),
-                      NPC-PERBAIKAN (2)↓, NPC-JOBS (2)↓, NPC-FRAME-DAN-POLISI-KEJAR (2)↓, MINIMAP-DAN-SIMPAN
-                      (2)↓, SIMPAN-MUAT (1), PENEMPATAN-NPC (1) … (+5)  */
+   Bergantung pada  : DASAR-DUNIA (4), NPC-BANTU-PEMAIN (2), BUKAAN-DAN-MATERIAL (1), DEKORASI (1),
+                      DEKORASI-HEWAN (1), EDITOR-PUT-HAPUS (1)
+   Dipakai oleh     : NPC-PATHFINDING (4)↓, NPC-SISTEM (2), NPC-PERBAIKAN (2)↓, NPC-JOBS (2)↓,
+                      NPC-JOBS-TANI-TERNAK (2)↓, NPC-JOBS-MEKANIK (2)↓, NPC-PILIH-TUGAS (2)↓, NPC-WANDER (2)↓,
+                      NPC-FRAME-DAN-POLISI-KEJAR (2)↓, MINIMAP-DAN-SIMPAN (2)↓ … (+10)  */
 /* ---------- grid 2D (surface, untuk randGround/wgAt) ---------- */
 let WG = null,
   WN = 0;
@@ -23052,9 +23332,10 @@ const DX8 = [1, -1, 0, 0, 1, 1, -1, -1],
    State (let)      : WG3, WG3N, WG3Y, WG3Stamp, WGH, WHGT, SOLID3
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : DASAR-DUNIA (3), KATALOG-DAN-ALAT-BANTU (2), EDITOR-ISI-AREA-DAN-INPUT (2),
+   Bergantung pada  : DASAR-DUNIA (3), EDITOR-PUT-HAPUS (2), BUKAAN-DAN-MATERIAL (1), KASUR-DAN-POSE-TIDUR (1),
                       NPC-BANTU-PEMAIN (1)
-   Dipakai oleh     : NPC-BANTU-PEMAIN (4), NPC-PATHFINDING (3)↓, KAMERA (2), NPC-BINFO (2)↓, NPC-TUGAS (1)↓  */
+   Dipakai oleh     : NPC-BANTU-PEMAIN (4), NPC-PATHFINDING (3)↓, KAMERA (2), NPC-BINFO (2)↓, NPC-TUGAS-JALAN
+                      (1)↓  */
 /* ---------- WG3: bitmap walkability 3D (pre-computed, O(1) per-cell) ----------
    Index: x + y*N + z*N*Y, dengan y=Math.round(block top).
    Nilai: 0=tidak walkable, 2=biasa, 3=zebra, 9=jalan. */
@@ -23220,8 +23501,8 @@ window.cekWG3 = () => {
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : NPC-WALK2D (4), NPC-BANTU-PEMAIN (3), NPC-WALK3D (3), DASAR-DUNIA (2)
-   Dipakai oleh     : NPC-TUGAS (4)↓, NPC-FRAME-DAN-POLISI-KEJAR (3)↓, CUACA-TORNADO (2), NPC-PILIH-TUGAS (2)↓,
-                      SIMULASI-KOTA (2)↓, NPC-TABRAKAN-GERAK (1)↓, GP-AI-PARRY (1)↓  */
+   Dipakai oleh     : NPC-TUGAS-JALAN (4)↓, NPC-FRAME-DAN-POLISI-KEJAR (3)↓, CUACA-TORNADO (2), NPC-WANDER (2)↓,
+                      SIMULASI-KOTA (2)↓, NPC-GERAK-JALUR (1)↓, GP-AI-PARRY (1)↓  */
 /* ---------- A* flat-array 3D ---------- */
 let PQ3 = null,
   PATH_AV = false,
@@ -23545,7 +23826,16 @@ function losOK(x0, z0, x1, z1) {
    rideApply, rideKeep, rideSet). Pembuka pasangan COLLIDER-BEGIN/END; penutupnya ada di NPC-TABRAKAN-RESOLVE.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (10) turnToward, dcBase, dcolAdd, dcolDel, dcolCell, vehTop, rideApply, rideKeep, rideSet,
+                      carTopAt
+   Konstanta/lain   : (1) _VTOP
+   State (let)      : RIDE, _carHit
+   Menulis let milik: —
+   Ubah objek       : KAMERA: P
+   Bergantung pada  : DASAR-DUNIA (5), MODEL-KENDARAAN-DATA (3), KAMERA (1), KASUR-DAN-POSE-TIDUR (1)
+   Dipakai oleh     : PEMAIN-GERAK-MODE (6), TIDUR-BANGUN (3), EDITOR-PUT-HAPUS (2), NPC-TABRAKAN-RESOLVE (2)↓,
+                      NPC-BANTU-PEMAIN (1), TERNAK-GERBANG (1), JURUS-SERANGAN-DASH (1), NPC-SISTEM (1),
+                      NPC-GERAK-JALUR (1)↓, NPC-PERBAIKAN (1)↓ … (+6)  */
 /* ---------- gerak ---------- */
 function turnToward(g, ang, k) {
   let df = ((ang - g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
@@ -23672,7 +23962,16 @@ function carTopAt(x, z, yLama) {
    terpijak). Memuat penutup COLLIDER-END. colResolve/colApplyPlayer juga dipakai pemain, monster, dan polisi.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (3) colResolve, colApplyPlayer, stepNPC
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: DASAR-DUNIA: COL_T
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (5), DEKORASI-HEWAN (2), NPC-BANTU-PEMAIN (2), MODEL-KENDARAAN-DATA (2),
+                      NPC-TABRAKAN-GERAK (2), STATE-DAN-LAMPU-LALIN (1), NPC-GERAK-JALUR (1)↓
+   Dipakai oleh     : JURUS-SERANGAN-DASH (1), PEMAIN-GERAK-MODE (1), NPC-GERAK-JALUR (1)↓,
+                      NPC-FRAME-DAN-POLISI-KEJAR (1)↓, GP-TEKNIK-DASAR (1)↓, GP-TEKNIK-MONSTER (1)↓, GP-AI-PARRY
+                      (1)↓  */
 function colResolve(x, z, y, r, npc, tgt) {
   let rx = x,
     rz = z,
@@ -23876,7 +24175,16 @@ function stepNPC(p, mx, mz) {
    4).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (5) stepNPC0, followPath, resetLimbs, placeInit, escapePath
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: DASAR-DUNIA: COL_T; NPC-PATHFINDING: STEP_AV
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (4), NPC-BANTU-PEMAIN (3), STATE-DAN-LAMPU-LALIN (2), BUKAAN-DAN-MATERIAL (1),
+                      DEKORASI (1), NPC-PATHFINDING (1), NPC-TABRAKAN-GERAK (1), NPC-TABRAKAN-RESOLVE (1),
+                      NPC-RUTINITAS-PAGI (1)↓, INTERIOR-ATAP (1)↓
+   Dipakai oleh     : NPC-TUGAS-JALAN (3)↓, NPC-WANDER (2)↓, CUACA-TORNADO (1), NPC-TABRAKAN-RESOLVE (1),
+                      NPC-TUGAS (1)↓, NPC-FRAME-DAN-POLISI-KEJAR (1)↓, GP-AI-PARRY (1)↓, SIMULASI-KOTA (1)↓  */
 function stepNPC0(p, mx, mz) {
   const cx = Math.floor(p.x),
     cz = Math.floor(p.z),
@@ -24067,7 +24375,14 @@ function escapePath(n) {
    dilewati NPC dan pemain, lalu membuka dan menutupnya).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) drBuild, updDoors
+   Konstanta/lain   : (2) DRS, drKey
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : DASAR-DUNIA (2), KAMERA (2), BUKAAN-DAN-MATERIAL (1), EDITOR-PUT-HAPUS (1),
+                      MODEL-KENDARAAN (1), INTERIOR-ATAP (1)↓
+   Dipakai oleh     : NPC-FRAME-DAN-POLISI-KEJAR (1)↓  */
 /* v98: daftar pintu + hash spasial di-cache (dibangun ulang bila TOWN / peta berubah). Dulu tiap frame: O(gedung × NPC)
    ditambah satu H.get(string) per gedung. Sekarang: satu lintasan NPC, tiap NPC hanya memeriksa pintu di sel hash sekitarnya. */
 const DRS = {T: null, fv: -2, n: -1, list: [], grid: new Map()};
@@ -24173,12 +24488,12 @@ function updDoors(dt) {
    Konstanta/lain   : (1) dDoor
    State (let)      : —
    State (var)      : IDX
-   Menulis let milik: EDITOR-ISI-AREA-DAN-INPUT: _chHook
+   Menulis let milik: EDITOR-PUT-HAPUS: _chHook
    Ubah objek       : —
-   Bergantung pada  : EDITOR-ISI-AREA-DAN-INPUT (5), DASAR-DUNIA (4), NPC-BANTU-PEMAIN (4), NPC-WALK3D (2),
-                      KATALOG-DAN-ALAT-BANTU (1), MODEL-KENDARAAN (1)
-   Dipakai oleh     : NPC-SISTEM (6), NPC-JOBS (5)↓, KAMERA (3), NPC-PILIH-TUGAS (2)↓, KATALOG-DAN-ALAT-BANTU
-                      (1), CUACA-TORNADO (1)  */
+   Bergantung pada  : EDITOR-PUT-HAPUS (5), DASAR-DUNIA (4), NPC-BANTU-PEMAIN (4), NPC-WALK3D (2),
+                      KASUR-DAN-POSE-TIDUR (1), MODEL-KENDARAAN (1)
+   Dipakai oleh     : NPC-SISTEM (6), NPC-JOBS-LAPANGAN (4)↓, KAMERA (3), NPC-JOBS (3)↓, NPC-PILIH-TUGAS (2)↓,
+                      TIDUR-BANGUN (1), CUACA-TORNADO (1), NPC-JOBS-JASA-KOTA (1)↓, NPC-AKTIVITAS-WARGA (1)↓  */
 /* ---------- bInfo: deteksi SEMUA lantai (fix: jangan pakai hTop(y-0.01)) ---------- */
 var IDX = {
   T: null,
@@ -24507,8 +24822,8 @@ function groundNear(cx, cz, n) {
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : NPC-SISTEM (3), NPC-BANTU-PEMAIN (2), COMBAT (2), NPC-WALK2D (2), DASAR-DUNIA (1), KAMERA
-                      (1), CUACA-TORNADO (1), NPC-TABRAKAN-GERAK (1), NPC-TUGAS (1)↓, NPC-JOBS (1)↓
-   Dipakai oleh     : NPC-JADWAL-BINDING (1), NPC-JOBS (1)↓, SIMULASI-KOTA (1)↓  */
+                      (1), CUACA-TORNADO (1), NPC-TABRAKAN-GERAK (1), NPC-TUGAS (1)↓, NPC-JOBS-LAPANGAN (1)↓
+   Dipakai oleh     : NPC-JADWAL-BINDING (1), NPC-JOBS-LAPANGAN (1)↓, NPC-JOBS-MEKANIK (1)↓, SIMULASI-KOTA (1)↓  */
 /* titik berdiri pekerja untuk memperbaiki blok r. Pekerja TIDAK punya akses ke atap, jadi selalu berdiri di TANAH:
    blok di tanah (jalan/lantai): di kolomnya sendiri bila bisa dipijak; blok di atas tanah (atap, dinding atas): lebih dulu di luar
    bangunan dalam 2 sel dari kolom, lalu di bawah kolom (interior kosong), lalu sel tanah luar terdekat sampai 10 sel.
@@ -24705,7 +25020,16 @@ function randGround(x, z, R) {
    npcDown/npcRescue (SIMULASI-KOTA).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (4) iconMat, setIcon, beginDo, doStep
+   Konstanta/lain   : (3) AN, ICM, T_
+   State (let)      : pathBud
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : KASUR-DAN-POSE-TIDUR (4), DUDUK (2), NPC-BANTU-PEMAIN (2), NPC-JADWAL-BINDING (1),
+                      NPC-TABRAKAN-GERAK (1), NPC-GERAK-JALUR (1), NPC-TUGAS-JALAN (1)↓
+   Dipakai oleh     : NPC-TUGAS-JALAN (4)↓, SIMULASI-KOTA (3)↓, CUACA-TORNADO (2), NPC-WANDER (2)↓,
+                      PARKIR-DINAMIS (1), NPC-SISTEM (1), NPC-PERBAIKAN (1), NPC-JOBS (1)↓, NPC-JOBS-LAPANGAN
+                      (1)↓, NPC-JOBS-JASA-KOTA (1)↓ … (+6)  */
 const AN = {
   write: (u, t) => {
     u.aR.rotation.x = -1.05 + Math.sin(t * 9) * 0.12;
@@ -24895,7 +25219,7 @@ function doStep(n, T, dt) {
    Menulis let milik: —
    Ubah objek       : —
    Bergantung pada  : DASAR-DUNIA (4), MODEL-KENDARAAN (1)
-   Dipakai oleh     : NPC-FRAME-DAN-POLISI-KEJAR (3)↓, NPC-TUGAS (1)  */
+   Dipakai oleh     : NPC-FRAME-DAN-POLISI-KEJAR (3)↓, NPC-TUGAS-JALAN (1)↓  */
 /* ---------- v99c: DIAGNOSTIK NPC ----------
    Pencatatan kegagalan tugas SELALU aktif (hanya dijalankan saat gagal, biayanya kecil, memori dibatasi).
    Konsol:  diagNpc([top])  → tabel gedung/tugas dengan kegagalan terbanyak (+ alasan: nopath / macet / tinggi)
@@ -25113,7 +25437,16 @@ window.debugNpc = on => {
    cleanup (SIMULASI-KOTA); runTask dipanggil wander (NPC-WANDER) dan fungsi lain di NPC-SISTEM.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (4) endTask, pocketExit, waterExit, runTask
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: NPC-TUGAS: pathBud
+   Ubah objek       : —
+   Bergantung pada  : NPC-BANTU-PEMAIN (4), NPC-PATHFINDING (4), NPC-TUGAS (4), DASAR-DUNIA (3), NPC-SISTEM (3),
+                      NPC-GERAK-JALUR (3), DUDUK (1), KASUR-DAN-POSE-TIDUR (1), NPC-JADWAL-BINDING (1),
+                      NPC-WALK2D (1) … (+3)
+   Dipakai oleh     : NPC-WANDER (2)↓, CUACA-TORNADO (1), NPC-TUGAS (1), NPC-FRAME-DAN-POLISI-KEJAR (1)↓,
+                      SIMULASI-KOTA (1)↓  */
 function endTask(n, fail, soft, why) {
   const T = n.task;
   if (!T) return;
@@ -25396,7 +25729,16 @@ const hasDoor = b => !!b && doorOK(b);
    MEKANIK (semua menambah properti ke JOBS).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) patrolNodes, carSide
+   Konstanta/lain   : (3) JOBS, wardBeds, docSub
+   State (let)      : _pn
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : NPC-SISTEM (11), NPC-BINFO (3), MODEL-KENDARAAN-DATA (2), NPC-WALK2D (2), DASAR-DUNIA (1),
+                      STATE-DAN-LAMPU-LALIN (1), KASUR-DAN-POSE-TIDUR (1), PARKIR-DINAMIS (1), MODEL-KENDARAAN
+                      (1), NPC-JADWAL-BINDING (1) … (+2)
+   Dipakai oleh     : NPC-JOBS-LAPANGAN (2)↓, NPC-JOBS-JASA-KOTA (2)↓, NPC-JOBS-MEKANIK (2)↓, PARKIR-DINAMIS
+                      (1), NPC-JOBS-TANI-TERNAK (1)↓, NPC-PILIH-TUGAS (1)↓  */
 /* ---------- rutinitas profesi ---------- */
 const JOBS = {};
 let _pn = null;
@@ -25594,7 +25936,14 @@ JOBS.misi = (n, b) => {
    (const di NPC-JOBS).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (3) finishRepair, qiblaFace, prayTask
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : NPC-JOBS: JOBS
+   Bergantung pada  : NPC-SISTEM (11), NPC-BINFO (4), COMBAT (2), NPC-JOBS (2), DASAR-DUNIA (1), KAMERA (1),
+                      SFX-DASAR (1), EDITOR-PUT-HAPUS (1), NPC-JADWAL-BINDING (1), NPC-PERBAIKAN (1) … (+2)
+   Dipakai oleh     : NPC-PERBAIKAN (1), NPC-PILIH-TUGAS (1)↓, SIMULASI-KOTA (1)↓  */
 function finishRepair(r) {
   const k = r.x + ',' + r.y + ',' + r.z;
   const cur = H.get(k);
@@ -25759,7 +26108,14 @@ JOBS.pln = (n, b) => {
    tukangkebun, walikota, atlet, tentara. Menambah properti ke JOBS (const di NPC-JOBS).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (0) —
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : NPC-JOBS: JOBS
+   Bergantung pada  : NPC-SISTEM (8), NPC-JOBS (2), KAMERA (1), COMBAT (1), MODEL-KENDARAAN (1), NPC-BINFO (1),
+                      NPC-TUGAS (1)
+   Dipakai oleh     : —  */
 JOBS.satpam = (n, b) => {
   const r = Math.random();
   if (!isWetWeather() && r < 0.5) {
@@ -25954,7 +26310,15 @@ JOBS.tentara = (n, b) => {
    TERNAK-GERBANG.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (6) zonaTask, gateBlk, gkOpen, gkShut, gkTick, penTask
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : NPC-JOBS: JOBS
+   Bergantung pada  : NPC-SISTEM (5), KAMERA (3), DASAR-DUNIA (2), DEKORASI-HEWAN (2), NPC-BANTU-PEMAIN (2),
+                      NPC-WALK2D (2), SFX-DASAR (1), TERNAK-GERBANG (1), MODEL-KENDARAAN (1), NPC-TABRAKAN-GERAK
+                      (1) … (+2)
+   Dipakai oleh     : TERNAK-GERBANG (1), NPC-JOBS (1)  */
 function zonaTask(n, o) {
   const k = n.c && n.c.zone,
     Z = k && TOWN && TOWN.zona && TOWN.zona[k];
@@ -26135,7 +26499,14 @@ JOBS.pekebun = (n, b) => {
    (const di NPC-JOBS); repairRoutine (perbaikan blok) ada di NPC-PERBAIKAN.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) wreckSide, carRepairRoutine
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : NPC-JOBS: JOBS
+   Bergantung pada  : COMBAT (4), NPC-SISTEM (3), NPC-WALK2D (2), NPC-JOBS (2), DASAR-DUNIA (1), KAMERA (1),
+                      PARKIR-DINAMIS (1), NPC-PERBAIKAN (1), NPC-TUGAS (1)
+   Dipakai oleh     : NPC-JOBS-LAPANGAN (1)  */
 function wreckSide(c, n) {
   const p = n.g.position;
   let best = null,
@@ -26241,7 +26612,14 @@ JOBS.mekanik = (n, b) => {
    lain). Dipanggil taskFree di NPC-PILIH-TUGAS.
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (5) civPlace, benchFace, civBench, civShop, civChat
+   Konstanta/lain   : (1) BKS
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : NPC-SISTEM (5), DASAR-DUNIA (3), KAMERA (1), MODEL-KENDARAAN (1), NPC-WALK2D (1),
+                      NPC-BINFO (1), NPC-TUGAS (1)
+   Dipakai oleh     : NPC-PILIH-TUGAS (3)↓, NPC-WANDER (1)↓  */
 /* ---------- warga: aktivitas harian ---------- */
 function civPlace(n, list, o) {
   const p = n.g.position;
@@ -26326,7 +26704,15 @@ function civChat(n) {
    fallback, cleanup). pickTask dipanggil wander (NPC-WANDER).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (6) taskFree, taskHome, taskWork, taskSchool, taskRecess, pickTask
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: —
+   Ubah objek       : —
+   Bergantung pada  : NPC-SISTEM (10), NPC-JADWAL-BINDING (6), NPC-AKTIVITAS-WARGA (3), SIMULASI-KOTA (3)↓,
+                      NPC-WALK2D (2), NPC-BINFO (2), DASAR-DUNIA (1), KAMERA (1), MODEL-KENDARAAN (1), NPC-TUGAS
+                      (1) … (+4)
+   Dipakai oleh     : NPC-WANDER (1)↓  */
 function taskFree(n) {
   const q = posOf(n),
     R = n.c.role,
@@ -26523,7 +26909,15 @@ function pickTask(n) {
    pemain) dan wander (pickTask lalu runTask; dipanggil npcFrame di NPC-FRAME-DAN-POLISI-KEJAR).
    ============================================================ */
 /* KONTRAK
-   (diisi buat_kontrak.js)  */
+   Fungsi           : (2) npcStepSfx, wander
+   Konstanta/lain   : (0) —
+   State (let)      : —
+   Menulis let milik: NPC-TUGAS: pathBud
+   Ubah objek       : —
+   Bergantung pada  : NPC-JADWAL-BINDING (4), SIMULASI-KOTA (4)↓, KAMERA (3), CUACA-TORNADO (3), DUDUK (2),
+                      SFX-DASAR (2), NPC-BANTU-PEMAIN (2), NPC-WALK2D (2), NPC-PATHFINDING (2), NPC-GERAK-JALUR
+                      (2) … (+7)
+   Dipakai oleh     : NPC-FRAME-DAN-POLISI-KEJAR (2)↓  */
 function npcStepSfx(n) {
   if (!play || !P || n.dead || n.mon) return;
   const p = n.g.position;
@@ -26681,8 +27075,8 @@ function wander(n, dt) {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : NPC-BANTU-PEMAIN (3), KATALOG-DAN-ALAT-BANTU (2), NPC-SISTEM (2), DASAR-DUNIA (1)
-   Dipakai oleh     : NPC-TABRAKAN-GERAK (1), NPC-TUGAS (1), NPC-PILIH-TUGAS (1)  */
+   Bergantung pada  : NPC-BANTU-PEMAIN (3), KASUR-DAN-POSE-TIDUR (2), NPC-SISTEM (2), DASAR-DUNIA (1)
+   Dipakai oleh     : NPC-GERAK-JALUR (1), NPC-TUGAS-JALAN (1), NPC-PILIH-TUGAS (1)  */
 /* ---------- furnitur yang dihindari ---------- */
 function isAvoidFurn(cx, cz, y) {
   for (let by = startCell(cx, y + 0.05, cz); by >= Math.max(0, Math.floor(y) - 1); by--) {
@@ -26941,10 +27335,10 @@ function fxNpc(dt) {
    Konstanta/lain   : (0) —
    State (let)      : —
    Menulis let milik: NPC-JADWAL-BINDING: actOn; NPC-TUGAS: pathBud
-   Ubah objek       : LALU-LINTAS-INTI: roadNpcs; NPC-JADWAL-BINDING: CYC; NPC-DIAGNOSTIK: DIAG
-   Bergantung pada  : NPC-JADWAL-BINDING (6), DASAR-DUNIA (5), NPC-PATHFINDING (3), NPC-TABRAKAN-GERAK (3),
-                      NPC-DIAGNOSTIK (3), KAMERA (2), KATALOG-DAN-ALAT-BANTU (2), NPC-BANTU-PEMAIN (2),
-                      NPC-WALK2D (2), NPC-TUGAS (2) … (+9)
+   Ubah objek       : LALU-LINTAS-HALANGAN: roadNpcs; NPC-JADWAL-BINDING: CYC; NPC-DIAGNOSTIK: DIAG
+   Bergantung pada  : NPC-JADWAL-BINDING (6), DASAR-DUNIA (5), NPC-PATHFINDING (3), NPC-DIAGNOSTIK (3), KAMERA
+                      (2), STATE-DAN-LAMPU-LALIN (2), NPC-BANTU-PEMAIN (2), NPC-WALK2D (2), NPC-WANDER (2),
+                      LALU-LINTAS-HALANGAN (1) … (+12)
    Dipakai oleh     : PERAN-DASAR-MISI-TOKO-POLISI (1), INIT (1)↓  */
 function onCycleChange() {
   for (const n of npcs) {
@@ -27127,14 +27521,14 @@ tBtn('bcyc', '⏭ Lewati siklus', () => {
    Konstanta/lain   : (9) doorOK, DOOR_SWING_T, ZERO_M, ROOF_LBL, aptCut, U_EXC, uVoid, ck, U_D4
    State (let)      : roofsOff, roofAuto, roofMode, hidB, hidKey, hidT
    State (var)      : _uCost
-   Menulis let milik: KAMERA: uAll, uCand, uDirty, uGen, uIn, uLast, uVer; EDITOR-ISI-AREA-DAN-INPUT: roofAct,
-                      roofDirty
+   Menulis let milik: KAMERA: uAll, uCand, uDirty, uGen, uIn, uLast, uVer; EDITOR-PUT-HAPUS: roofAct, roofDirty
    Ubah objek       : —
-   Bergantung pada  : KAMERA (13), DASAR-DUNIA (6), KATALOG-DAN-ALAT-BANTU (4), CHUNK-BLOK-DAN-UKURAN-KOTA (4),
-                      EDITOR-ISI-AREA-DAN-INPUT (3), SFX-SUARA (1), EDITOR-ATAP (1), MODEL-KENDARAAN (1)
+   Bergantung pada  : KAMERA (13), DASAR-DUNIA (6), CHUNK-BLOK-DAN-UKURAN-KOTA (4), STATE-DAN-LAMPU-LALIN (3),
+                      EDITOR-PUT-HAPUS (3), BUKAAN-DAN-MATERIAL (1), SFX-DASAR (1), EDITOR-ATAP (1),
+                      MODEL-KENDARAAN (1)
    Dipakai oleh     : LABEL-GEDUNG-DAN-TOMBOL (3), KAMERA (1), HUD-PESAN-NAMA (1), CUACA-TORNADO (1), COMBAT
-                      (1), NPC-SERANG-DAN-POSE (1), NPC-SISTEM (1), NPC-JADWAL-BINDING (1), NPC-TABRAKAN-GERAK
-                      (1), NPC-FRAME-DAN-POLISI-KEJAR (1) … (+2)  */
+                      (1), NPC-SERANG-DAN-POSE (1), NPC-SISTEM (1), NPC-JADWAL-BINDING (1), NPC-GERAK-JALUR (1),
+                      NPC-PINTU-OTOMATIS (1) … (+3)  */
 const doorOK = b => {
   if (!b || !b.s) return false;
   const k = H.get(b.s.doorX + ',0,' + b.s.doorZ);
@@ -27580,9 +27974,9 @@ function gameBoot() {
    Menulis let milik: COMBAT: shake
    Ubah objek       : PERAN-DASAR-MISI-TOKO-POLISI: shopEl
    Bergantung pada  : DASAR-DUNIA (2), SENJATA (2), PERAN-DASAR-MISI-TOKO-POLISI (2), JURUS-SERANGAN-DASH (2),
-                      KAMERA (1), SFX-SUARA (1), COMBAT (1), GP-TAMPILAN-RAGE (1)↓
+                      KAMERA (1), SFX-DASAR (1), COMBAT (1), GP-TAMPILAN-RAGE (1)↓
    Dipakai oleh     : GP-MONSTER (6)↓, GP-GELOMBANG (4)↓, GP-TAMPILAN-RAGE (3)↓, GP-AI-PARRY (3)↓,
-                      GP-TEKNIK-DASAR (2)↓, SFX-SUARA (1), GP-TEKNIK-MONSTER (1)↓, SIMULASI-KOTA (1)↓,
+                      GP-TEKNIK-DASAR (2)↓, SFX-AMBIENT-UPDATE (1), GP-TEKNIK-MONSTER (1)↓, SIMULASI-KOTA (1)↓,
                       SIM-PORTAL (1)↓  */
 const GP = {
   on: true,
@@ -27740,7 +28134,7 @@ function gpAttach() {
    State (let)      : —
    Menulis let milik: —
    Ubah objek       : DASAR-DUNIA: Combat; GAMEPLAY-PLUS: GP
-   Bergantung pada  : DASAR-DUNIA (6), GAMEPLAY-PLUS (3), SFX-SUARA (2), COMBAT (2), KAMERA (1),
+   Bergantung pada  : DASAR-DUNIA (6), GAMEPLAY-PLUS (3), SFX-DASAR (2), COMBAT (2), KAMERA (1),
                       PERAN-DASAR-MISI-TOKO-POLISI (1), JURUS-SERANGAN-DASH (1), SIMULASI-KOTA (1)↓
    Dipakai oleh     : GP-GELOMBANG (10)↓, GP-MONSTER (4)↓, GP-AI-PARRY (3)↓, GAMEPLAY-PLUS (1), GP-TEKNIK-DASAR
                       (1)↓, GP-TEKNIK-MONSTER (1)↓, LAYAR-HP (1)↓  */
@@ -27943,7 +28337,7 @@ function gpPickups(dt) {
    Ubah objek       : DASAR-DUNIA: Combat; PERAN-DASAR-MISI-TOKO-POLISI: WAL; GAMEPLAY-PLUS: GP
    Bergantung pada  : COMBAT (6), GAMEPLAY-PLUS (6), DASAR-DUNIA (5), GP-TAMPILAN-RAGE (4), GP-TEKNIK-DASAR
                       (4)↓, PERAN-DASAR-MISI-TOKO-POLISI (3), NPC-BANTU-PEMAIN (2), JURUS-SERANGAN-DASH (2),
-                      KAMERA (1), SFX-SUARA (1) … (+5)
+                      KAMERA (1), SFX-DASAR (1) … (+5)
    Dipakai oleh     : GP-GELOMBANG (5)↓, GP-TEKNIK-DASAR (3)↓, GP-AI-PARRY (2)↓, COMBAT (1), GP-TEKNIK-MONSTER
                       (1)↓  */
 /* ---------- monster: buat, serang, kena, mati ---------- */
@@ -28231,8 +28625,8 @@ function gpPjClear() {
    Menulis let milik: KAMERA: vy; COMBAT: shake
    Ubah objek       : DASAR-DUNIA: Combat; GP-MONSTER: GPPJ
    Bergantung pada  : DASAR-DUNIA (4), NPC-BANTU-PEMAIN (3), JURUS-SERANGAN-DASH (3), GP-MONSTER (3), KAMERA
-                      (2), COMBAT (2), NPC-TABRAKAN-GERAK (2), GAMEPLAY-PLUS (2), SFX-SUARA (1), NPC-WALK2D (1)
-                      … (+1)
+                      (2), COMBAT (2), GAMEPLAY-PLUS (2), SFX-DASAR (1), NPC-WALK2D (1), NPC-TABRAKAN-GERAK (1)
+                      … (+2)
    Dipakai oleh     : GP-TEKNIK-MONSTER (9)↓, GP-MONSTER (4), GP-AI-PARRY (2)↓, GP-GELOMBANG (1)↓  */
 /* ---------- teknik khusus monster: GPMON.tk -> GPTK[kunci]; start(n, X) mengisi n.sk, tick(n, s, dt, X) mengerjakannya ---------- */
 function gpTkEnd(n, stun, a, b, atk) {
@@ -28688,9 +29082,9 @@ function gpBangkit(n) {
    State (let)      : —
    Menulis let milik: KAMERA: vy; COMBAT: shake
    Ubah objek       : DASAR-DUNIA: Combat
-   Bergantung pada  : GP-TEKNIK-DASAR (9), DASAR-DUNIA (4), JURUS-SERANGAN-DASH (3), COMBAT (2),
-                      NPC-TABRAKAN-GERAK (2), KAMERA (1), SFX-SUARA (1), NPC-BANTU-PEMAIN (1), NPC-WALK2D (1),
-                      GAMEPLAY-PLUS (1) … (+2)
+   Bergantung pada  : GP-TEKNIK-DASAR (9), DASAR-DUNIA (4), JURUS-SERANGAN-DASH (3), COMBAT (2), KAMERA (1),
+                      SFX-DASAR (1), NPC-BANTU-PEMAIN (1), NPC-WALK2D (1), NPC-TABRAKAN-GERAK (1),
+                      NPC-TABRAKAN-RESOLVE (1) … (+3)
    Dipakai oleh     : —  */
 Object.assign(GPTK, {
   /* robot: laser garis lurus; arah terkunci saat mengisi, bisa dihindari dengan bergeser/dash */
@@ -29434,9 +29828,9 @@ Object.assign(GPTK, {
    State (let)      : —
    Menulis let milik: COMBAT: shake; NPC-TUGAS: pathBud
    Ubah objek       : DASAR-DUNIA: Combat; GAMEPLAY-PLUS: GP
-   Bergantung pada  : DASAR-DUNIA (4), COMBAT (4), JURUS-SERANGAN-DASH (3), NPC-TABRAKAN-GERAK (3),
-                      GAMEPLAY-PLUS (3), GP-TAMPILAN-RAGE (3), KAMERA (2), KATALOG-DAN-ALAT-BANTU (2), SFX-SUARA
-                      (2), NPC-BANTU-PEMAIN (2) … (+5)
+   Bergantung pada  : DASAR-DUNIA (4), COMBAT (4), JURUS-SERANGAN-DASH (3), GAMEPLAY-PLUS (3), GP-TAMPILAN-RAGE
+                      (3), KAMERA (2), STATE-DAN-LAMPU-LALIN (2), SFX-DASAR (2), NPC-BANTU-PEMAIN (2),
+                      GP-MONSTER (2) … (+7)
    Dipakai oleh     : GP-GELOMBANG (2)↓, COMBAT (1)  */
 function gpMonAI(n, dt) {
   if (n.gpInv > 0) n.gpInv -= dt;
@@ -29706,7 +30100,7 @@ function gpUlt() {
    Ubah objek       : DASAR-DUNIA: Combat; PERAN-DASAR-MISI-TOKO-POLISI: WAL; GAMEPLAY-PLUS: GP;
                       GP-TAMPILAN-RAGE: gpH, gpTg; SIMULASI-KOTA: SIM
    Bergantung pada  : GP-TAMPILAN-RAGE (10), PERAN-DASAR-MISI-TOKO-POLISI (6), DASAR-DUNIA (5), GP-MONSTER (5),
-                      COMBAT (4), GAMEPLAY-PLUS (4), SIMULASI-KOTA (3)↓, KAMERA (2), GP-AI-PARRY (2), SFX-SUARA
+                      COMBAT (4), GAMEPLAY-PLUS (4), SIMULASI-KOTA (3)↓, KAMERA (2), GP-AI-PARRY (2), SFX-DASAR
                       (1) … (+5)
    Dipakai oleh     : INIT (2)↓, COMBAT (1)  */
 /* ---------- toko darurat & mode gelombang ---------- */
@@ -29953,12 +30347,12 @@ function gpTick(dt) {
    State (let)      : —
    Menulis let milik: NPC-TUGAS: pathBud
    Ubah objek       : DASAR-DUNIA: Combat
-   Bergantung pada  : SIM-PORTAL (5)↓, CUACA-TORNADO (4), NPC-TUGAS (4), DASAR-DUNIA (3), KAMERA (2),
+   Bergantung pada  : SIM-PORTAL (5)↓, CUACA-TORNADO (4), DASAR-DUNIA (3), NPC-TUGAS (3), KAMERA (2),
                       NPC-BANTU-PEMAIN (2), COMBAT (2), NPC-SISTEM (2), NPC-PATHFINDING (2), SIM-API (2)↓ …
-                      (+11)
-   Dipakai oleh     : SIM-PORTAL (6)↓, NPC-PILIH-TUGAS (5), GP-GELOMBANG (3), SIM-API (3)↓, CUACA-TORNADO (2),
-                      NPC-SERANG-DAN-POSE (2), LALU-LINTAS-INTI (1), NPC-FRAME-DAN-POLISI-KEJAR (1),
-                      GP-TAMPILAN-RAGE (1), GP-MONSTER (1) … (+2)
+                      (+12)
+   Dipakai oleh     : SIM-PORTAL (6)↓, NPC-WANDER (4), NPC-PILIH-TUGAS (3), GP-GELOMBANG (3), SIM-API (3)↓,
+                      CUACA-TORNADO (2), NPC-SERANG-DAN-POSE (2), LALU-LINTAS-UPDATE (1),
+                      NPC-FRAME-DAN-POLISI-KEJAR (1), GP-TAMPILAN-RAGE (1) … (+3)
    Catatan          : Sub-region dalam SIMULASI-KOTA (dibuat bertahap): SIM-PORTAL (portalOpen, portalClose,
                       portalKill, portalUpd, launchFireBalls, fireBallsKill, fireBallsUpd, fireImpact,
                       blastColumn) + SIM-API (spawnFire, extinguishFire, fireAudioStart, fireAudioStop,
@@ -29998,9 +30392,9 @@ const FB_MAT = new THREE.MeshBasicMaterial({color: FIREBALL_COL, transparent: tr
    State (let)      : —
    Menulis let milik: COMBAT: shake
    Ubah objek       : SIMULASI-KOTA: SIM
-   Bergantung pada  : DASAR-DUNIA (7), SIMULASI-KOTA (6), COMBAT (5), EDITOR-ISI-AREA-DAN-INPUT (3),
-                      JURUS-SERANGAN-DASH (3), KAMERA (2), SFX-SUARA (2), NPC-BANTU-PEMAIN (2), DEKORASI (1),
-                      GAMEPLAY-PLUS (1) … (+1)
+   Bergantung pada  : DASAR-DUNIA (7), SIMULASI-KOTA (6), COMBAT (5), EDITOR-PUT-HAPUS (3), JURUS-SERANGAN-DASH
+                      (3), KAMERA (2), SFX-DASAR (2), NPC-BANTU-PEMAIN (2), DEKORASI (1), GAMEPLAY-PLUS (1) …
+                      (+1)
    Dipakai oleh     : SIMULASI-KOTA (5), GP-GELOMBANG (1)  */
 /* ---------- portal ---------- */
 function portalOpen(x, z) {
@@ -30262,8 +30656,8 @@ function blastColumn(bx, bz, intensity, now) {
    State (let)      : _fireAudT
    Menulis let milik: —
    Ubah objek       : —
-   Bergantung pada  : SFX-SUARA (7), DASAR-DUNIA (4), KAMERA (4), SIMULASI-KOTA (3), KATALOG-DAN-ALAT-BANTU (2),
-                      NPC-BANTU-PEMAIN (1), COMBAT (1)
+   Bergantung pada  : SFX-DASAR (5), DASAR-DUNIA (4), KAMERA (4), SIMULASI-KOTA (3), STATE-DAN-LAMPU-LALIN (2),
+                      SFX-AMBIENT-BANGUN (1), SFX-AMBIENT-UPDATE (1), NPC-BANTU-PEMAIN (1), COMBAT (1)
    Dipakai oleh     : SIMULASI-KOTA (2), SIM-PORTAL (1)  */
 /* ---------- api ---------- */
 function spawnFire(x, z) {
@@ -30840,7 +31234,7 @@ function simTick(dt) {
    Ubah objek       : DASAR-DUNIA: K
    Bergantung pada  : DASAR-DUNIA (3), KAMERA (2), CHUNK-BLOK-DAN-UKURAN-KOTA (2), PERAN-DASAR-MISI-TOKO-POLISI
                       (2), PEMBUKA (1), KONTROL-SENTUH (1), LABEL-GEDUNG-DAN-TOMBOL (1), GP-TAMPILAN-RAGE (1)
-   Dipakai oleh     : EDITOR-ISI-AREA-DAN-INPUT (1), NPC-SERANG-DAN-POSE (1), MINIMAP-DAN-SIMPAN (1)↓  */
+   Dipakai oleh     : EDITOR-ALAT-DAN-PANEL (1), NPC-SERANG-DAN-POSE (1), MINIMAP-DAN-SIMPAN (1)↓  */
 const MOB = {on: false, moved: false};
 const isMobView = () =>
   Math.min(innerWidth, innerHeight) < 600 && (innerWidth < 700 || matchMedia('(pointer:coarse)').matches);
@@ -30981,6 +31375,9 @@ function mobPad() {
     MOB.pad = MOB.vz = 0;
   }
   b.classList.toggle('mcfp', !!cfp);
+  b.classList.toggle('mcat', MOB.on && !play && $('cat').style.display !== 'none'); /* katalog terbuka: sembunyikan joystick */
+  b.classList.toggle('mpop', MOB.on && !!document.querySelector('#calp.open,#wxp.open')); /* popover terbuka: sembunyikan isi menu */
+  b.classList.toggle('msay', MOB.on && play && getComputedStyle($('say')).display !== 'none'); /* ucapan NPC tampil: di HP portrait pendek toast disembunyikan (CSS) */
   requestAnimationFrame(mobPad);
 }
 requestAnimationFrame(mobPad);
@@ -31007,9 +31404,9 @@ mobSync();
    State (let)      : —
    Menulis let milik: KAMERA: play; HUD-PESAN-NAMA: coinSaved
    Ubah objek       : PERAN-DASAR-MISI-TOKO-POLISI: Q
-   Bergantung pada  : DASAR-DUNIA (9), HUD-PESAN-NAMA (3), NPC-SERANG-DAN-POSE (3), KAMERA (2),
-                      KATALOG-DAN-ALAT-BANTU (2), CUACA-KALENDER (2), SIMPAN-MUAT (2), NPC-WALK2D (2),
-                      CHUNK-BLOK-DAN-UKURAN-KOTA (1), NPC-BANTU-PEMAIN (1) … (+5)
+   Bergantung pada  : DASAR-DUNIA (9), HUD-PESAN-NAMA (3), NPC-SERANG-DAN-POSE (3), KAMERA (2), CUACA-KALENDER
+                      (2), SIMPAN-MUAT (2), NPC-WALK2D (2), KATALOG-BLOK (1), STATE-DAN-LAMPU-LALIN (1),
+                      CHUNK-BLOK-DAN-UKURAN-KOTA (1) … (+6)
    Dipakai oleh     : INIT (2)↓  */
 const MMP = {
   cv: null,
@@ -31037,10 +31434,14 @@ function mmInit() {
   color:var(--tx);border:0;cursor:pointer;line-height:1}
 #mmsave button:hover{background:#4a5270}
 body.mob #mmwrap{left:calc(8px + var(--sl));right:auto;top:calc(56px + var(--st));bottom:auto;padding:3px;gap:2px}
-@media (orientation:portrait){
-  body.mob.mplay #mmwrap{left:calc(8px + var(--sl));right:auto;top:calc(170px + var(--st));bottom:auto}
+body.mob.mplay #mmwrap{top:calc(162px + var(--st))}
+@media (orientation:landscape){
+  body.mob #mmwrap{left:auto;right:calc(8px + var(--sr));top:calc(8px + var(--st))}
+  body.mob.mplay #mmwrap{left:calc(var(--sl) + 18px + 95px + 8px);right:auto;top:auto;bottom:calc(16px + var(--sb));transform:scale(.9);transform-origin:left bottom}
 }
-body.mob.mplay #mmwrap{left:auto;right:calc(8px + var(--sr));top:auto;bottom:calc(118px + var(--sb))}
+@media (orientation:portrait) and (max-height:600px){
+  body.mob.mplay #mmwrap{transform:scale(.8);transform-origin:left top}
+}
 body.mob #mmsave button{padding:2px 3px;font-size:11px}`;
   document.head.appendChild(st);
   const w = document.createElement('div');
@@ -31403,7 +31804,7 @@ function mmInfo() {
    Ubah objek       : DASAR-DUNIA: cam, cmpNeedleEl, tmEl
    Bergantung pada  : DASAR-DUNIA (12), CHUNK-BLOK-DAN-UKURAN-KOTA (7), COMBAT (7), CUACA (5), KAMERA (3),
                       JURUS-SERANGAN-DASH (3), NPC-SERANG-DAN-POSE (3), PEMAIN-GERAK-MODE (3), SIMPAN-MUAT (3),
-                      LALU-LINTAS-INTI (3) … (+28)
+                      CUACA-KALENDER (2) … (+29)
    Dipakai oleh     : CHUNK-BLOK-DAN-UKURAN-KOTA (3), CUACA-TORNADO (1), NPC-PILIH-TUGAS (1),
                       NPC-FRAME-DAN-POLISI-KEJAR (1), SIMULASI-KOTA (1)  */
 setCity(128);
